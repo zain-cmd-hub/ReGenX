@@ -117,6 +117,20 @@ function writeImageCache(cache) {
   localStorage.setItem("tscemImageCache", JSON.stringify(cache));
 }
 
+function computeEcoScore({ purpose, condition, remainingLife }) {
+  if (!purpose) return 0;
+
+  const baseScore =
+    purpose === "sell" ? 82 :
+      purpose === "repair" ? 55 :
+        purpose === "recycle" ? 25 : 0;
+
+  const conditionBoost = condition === "Good" ? 8 : condition === "Medium" ? 0 : condition === "Poor" ? -8 : 0;
+  const lifeBoost = clamp(Math.round(((Number(remainingLife || 0) - 50) / 5)), -10, 10);
+
+  return clamp(Math.round(baseScore + conditionBoost + lifeBoost), 0, 100);
+}
+
 function generateFacilities(location, baseCoords) {
   const baseNames = [
     "GreenFix Repair Hub",
@@ -194,6 +208,7 @@ export default function DashboardPage() {
   const [damageLevel, setDamageLevel] = useState(0);
   const [repairCost, setRepairCost] = useState(0);
   const [recyclingValue, setRecyclingValue] = useState(0);
+  const [ecoScore, setEcoScore] = useState(0);
   const [analysisReady, setAnalysisReady] = useState(false);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
 
@@ -375,6 +390,7 @@ export default function DashboardPage() {
     setDamageLevel(0);
     setRepairCost(0);
     setRecyclingValue(0);
+    setEcoScore(0);
     setUsageMessage("");
     setAnalysisReady(false);
   }
@@ -471,10 +487,23 @@ export default function DashboardPage() {
   }, [impactTotals]);
 
   const dashboardCondition = condition && condition !== "-" ? `Condition: ${condition}` : "-";
-  const dashboardScore = score ? `Score: ${score}/100` : "-";
+  const dashboardEcoScore = ecoScore ? `Eco: ${ecoScore}/100` : "-";
   const dashboardLife = remainingLife ? `Remaining life: ${remainingLife}%` : "-";
   const dashboardPrice = price ? `Estimated price: ₹${price}` : "-";
   const dashboardDemand = demand ? `Demand: ${demand}` : "-";
+
+  const ecoLabel = useMemo(() => {
+    if (!analysisReady) return "";
+    if (ecoScore > 70) return "Best for environment";
+    if (ecoScore >= 40) return "Moderate impact";
+    return "Low environmental benefit";
+  }, [analysisReady, ecoScore]);
+
+  const ecoTone = useMemo(() => {
+    if (ecoScore > 70) return "eco-high";
+    if (ecoScore >= 40) return "eco-mid";
+    return "eco-low";
+  }, [ecoScore]);
 
   function scrollToSection(target) {
     setActiveNav(target);
@@ -564,6 +593,11 @@ export default function DashboardPage() {
     const cachedResult = cache[cacheKey];
 
     if (cachedResult) {
+      const cachedEcoScore = cachedResult.ecoScore ?? computeEcoScore({
+        purpose,
+        condition: cachedResult.condition,
+        remainingLife: cachedResult.remainingLife,
+      });
       setCondition(cachedResult.condition);
       setScore(cachedResult.score);
       setRemainingLife(cachedResult.remainingLife);
@@ -573,6 +607,7 @@ export default function DashboardPage() {
       setRepairCost(cachedResult.repairCost || 0);
       setRecyclingValue(cachedResult.recyclingValue || 0);
       setUsageMessage(cachedResult.usageMessage || "");
+      setEcoScore(cachedEcoScore);
       setAnalysisReady(true);
       setUploadLoading(false);
       setIsAnalyzing(false);
@@ -664,6 +699,12 @@ export default function DashboardPage() {
         usageMessage: nextUsageMessage,
       });
 
+      const nextEcoScore = computeEcoScore({
+        purpose,
+        condition: nextCondition,
+        remainingLife: remaining,
+      });
+
       const result = {
         condition: nextCondition,
         score: nextScore,
@@ -674,6 +715,7 @@ export default function DashboardPage() {
         repairCost: estimatedRepairCost,
         recyclingValue: recyclingEstimate,
         usageMessage: nextUsageMessage,
+        ecoScore: nextEcoScore,
       };
 
       const historyEntry = {
@@ -683,6 +725,7 @@ export default function DashboardPage() {
         purpose,
         price: purpose === "repair" ? estimatedRepairCost : purpose === "recycle" ? recyclingEstimate : estimatedPrice,
         condition: nextCondition,
+        ecoScore: nextEcoScore,
         suggestion: nextUsageMessage || "Analysis complete.",
         date: new Date().toISOString(),
       };
@@ -701,6 +744,7 @@ export default function DashboardPage() {
       setRepairCost(result.repairCost);
       setRecyclingValue(result.recyclingValue);
       setUsageMessage(result.usageMessage);
+      setEcoScore(result.ecoScore);
       setAnalysisReady(true);
     } catch (error) {
       console.error("[AI] Image analysis failed", error);
@@ -1183,7 +1227,7 @@ export default function DashboardPage() {
                 <div className="icon-box"><iconify-icon icon="ph:leaf-bold" /></div>
                 <div className="stat-info">
                   <span className="stat-label">Eco Score</span>
-                  <strong className="stat-value">{dashboardScore}</strong>
+                  <strong className="stat-value">{dashboardEcoScore}</strong>
                   <span className="stat-meta">{dashboardCondition}</span>
                 </div>
               </div>
@@ -1246,6 +1290,7 @@ export default function DashboardPage() {
                       <h4>{item.productName}</h4>
                       <p className="history-meta">Purpose: {item.purpose}</p>
                       <p className="history-meta">Detected value: ₹{item.price}</p>
+                      <p className="history-meta">Eco Score: {item.ecoScore ? `${item.ecoScore}/100` : "-"} 🌱</p>
                       <p className="history-meta">Uploaded: {new Date(item.date).toLocaleDateString()}</p>
                       <p className="history-note">Your Previous Analysis: {item.condition} • {item.suggestion}</p>
                     </div>
@@ -1511,6 +1556,16 @@ export default function DashboardPage() {
                         <div className="res-item"><span>Weight</span><strong>{materialWeight ? `${materialWeight} kg` : "-"}</strong></div>
                         <div className="res-item"><span>Recycling Value</span><strong>{recyclingValue ? `₹${recyclingValue}` : "-"}</strong></div>
                       </>
+                    ) : null}
+                    {analysisReady ? (
+                      <div className={`res-item eco-card ${ecoTone}`}>
+                        <span>Eco Score</span>
+                        <div className="eco-ring" style={{ "--eco-score": ecoScore }}>
+                          <div className="eco-value">{ecoScore}</div>
+                          <div className="eco-unit">/ 100 🌱</div>
+                        </div>
+                        <div className="eco-note">{ecoLabel}</div>
+                      </div>
                     ) : null}
                     {!purpose ? (
                       <div className="res-item"><span>Purpose</span><strong>Select above</strong></div>
