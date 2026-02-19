@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Smart Circular Economy Marketplace</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <div class="logo">SCEM</div>
+      <div class="brand-text">
+        <h1>Smart Circular Economy Marketplace</h1>
+        <p>AI Powered Circular Economy Marketplace</p>
+      </div>
+    </div>
+    <nav class="nav">
+      <button class="nav-btn" data-target="landing">Home</button>
+      <button class="nav-btn" data-target="upload">Upload</button>
+      <button class="nav-btn" data-target="life">Life Cycle</button>
+      <button class="nav-btn" data-target="pricing">Pricing</button>
+      <button class="nav-btn" data-target="geo">Facilities</button>
+      <button class="nav-btn" data-target="dashboard">Dashboard</button>
+    </nav>
+  </header>
+
+  <main>
+    <section id="landing" class="section hero">
+      <div class="hero-content">
+        <h2 class="fade-in">AI Powered Circular Economy Marketplace</h2>
+        <p class="fade-in delay-1">Reduce waste. Reuse smartly. Build a zero-waste future.</p>
+        <div class="hero-actions slide-up delay-2">
+          <button class="cta" data-target="upload">Upload Product</button>
+          <button class="cta" data-target="life">Predict Life Cycle</button>
+          <button class="cta" data-target="pricing">Get Fair Price</button>
+          <button class="cta" data-target="geo">Find Nearby Facilities</button>
+        </div>
+      </div>
+      <div class="hero-visual slide-up">
+        <div class="pulse-ring"></div>
+        <div class="orb">
+          <div class="orb-inner"></div>
+        </div>
+        <div class="stat-grid">
+          <div class="stat">
+            <span class="stat-value" id="liveScore">82</span>
+            <span class="stat-label">Eco Score</span>
+          </div>
+          <div class="stat">
+            <span class="stat-value" id="liveReuse">64%</span>
+            <span class="stat-label">Reuse Potential</span>
+          </div>
+          <div class="stat">
+            <span class="stat-value" id="liveDemand">High</span>
+            <span class="stat-label">Market Demand</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="upload" class="section">
+      <div class="section-title">
+        <h3>Upload Product</h3>
+        <p>Simulate AI image analysis and product condition detection.</p>
+      </div>
+      <div class="card grid-2">
+        <div class="upload-box">
+          <input type="file" id="productImage" accept="image/*" />
+          <div class="image-preview" id="imagePreview">
+            <span>No image selected</span>
+          </div>
+        </div>
+        <div class="form">
+          <label>
+            Product type
+            <input type="text" id="productType" placeholder="e.g., Laptop, Sofa, Bicycle" />
+          </label>
+          <label>
+            Product age (years)
+            <input type="number" id="productAge" min="0" max="30" placeholder="0-30" />
+          </label>
+          <label>
+            Usage level
+            <select id="usageLevel">
+              <option value="light">Light</option>
+              <option value="moderate" selected>Moderate</option>
+              <option value="heavy">Heavy</option>
+            </select>
+          </label>
+          <button id="analyzeBtn" class="primary">Analyze Product</button>
+          <div class="loader" id="uploadLoader" aria-hidden="true"></div>
+        </div>
+      </div>
+      <div class="results card" id="uploadResults" aria-live="polite">
+        <div>
+          <h4>AI Condition</h4>
+          <p id="conditionResult">-</p>
+        </div>
+        <div>
+          <h4>Sustainability Score</h4>
+          <p id="scoreResult">-</p>
+        </div>
+        <div>
+          <h4>Remaining Life</h4>
+          <p id="lifeResult">-</p>
+        </div>
+      </div>
+    </section>
+
+    <section id="life" class="section">
+      <div class="section-title">
+        <h3>AI Life Cycle Prediction</h3>
+        <p>Predict remaining life using age and AI condition outputs.</p>
+      </div>
+      <div class="card">
+        <div class="life-controls">
+          <button id="predictLifeBtn" class="primary">Run Life Cycle Prediction</button>
+          <div class="loader" id="lifeLoader" aria-hidden="true"></div>
+        </div>
+        <div class="progress-wrap">
+          <div class="progress-bar">
+            <div class="progress-fill" id="lifeProgress"></div>
+          </div>
+          <div class="progress-label">
+            <span id="lifePercent">0%</span>
+            <span>Remaining Life</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="pricing" class="section">
+      <div class="section-title">
+        <h3>Dynamic Pricing Model</h3>
+        <p>Estimate fair price using AI insights and live market demand.</p>
+      </div>
+      <div class="card">
+        <div class="pricing-controls">
+          <button id="priceBtn" class="primary">Calculate Fair Price</button>
+          <div class="loader" id="priceLoader" aria-hidden="true"></div>
+        </div>
+        <div class="price-output">
+          <span>Estimated Fair Price:</span>
+          <strong id="priceValue">-</strong>
+          <div id="demandValue" class="demand"></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="geo" class="section">
+      <div class="section-title">
+        <h3>Geo-Based Recommendations</h3>
+        <p>Find repair shops, recycling centers, and buyers near you.</p>
+      </div>
+      <div class="card geo-input">
+        <label>
+          Your location
+          <input type="text" id="locationInput" placeholder="Enter your city or area" />
+        </label>
+        <button id="geoBtn" class="primary">Find Nearby Facilities</button>
+        <div class="loader" id="geoLoader" aria-hidden="true"></div>
+      </div>
+      <div class="card grid-3" id="geoResults"></div>
+    </section>
+
+    <section id="dashboard" class="section">
+      <div class="section-title">
+        <h3>Dashboard</h3>
+        <p>Unified view of uploads, AI results, pricing, and facilities.</p>
+      </div>
+      <div class="card dashboard-grid">
+        <div class="dash-item">
+          <h4>Uploaded Product</h4>
+          <p id="dashProduct">-</p>
+          <p id="dashAge">-</p>
+          <p id="dashUsage">-</p>
+        </div>
+        <div class="dash-item">
+          <h4>AI Analysis</h4>
+          <p id="dashCondition">-</p>
+          <p id="dashScore">-</p>
+          <p id="dashLife">-</p>
+        </div>
+        <div class="dash-item">
+          <h4>Pricing</h4>
+          <p id="dashPrice">-</p>
+          <p id="dashDemand">-</p>
+        </div>
+        <div class="dash-item">
+          <h4>Recommended Facilities</h4>
+          <div id="dashFacilities">-</div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <p>Built for a zero-waste future. Powered by simulated AI intelligence.</p>
+  </footer>
+
+  <div class="modal hidden" id="connectModal" aria-hidden="true">
+    <div class="modal-overlay" data-close="true"></div>
+    <div class="modal-card" role="dialog" aria-modal="true">
+      <button class="modal-close" id="modalClose" aria-label="Close">&times;</button>
+      <h3 id="modalName">Facility</h3>
+      <p id="modalType" class="modal-sub">-</p>
+      <div class="modal-info">
+        <div>
+          <span>Phone</span>
+          <strong id="modalPhone">-</strong>
+        </div>
+        <div>
+          <span>WhatsApp</span>
+          <strong id="modalWhatsapp">-</strong>
+        </div>
+      </div>
+      <div class="modal-message">
+        <p>Message preview</p>
+        <div id="modalMessage" class="message-preview"></div>
+      </div>
+      <button id="modalWhatsappBtn" class="primary">Open WhatsApp</button>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
