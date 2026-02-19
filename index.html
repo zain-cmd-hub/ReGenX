@@ -4,222 +4,308 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Smart Circular Economy Marketplace</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;500;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://code.iconify.design/iconify-icon/1.0.7/iconify-icon.min.js"></script>
   <link rel="stylesheet" href="style.css" />
 </head>
-<body>
-  <header class="topbar">
-    <div class="brand">
-      <div class="logo">SCEM</div>
-      <div class="brand-text">
-        <h1>Smart Circular Economy Marketplace</h1>
-        <p>AI Powered Circular Economy Marketplace</p>
+<body class="dashboard-body">
+  
+  <!-- Sidebar Navigation -->
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <div class="logo-icon">
+        <iconify-icon icon="ph:recycle-bold"></iconify-icon>
+      </div>
+      <span class="brand-name">SCEM</span>
+    </div>
+    
+    <nav class="sidebar-nav">
+      <button class="nav-btn active" data-target="dashboard">
+        <iconify-icon icon="ph:squares-four-bold"></iconify-icon>
+        <span>Dashboard</span>
+      </button>
+      <button class="nav-btn" data-target="landing">
+        <iconify-icon icon="ph:house-bold"></iconify-icon>
+        <span>Overview</span>
+      </button>
+      <button class="nav-btn" data-target="upload">
+        <iconify-icon icon="ph:upload-simple-bold"></iconify-icon>
+        <span>Upload</span>
+      </button>
+      <button class="nav-btn" data-target="life">
+        <iconify-icon icon="ph:chart-line-up-bold"></iconify-icon>
+        <span>Life Cycle</span>
+      </button>
+      <button class="nav-btn" data-target="pricing">
+        <iconify-icon icon="ph:currency-dollar-bold"></iconify-icon>
+        <span>Pricing</span>
+      </button>
+      <button class="nav-btn" data-target="geo">
+        <iconify-icon icon="ph:map-pin-bold"></iconify-icon>
+        <span>Facilities</span>
+      </button>
+    </nav>
+    
+    <div class="sidebar-footer">
+      <div class="user-profile">
+        <div class="avatar">DK</div>
+        <div class="user-info">
+          <span class="user-name">Dev Kulshrestha</span>
+          <span class="user-role">Admin</span>
+        </div>
       </div>
     </div>
-    <nav class="nav">
-      <button class="nav-btn" data-target="landing">Home</button>
-      <button class="nav-btn" data-target="upload">Upload</button>
-      <button class="nav-btn" data-target="life">Life Cycle</button>
-      <button class="nav-btn" data-target="pricing">Pricing</button>
-      <button class="nav-btn" data-target="geo">Facilities</button>
-      <button class="nav-btn" data-target="dashboard">Dashboard</button>
-    </nav>
-  </header>
+  </aside>
 
-  <main>
-    <section id="landing" class="section hero">
-      <div class="hero-content">
-        <h2 class="fade-in">AI Powered Circular Economy Marketplace</h2>
-        <p class="fade-in delay-1">Reduce waste. Reuse smartly. Build a zero-waste future.</p>
-        <div class="hero-actions slide-up delay-2">
-          <button class="cta" data-target="upload">Upload Product</button>
-          <button class="cta" data-target="life">Predict Life Cycle</button>
-          <button class="cta" data-target="pricing">Get Fair Price</button>
-          <button class="cta" data-target="geo">Find Nearby Facilities</button>
+  <!-- Main Content Wrapper -->
+  <div class="main-wrapper">
+    
+    <!-- Top Header -->
+    <header class="top-header">
+      <div class="header-welcome">
+        <h1>Dashboard</h1>
+        <p>Welcome back, complete your circular economy tasks.</p>
+      </div>
+      <div class="header-actions">
+        <div class="search-bar">
+          <iconify-icon icon="ph:magnifying-glass-bold"></iconify-icon>
+          <input type="text" placeholder="Search..." />
+        </div>
+        <button class="icon-btn notification-btn">
+          <iconify-icon icon="ph:bell-bold"></iconify-icon>
+          <span class="badge"></span>
+        </button>
+        <div class="profile-pic">
+          <img src="https://ui-avatars.com/api/?name=Dev+Kulshrestha&background=0D8ABC&color=fff" alt="Profile">
         </div>
       </div>
-      <div class="hero-visual slide-up">
-        <div class="pulse-ring"></div>
-        <div class="orb">
-          <div class="orb-inner"></div>
-        </div>
-        <div class="stat-grid">
-          <div class="stat">
-            <span class="stat-value" id="liveScore">82</span>
-            <span class="stat-label">Eco Score</span>
-          </div>
-          <div class="stat">
-            <span class="stat-value" id="liveReuse">64%</span>
-            <span class="stat-label">Reuse Potential</span>
-          </div>
-          <div class="stat">
-            <span class="stat-value" id="liveDemand">High</span>
-            <span class="stat-label">Market Demand</span>
-          </div>
-        </div>
-      </div>
-    </section>
+    </header>
 
-    <section id="upload" class="section">
-      <div class="section-title">
-        <h3>Upload Product</h3>
-        <p>Simulate AI image analysis and product condition detection.</p>
-      </div>
-      <div class="card grid-2">
-        <div class="upload-box">
-          <input type="file" id="productImage" accept="image/*" />
-          <div class="image-preview" id="imagePreview">
-            <span>No image selected</span>
-          </div>
+    <main class="content-area">
+      
+      <!-- Dashboard Overview (Moved to top as default view perhaps, but keeping section ID structure) -->
+      <section id="dashboard" class="section dashboard-section">
+        <div class="section-header">
+          <h3>Overview</h3>
         </div>
-        <div class="form">
-          <label>
-            Product type
-            <input type="text" id="productType" placeholder="e.g., Laptop, Sofa, Bicycle" />
-          </label>
-          <label>
-            Product age (years)
-            <input type="number" id="productAge" min="0" max="30" placeholder="0-30" />
-          </label>
-          <label>
-            Usage level
-            <select id="usageLevel">
-              <option value="light">Light</option>
-              <option value="moderate" selected>Moderate</option>
-              <option value="heavy">Heavy</option>
-            </select>
-          </label>
-          <button id="analyzeBtn" class="primary">Analyze Product</button>
-          <div class="loader" id="uploadLoader" aria-hidden="true"></div>
+        <div class="stats-grid">
+           <div class="stat-card blue">
+             <div class="icon-box">
+               <iconify-icon icon="ph:package-bold"></iconify-icon>
+             </div>
+             <div class="stat-info">
+               <span class="stat-label">Uploaded Product</span>
+               <strong class="stat-value" id="dashProduct">-</strong>
+               <span class="stat-meta" id="dashAge">-</span>
+             </div>
+           </div>
+           
+           <div class="stat-card green">
+             <div class="icon-box">
+               <iconify-icon icon="ph:leaf-bold"></iconify-icon>
+             </div>
+             <div class="stat-info">
+               <span class="stat-label">Eco Score</span>
+               <strong class="stat-value" id="dashScore">-</strong>
+               <span class="stat-meta" id="dashCondition">-</span>
+             </div>
+           </div>
+           
+           <div class="stat-card purple">
+             <div class="icon-box">
+               <iconify-icon icon="ph:chart-pie-slice-bold"></iconify-icon>
+             </div>
+             <div class="stat-info">
+               <span class="stat-label">Remaining Life</span>
+               <strong class="stat-value" id="dashLife">-</strong>
+               <div class="progress-mini">
+                 <div class="bar" style="width: 0%"></div>
+               </div>
+             </div>
+           </div>
+           
+           <div class="stat-card orange">
+             <div class="icon-box">
+               <iconify-icon icon="ph:tag-bold"></iconify-icon>
+             </div>
+             <div class="stat-info">
+               <span class="stat-label">Est. Price</span>
+               <strong class="stat-value" id="dashPrice">-</strong>
+               <span class="stat-meta" id="dashDemand">-</span>
+             </div>
+           </div>
         </div>
-      </div>
-      <div class="results card" id="uploadResults" aria-live="polite">
-        <div>
-          <h4>AI Condition</h4>
-          <p id="conditionResult">-</p>
-        </div>
-        <div>
-          <h4>Sustainability Score</h4>
-          <p id="scoreResult">-</p>
-        </div>
-        <div>
-          <h4>Remaining Life</h4>
-          <p id="lifeResult">-</p>
-        </div>
-      </div>
-    </section>
 
-    <section id="life" class="section">
-      <div class="section-title">
-        <h3>AI Life Cycle Prediction</h3>
-        <p>Predict remaining life using age and AI condition outputs.</p>
-      </div>
-      <div class="card">
-        <div class="life-controls">
-          <button id="predictLifeBtn" class="primary">Run Life Cycle Prediction</button>
-          <div class="loader" id="lifeLoader" aria-hidden="true"></div>
+        <div class="dashboard-row">
+            <div class="card full-width">
+                <h4>Recommended Facilities</h4>
+                <div id="dashFacilities" class="facility-list">-</div>
+            </div>
         </div>
-        <div class="progress-wrap">
-          <div class="progress-bar">
-            <div class="progress-fill" id="lifeProgress"></div>
-          </div>
-          <div class="progress-label">
-            <span id="lifePercent">0%</span>
-            <span>Remaining Life</span>
+      </section>
+
+      <!-- Original Sections Adapted -->
+      
+      <section id="landing" class="section hero-card">
+        <div class="hero-content">
+          <span class="tag">AI Powered</span>
+          <h2>Circular Economy Marketplace</h2>
+          <p>Reduce waste. Reuse smartly. Build a zero-waste future.</p>
+          <div class="hero-stats">
+            <div class="mini-stat">
+              <span class="val" id="liveScore">82</span>
+              <span class="lbl">Eco Score</span>
+            </div>
+            <div class="mini-stat">
+              <span class="val" id="liveReuse">64%</span>
+              <span class="lbl">Reuse Potential</span>
+            </div>
           </div>
         </div>
-      </div>
-    </section>
+        <div class="hero-illustration">
+             <iconify-icon icon="solar:smart-home-angle-bold-duotone" style="font-size: 180px; color: var(--primary); opacity: 0.8;"></iconify-icon>
+        </div>
+      </section>
 
-    <section id="pricing" class="section">
-      <div class="section-title">
-        <h3>Dynamic Pricing Model</h3>
-        <p>Estimate fair price using AI insights and live market demand.</p>
-      </div>
-      <div class="card">
-        <div class="pricing-controls">
-          <button id="priceBtn" class="primary">Calculate Fair Price</button>
-          <div class="loader" id="priceLoader" aria-hidden="true"></div>
-        </div>
-        <div class="price-output">
-          <span>Estimated Fair Price:</span>
-          <strong id="priceValue">-</strong>
-          <div id="demandValue" class="demand"></div>
-        </div>
-      </div>
-    </section>
+      <div class="grid-layout">
+        <section id="upload" class="section card-panel">
+          <div class="panel-header">
+            <h3><iconify-icon icon="ph:upload-simple-bold"></iconify-icon> Upload Product</h3>
+            <button class="more-btn"><iconify-icon icon="ph:dots-three-bold"></iconify-icon></button>
+          </div>
+          <div class="upload-container">
+            <div class="upload-area">
+              <input type="file" id="productImage" accept="image/*" />
+              <div class="image-preview" id="imagePreview">
+                <iconify-icon icon="ph:image-bold" style="font-size: 48px; opacity: 0.5"></iconify-icon>
+                <span>Select Image</span>
+              </div>
+            </div>
+            <div class="form-group">
+              <label>Product Type</label>
+              <input type="text" id="productType" placeholder="e.g., Laptop" />
+              
+              <div class="row">
+                  <div class="col">
+                     <label>Age (years)</label>
+                     <input type="number" id="productAge" min="0" max="30" placeholder="0" />
+                  </div>
+                  <div class="col">
+                     <label>Usage</label>
+                     <select id="usageLevel">
+                        <option value="light">Light</option>
+                        <option value="moderate" selected>Moderate</option>
+                        <option value="heavy">Heavy</option>
+                     </select>
+                  </div>
+              </div>
+              
+              <button id="analyzeBtn" class="btn-primary full-width">
+                <iconify-icon icon="ph:magic-wand-bold"></iconify-icon> Analyze
+              </button>
+              <div class="loader" id="uploadLoader"></div>
 
-    <section id="geo" class="section">
-      <div class="section-title">
-        <h3>Geo-Based Recommendations</h3>
-        <p>Find repair shops, recycling centers, and buyers near you.</p>
-      </div>
-      <div class="card geo-input">
-        <label>
-          Your location
-          <input type="text" id="locationInput" placeholder="Enter your city or area" />
-        </label>
-        <button id="geoBtn" class="primary">Find Nearby Facilities</button>
-        <div class="loader" id="geoLoader" aria-hidden="true"></div>
-      </div>
-      <div class="card grid-3" id="geoResults"></div>
-    </section>
+              <div class="results-summary" id="uploadResults">
+                <div class="res-item">
+                    <span>Condition</span>
+                    <strong id="conditionResult">-</strong>
+                </div>
+                <div class="res-item">
+                    <span>Sus. Score</span>
+                    <strong id="scoreResult">-</strong>
+                </div>
+                 <div class="res-item">
+                    <span>Life</span>
+                    <strong id="lifeResult">-</strong>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
 
-    <section id="dashboard" class="section">
-      <div class="section-title">
-        <h3>Dashboard</h3>
-        <p>Unified view of uploads, AI results, pricing, and facilities.</p>
-      </div>
-      <div class="card dashboard-grid">
-        <div class="dash-item">
-          <h4>Uploaded Product</h4>
-          <p id="dashProduct">-</p>
-          <p id="dashAge">-</p>
-          <p id="dashUsage">-</p>
-        </div>
-        <div class="dash-item">
-          <h4>AI Analysis</h4>
-          <p id="dashCondition">-</p>
-          <p id="dashScore">-</p>
-          <p id="dashLife">-</p>
-        </div>
-        <div class="dash-item">
-          <h4>Pricing</h4>
-          <p id="dashPrice">-</p>
-          <p id="dashDemand">-</p>
-        </div>
-        <div class="dash-item">
-          <h4>Recommended Facilities</h4>
-          <div id="dashFacilities">-</div>
-        </div>
-      </div>
-    </section>
-  </main>
+        <div class="vertical-stack">
+            <section id="life" class="section card-panel small-panel">
+              <div class="panel-header">
+                <h3><iconify-icon icon="ph:chart-line-up-bold"></iconify-icon> Life Cycle</h3>
+              </div>
+              <div class="panel-body">
+                <p class="desc-text">Predict remaining lifespan based on AI analysis.</p>
+                <div class="progress-circle-wrap">
+                   <!-- Simplified progress display -->
+                   <div class="progress-bar-container">
+                        <div class="progress-fill" id="lifeProgress"></div>
+                   </div>
+                   <div class="progress-text">
+                        <span id="lifePercent">0%</span> Remaining
+                   </div>
+                </div>
+                <button id="predictLifeBtn" class="btn-secondary full-width">Predict</button>
+                <div class="loader" id="lifeLoader"></div>
+              </div>
+            </section>
 
-  <footer class="footer">
-    <p>Built for a zero-waste future. Powered by simulated AI intelligence.</p>
+            <section id="pricing" class="section card-panel small-panel">
+              <div class="panel-header">
+                <h3><iconify-icon icon="ph:currency-dollar-bold"></iconify-icon> Fair Price</h3>
+              </div>
+               <div class="panel-body">
+                 <div class="price-display">
+                    <span class="currency">₹</span>
+                    <strong id="priceValue" class="huge-text">-</strong>
+                 </div>
+                 <div id="demandValue" class="demand-tag"></div>
+                 <button id="priceBtn" class="btn-secondary full-width">Calculate</button>
+                 <div class="loader" id="priceLoader"></div>
+               </div>
+            </section>
+        </div>
+      </div>
+
+      <section id="geo" class="section card-panel full-width-panel">
+        <div class="panel-header">
+          <h3><iconify-icon icon="ph:map-pin-bold"></iconify-icon> Nearby Facilities</h3>
+          <div class="search-inline">
+             <input type="text" id="locationInput" placeholder="Enter city..." />
+             <button id="geoBtn" class="icon-only-btn"><iconify-icon icon="ph:arrow-right-bold"></iconify-icon></button>
+          </div>
+        </div>
+        <div class="loader" id="geoLoader"></div>
+        <div class="geo-grid" id="geoResults">
+            <!-- Results populated here -->
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <footer class="main-footer">
+    <p>&copy; 2026 Smart Circular Economy Marketplace. </p>
   </footer>
 
   <div class="modal hidden" id="connectModal" aria-hidden="true">
     <div class="modal-overlay" data-close="true"></div>
     <div class="modal-card" role="dialog" aria-modal="true">
       <button class="modal-close" id="modalClose" aria-label="Close">&times;</button>
+      <div class="modal-header-icon">
+        <iconify-icon icon="logos:whatsapp-icon"></iconify-icon>
+      </div>
       <h3 id="modalName">Facility</h3>
       <p id="modalType" class="modal-sub">-</p>
-      <div class="modal-info">
-        <div>
-          <span>Phone</span>
-          <strong id="modalPhone">-</strong>
-        </div>
-        <div>
-          <span>WhatsApp</span>
-          <strong id="modalWhatsapp">-</strong>
+      
+      <div class="contact-details">
+        <div class="contact-row">
+            <iconify-icon icon="ph:phone-bold"></iconify-icon>
+            <span id="modalPhone">-</span>
         </div>
       </div>
-      <div class="modal-message">
-        <p>Message preview</p>
+      
+      <div class="modal-message-box">
+        <label>Pre-filled Message</label>
         <div id="modalMessage" class="message-preview"></div>
       </div>
-      <button id="modalWhatsappBtn" class="primary">Open WhatsApp</button>
+      <button id="modalWhatsappBtn" class="btn-primary full-width">Send Message</button>
     </div>
   </div>
 

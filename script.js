@@ -163,11 +163,20 @@ function refreshDashboard() {
   dashDemand.textContent = state.demand ? `Demand: ${state.demand}` : "-";
 
   if (state.facilities.length === 0) {
-    dashFacilities.textContent = "-";
+    dashFacilities.textContent = "No recent facilities found.";
   } else {
     dashFacilities.innerHTML = state.facilities
       .slice(0, 3)
-      .map((item) => `<div>${item.name} (${item.type})</div>`)
+      .map(
+        (item) => `
+      <div class="facility-item" style="border:none; padding:0; box-shadow:none; margin-bottom:12px;">
+        <div class="f-header">
+           <strong class="f-name" style="font-size:14px;">${item.name}</strong>
+           <span class="f-dist" style="font-size:11px;">${item.distance} km</span>
+        </div>
+        <span class="f-type" style="font-size:12px;">${item.type}</span>
+      </div>`
+      )
       .join("");
   }
 }
@@ -308,11 +317,14 @@ geoBtn.addEventListener("click", () => {
     geoResults.innerHTML = facilities
       .map((item, index) => {
         return `
-          <div class="facility-card">
-            <h4>${item.name}</h4>
-            <p>${item.type} | ${item.distance} km away</p>
-            <button class="primary" data-connect-index="${index}">Connect</button>
-          </div>
+      <div class="facility-item">
+        <div class="f-header">
+            <span class="f-name">${item.name}</span>
+            <span class="f-dist">${item.distance} km</span>
+        </div>
+        <span class="f-type">${item.type}</span>
+        <button class="f-action" data-connect-index="${index}">Connect</button>
+      </div>
         `;
       })
       .join("");
