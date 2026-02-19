@@ -213,6 +213,7 @@ export default function DashboardPage() {
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isProfileEditing, setIsProfileEditing] = useState(true);
   const [profileStatus, setProfileStatus] = useState("");
+  const [dataClearStatus, setDataClearStatus] = useState("");
   const [flowStep, setFlowStep] = useState(0);
   const [profileData, setProfileData] = useState({
     name: "",
@@ -931,6 +932,8 @@ export default function DashboardPage() {
   async function handleLogout() {
     await signOut(auth);
     localStorage.removeItem("tscemUser");
+    setUserProfile({ name: "", email: "", photo: "" });
+    alert("You have been logged out successfully.");
     router.push("/login");
   }
 
@@ -940,6 +943,49 @@ export default function DashboardPage() {
     setProfileStatus("Profile updated successfully");
     setIsProfileEditing(false);
     setTimeout(() => setProfileStatus(""), 2500);
+  }
+
+  function handleClearData() {
+    const confirmed = window.confirm("Are you sure you want to delete all your data?");
+    if (!confirmed) return;
+
+    localStorage.removeItem("tscemProfile");
+    localStorage.removeItem("tscemImageCache");
+    localStorage.removeItem("tscemNotifications");
+    localStorage.removeItem("tscemReviews");
+    localStorage.removeItem("tscemProductHistory");
+    localStorage.removeItem("tscemUser");
+
+    setProductHistory([]);
+    setNotifications([]);
+    setReviews([]);
+    setFacilities([]);
+    setActiveFacility(null);
+    setShopProfile(null);
+    setProductImage("");
+    setImageHash("");
+    setProductTypeInput("");
+    setProductAgeInput("");
+    setUsageYears("");
+    setUsageMonths("");
+    setUsageDays("");
+    setMaterialWeight("");
+    setMaterialType("metal");
+    setPurpose("");
+    setFlowStep(0);
+    setFileError("");
+    resetAnalysis();
+    setProfileData({
+      name: "",
+      email: "",
+      phone: "",
+      address: "",
+      about: "",
+    });
+    setIsProfileEditing(true);
+    setProfileStatus("");
+    setDataClearStatus("All demo data has been cleared.");
+    setTimeout(() => setDataClearStatus(""), 2500);
   }
 
   const unreadCount = notifications.filter((item) => !item.read).length;
@@ -1572,6 +1618,10 @@ export default function DashboardPage() {
 
         <footer className="main-footer">
           <p>© 2026 Smart Circular Economy Marketplace.</p>
+          <div className="privacy-note">
+            <span className="privacy-icon">🔒</span>
+            <span>Your data is stored locally for demo purpose only.</span>
+          </div>
         </footer>
       </div>
 
@@ -1774,7 +1824,23 @@ export default function DashboardPage() {
               />
             </label>
 
-            {profileStatus ? <div className="profile-success">{profileStatus}</div> : null}
+            {profileStatus ? <div className="profile-success status-fade">{profileStatus}</div> : null}
+            {dataClearStatus ? <div className="profile-warning status-fade">{dataClearStatus}</div> : null}
+
+            <div className="safety-panel">
+              <div className="safety-header">
+                <iconify-icon icon="ph:shield-check-bold" />
+                <span>Safety & Trust</span>
+              </div>
+              <p className="safety-note">Manage your local demo data and sessions.</p>
+              <button
+                type="button"
+                className="btn-warning full-width"
+                onClick={handleClearData}
+              >
+                Clear My Data
+              </button>
+            </div>
 
             <div className="profile-actions">
               <button
