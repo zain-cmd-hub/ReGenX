@@ -206,6 +206,15 @@ export default function DashboardPage() {
     about: "",
   });
 
+  const [reviews, setReviews] = useState([]);
+  const [isRatingOpen, setIsRatingOpen] = useState(false);
+  const [ratingValue, setRatingValue] = useState(0);
+  const [ratingText, setRatingText] = useState("");
+  const [ratingError, setRatingError] = useState("");
+  const [ratingSuccess, setRatingSuccess] = useState("");
+  const [currentTransaction, setCurrentTransaction] = useState(null);
+  const [shopProfile, setShopProfile] = useState(null);
+
   const [liveScore, setLiveScore] = useState(82);
   const [liveReuse, setLiveReuse] = useState(64);
   const [liveDemand] = useState("High");
@@ -276,6 +285,17 @@ export default function DashboardPage() {
   useEffect(() => {
     localStorage.setItem("tscemNotifications", JSON.stringify(notifications));
   }, [notifications]);
+
+  useEffect(() => {
+    const storedReviews = localStorage.getItem("tscemReviews");
+    if (storedReviews) {
+      setReviews(JSON.parse(storedReviews));
+    }
+  }, []);
+
+  useEffect(() => {
+    localStorage.setItem("tscemReviews", JSON.stringify(reviews));
+  }, [reviews]);
 
   function resetAnalysis() {
     setCondition("-");
@@ -669,6 +689,73 @@ export default function DashboardPage() {
     };
   }
 
+  function getTransactionId(facility) {
+    return `${facility.name}|${purpose}|${imageHash}|${totalUsageDays}`;
+  }
+
+  function hasReviewed(transactionId) {
+    return reviews.some((item) => item.transactionId === transactionId);
+  }
+
+  function handleOpenRating(facility) {
+    const transactionId = getTransactionId(facility);
+    if (hasReviewed(transactionId)) {
+      setRatingError("You already rated this transaction.");
+      setTimeout(() => setRatingError(""), 2500);
+      return;
+    }
+
+    setRatingValue(0);
+    setRatingText("");
+    setRatingError("");
+    setRatingSuccess("");
+    setCurrentTransaction({
+      id: transactionId,
+      shopName: facility.name,
+      purpose,
+      productSummary: `${productTypeInput || "Product"} • Usage ${totalUsageDays} days`,
+      timestamp: Date.now(),
+    });
+    setIsRatingOpen(true);
+  }
+
+  function handleSubmitRating(event) {
+    event.preventDefault();
+    if (!currentTransaction) return;
+
+    if (ratingValue <= 0) {
+      setRatingError("Please select a rating before submitting.");
+      return;
+    }
+
+    if (hasReviewed(currentTransaction.id)) {
+      setRatingError("You already rated this transaction.");
+      return;
+    }
+
+    const reviewEntry = {
+      id: `${currentTransaction.id}_${Date.now()}`,
+      transactionId: currentTransaction.id,
+      userEmail: profileData.email || userProfile.email || "",
+      shopName: currentTransaction.shopName,
+      serviceType: currentTransaction.purpose,
+      rating: ratingValue,
+      reviewText: ratingText,
+      date: new Date().toISOString(),
+    };
+
+    setReviews((prev) => [reviewEntry, ...prev]);
+    setRatingSuccess("Review submitted successfully.");
+    setTimeout(() => {
+      setIsRatingOpen(false);
+      setRatingSuccess("");
+    }, 1200);
+  }
+
+  function openShopProfile(facility) {
+    setShopProfile(facility);
+  }
+
   function scheduleNotification(facility) {
     const delay = 5000 + (facility.name.length % 6) * 1000;
     setTimeout(() => {
@@ -686,6 +773,13 @@ export default function DashboardPage() {
     openWhatsApp();
     scheduleNotification(activeFacility);
     setFlowStep(5);
+    setCurrentTransaction({
+      id: getTransactionId(activeFacility),
+      shopName: activeFacility.name,
+      purpose,
+      productSummary: `${productTypeInput || "Product"} • Usage ${totalUsageDays} days`,
+      timestamp: Date.now(),
+    });
   }
 
   function handlePurposeSelect(nextPurpose) {
@@ -732,6 +826,13 @@ export default function DashboardPage() {
     { id: 4, label: "Price & Value" },
     { id: 5, label: "Connect Facility" },
   ];
+
+  const shopReviews = shopProfile
+    ? reviews.filter((item) => item.shopName === shopProfile.name)
+    : [];
+  const shopAverage = shopReviews.length
+    ? shopReviews.reduce((sum, item) => sum + item.rating, 0) / shopReviews.length
+    : 0;
 
   return (
     <div className="dashboard-body">
@@ -1237,9 +1338,14 @@ export default function DashboardPage() {
                     <span className="f-dist">{item.distance} km</span>
                   </div>
                   <span className="f-type">{item.type}</span>
-                  <button className="f-action" onClick={() => handleConnectClick(item)}>
-                    Connect
-                  </button>
+                  <div className="facility-actions">
+                    <button className="f-action" onClick={() => handleConnectClick(item)}>
+                      Connect
+                    </button>
+                    <button className="f-link" onClick={() => openShopProfile(item)}>
+                      View Profile
+                    </button>
+                  </div>
                 </div>
               ))}
             </div>
@@ -1279,6 +1385,93 @@ export default function DashboardPage() {
           <button className="btn-primary full-width" onClick={handleSendMessage}>
             Send Message
           </button>
+          {currentTransaction && activeFacility && currentTransaction.shopName === activeFacility.name ? (
+            <button className="btn-secondary full-width" onClick={() => handleOpenRating(activeFacility)}>
+              Rate Service
+            </button>
+          ) : null}
+        </div>
+      </div>
+
+      <div className={`modal ${isRatingOpen ? "" : "hidden"}`} aria-hidden={!isRatingOpen}>
+        <div className="modal-overlay" onClick={() => setIsRatingOpen(false)} />
+        <div className="modal-card rating-modal" role="dialog" aria-modal="true">
+          <button className="modal-close" aria-label="Close" onClick={() => setIsRatingOpen(false)}>
+            ×
+          </button>
+          <div className="modal-header-icon">
+            <iconify-icon icon="ph:star-fill" />
+          </div>
+          <h3>Rate Service</h3>
+          <p className="modal-sub">Share your experience with {currentTransaction?.shopName || "this shop"}.</p>
+
+          <form className="rating-form" onSubmit={handleSubmitRating}>
+            <div className="star-row">
+              {[1, 2, 3, 4, 5].map((star) => (
+                <button
+                  type="button"
+                  key={star}
+                  className={`star-btn ${ratingValue >= star ? "active" : ""}`}
+                  onClick={() => setRatingValue(star)}
+                >
+                  ★
+                </button>
+              ))}
+            </div>
+            <textarea
+              rows="3"
+              placeholder="Write a short review..."
+              value={ratingText}
+              onChange={(event) => setRatingText(event.target.value)}
+            />
+            {ratingError ? <div className="rating-error">{ratingError}</div> : null}
+            {ratingSuccess ? <div className="rating-success">{ratingSuccess}</div> : null}
+            <button type="submit" className="btn-primary full-width">
+              Submit Review
+            </button>
+          </form>
+        </div>
+      </div>
+
+      <div className={`modal ${shopProfile ? "" : "hidden"}`} aria-hidden={!shopProfile}>
+        <div className="modal-overlay" onClick={() => setShopProfile(null)} />
+        <div className="modal-card shop-modal" role="dialog" aria-modal="true">
+          <button className="modal-close" aria-label="Close" onClick={() => setShopProfile(null)}>
+            ×
+          </button>
+          <div className="modal-header-icon">
+            <iconify-icon icon="ph:storefront-bold" />
+          </div>
+          <h3>{shopProfile?.name || "Shop"}</h3>
+          <p className="modal-sub">{shopProfile?.type || "Service"}</p>
+
+          <div className="shop-rating">
+            <div className="shop-score">
+              <span className="score-value">{shopAverage ? shopAverage.toFixed(1) : "0.0"}</span>
+              <span className="score-label">Average Rating</span>
+            </div>
+            <div className="shop-count">
+              <span className="score-value">{shopReviews.length}</span>
+              <span className="score-label">Total Reviews</span>
+            </div>
+          </div>
+
+          <div className="review-list">
+            {shopReviews.length === 0 ? (
+              <div className="notification-empty">No reviews yet.</div>
+            ) : (
+              shopReviews.slice(0, 5).map((review) => (
+                <div key={review.id} className="review-item">
+                  <div className="review-header">
+                    <span className="review-stars">{"★".repeat(review.rating)}{"☆".repeat(5 - review.rating)}</span>
+                    <span className="review-date">{new Date(review.date).toLocaleDateString()}</span>
+                  </div>
+                  <div className="review-text">{review.reviewText || "(No comments)"}</div>
+                  <div className="review-meta">{review.userEmail || "Anonymous"}</div>
+                </div>
+              ))
+            )}
+          </div>
         </div>
       </div>
 
