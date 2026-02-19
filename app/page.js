@@ -197,8 +197,6 @@ export default function DashboardPage() {
 
   const fileInputRef = useRef(null);
 
-  const fileInputRef = useRef(null);
-
   useEffect(() => {
     const storedUser = localStorage.getItem("tscemUser");
     if (storedUser) {
