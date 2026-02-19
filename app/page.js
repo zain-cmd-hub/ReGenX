@@ -561,9 +561,9 @@ export default function DashboardPage() {
 
   const ecoLabel = useMemo(() => {
     if (!analysisReady) return "";
-    if (ecoScore > 70) return "Best for environment";
+    if (ecoScore > 70) return "Best for environment 🌍";
     if (ecoScore >= 40) return "Moderate impact";
-    return "Low environmental benefit";
+    return "Low eco benefit";
   }, [analysisReady, ecoScore]);
 
   const ecoTone = useMemo(() => {
@@ -1751,20 +1751,24 @@ export default function DashboardPage() {
                         <div className="res-item"><span>Recycling Value</span><strong>{recyclingValue ? `₹${recyclingValue}` : "-"}</strong></div>
                       </>
                     ) : null}
-                    {analysisReady ? (
-                      <div className={`res-item eco-card ${ecoTone}`}>
-                        <span>Eco Score</span>
-                        <div className="eco-ring" style={{ "--eco-score": ecoScore }}>
-                          <div className="eco-value">{ecoScore}</div>
-                          <div className="eco-unit">/ 100 🌱</div>
-                        </div>
-                        <div className="eco-note">{ecoLabel}</div>
-                      </div>
-                    ) : null}
                     {!purpose ? (
                       <div className="res-item"><span>Purpose</span><strong>Select above</strong></div>
                     ) : null}
                   </div>
+
+                  {analysisReady ? (
+                    <div className={`eco-score-card ${ecoTone}`}>
+                      <div className="eco-score-ring" style={{ "--eco-score": ecoScore }}>
+                        <div className="eco-score-center">
+                          <div className="eco-score-value">{ecoScore}</div>
+                          <div className="eco-score-unit">/ 100</div>
+                          <div className="eco-score-leaf">🌱</div>
+                        </div>
+                      </div>
+                      <div className="eco-score-label">Eco Score</div>
+                      <div className="eco-score-note">{ecoLabel}</div>
+                    </div>
+                  ) : null}
 
                   {analysisReady ? (
                     <div className="comparison-panel">
