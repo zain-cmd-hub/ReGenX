@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { MapContainer, Marker, Popup, TileLayer, useMap } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
@@ -27,8 +27,40 @@ function buildMarkerIcon(category) {
   });
 }
 
+function MapInteractionLock({ locked }) {
+  const map = useMap();
+
+  useEffect(() => {
+    if (!map) return;
+
+    if (locked) {
+      map.dragging.disable();
+      map.scrollWheelZoom.disable();
+      map.doubleClickZoom.disable();
+      map.boxZoom.disable();
+      map.keyboard.disable();
+      if (map.tap) {
+        map.tap.disable();
+      }
+    } else {
+      map.dragging.enable();
+      map.scrollWheelZoom.enable();
+      map.doubleClickZoom.enable();
+      map.boxZoom.enable();
+      map.keyboard.enable();
+      if (map.tap) {
+        map.tap.enable();
+      }
+    }
+  }, [locked, map]);
+
+  return null;
+}
+
 export default function MapView({ facilities, center, onConnect }) {
   const safeCenter = center || { lat: 28.6139, lng: 77.2090 };
+  const [showContactModal, setShowContactModal] = useState(false);
+  const [selectedFacility, setSelectedFacility] = useState(null);
   const icons = useMemo(() => ({
     repair: buildMarkerIcon("repair"),
     recycling: buildMarkerIcon("recycling"),
@@ -38,14 +70,44 @@ export default function MapView({ facilities, center, onConnect }) {
     user: buildMarkerIcon("user"),
   }), []);
 
+  useEffect(() => {
+    document.body.style.overflow = showContactModal ? "hidden" : "";
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [showContactModal]);
+
+  function openContactModal(facility) {
+    setSelectedFacility(facility);
+    setShowContactModal(true);
+  }
+
+  function closeContactModal() {
+    setShowContactModal(false);
+    setSelectedFacility(null);
+  }
+
+  function handleConnect() {
+    if (!selectedFacility) return;
+    onConnect?.(selectedFacility);
+    closeContactModal();
+  }
+
+  function handleWhatsApp() {
+    if (!selectedFacility?.whatsappLink) return;
+    window.open(selectedFacility.whatsappLink, "_blank", "noopener,noreferrer");
+    closeContactModal();
+  }
+
   return (
-    <div className="map-wrapper">
+    <div className={`map-wrapper ${showContactModal ? "is-modal" : ""}`}>
       <MapContainer
         center={[safeCenter.lat, safeCenter.lng]}
         zoom={13}
         scrollWheelZoom
         className="map-container"
       >
+        <MapInteractionLock locked={showContactModal} />
         <Recenter center={safeCenter} zoom={13} />
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
@@ -66,33 +128,41 @@ export default function MapView({ facilities, center, onConnect }) {
             key={`${facility.name}_${facility.latitude}_${facility.longitude}`}
             position={[facility.latitude, facility.longitude]}
             icon={icons[facility.category] || icons.buyer}
-          >
-            <Popup>
-              <div className="map-popup">
-                <strong>{facility.name}</strong>
-                <span className="map-popup-meta">{facility.type}</span>
-                <div className="map-popup-actions">
-                  <button
-                    type="button"
-                    className="map-popup-btn primary"
-                    onClick={() => onConnect?.(facility)}
-                  >
-                    Contact
-                  </button>
-                  <a
-                    className="map-popup-btn ghost"
-                    href={facility.whatsappLink}
-                    target="_blank"
-                    rel="noreferrer"
-                  >
-                    WhatsApp
-                  </a>
-                </div>
-              </div>
-            </Popup>
-          </Marker>
+            eventHandlers={{
+              click: () => openContactModal(facility),
+            }}
+          />
         ))}
       </MapContainer>
+
+      {showContactModal ? (
+        <div className="map-contact-layer" role="dialog" aria-modal="true">
+          <div className="map-contact-overlay" onClick={closeContactModal} />
+          <div className="map-contact-card">
+            <button
+              type="button"
+              className="map-contact-close"
+              aria-label="Close"
+              onClick={closeContactModal}
+            >
+              ×
+            </button>
+            <div className="map-contact-icon">📍</div>
+            <h3>{selectedFacility?.name || "Facility"}</h3>
+            <p className="map-contact-sub">
+              {selectedFacility?.type || "Facility"}
+            </p>
+            <div className="map-contact-actions">
+              <button type="button" className="map-contact-btn primary" onClick={handleConnect}>
+                Connect
+              </button>
+              <button type="button" className="map-contact-btn ghost" onClick={handleWhatsApp}>
+                WhatsApp
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }
