@@ -2,8 +2,16 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import dynamic from "next/dynamic";
 import { onAuthStateChanged, signOut } from "firebase/auth";
 import { auth } from "./lib/firebase";
+
+const MapView = dynamic(() => import("./components/MapView"), { ssr: false });
+const DEFAULT_CITY = {
+  name: "New Delhi",
+  lat: 28.6139,
+  lng: 77.2090,
+};
 
 function clamp(value, min, max) {
   return Math.min(Math.max(value, min), max);
@@ -109,7 +117,7 @@ function writeImageCache(cache) {
   localStorage.setItem("tscemImageCache", JSON.stringify(cache));
 }
 
-function generateFacilities(location) {
+function generateFacilities(location, baseCoords) {
   const baseNames = [
     "GreenFix Repair Hub",
     "ReLoop Recycling",
@@ -138,6 +146,9 @@ function generateFacilities(location) {
   ];
 
   const offset = location.length % 5;
+  const baseLat = baseCoords?.lat ?? DEFAULT_CITY.lat;
+  const baseLng = baseCoords?.lng ?? DEFAULT_CITY.lng;
+
   return baseNames.map((name, index) => ({
     name: `${name} - ${location}`,
     distance: 2 + index + offset,
@@ -145,6 +156,9 @@ function generateFacilities(location) {
     category: categories[index % categories.length],
     phone: phoneNumbers[index],
     whatsapp: whatsappNumbers[index],
+    whatsappLink: `https://wa.me/${whatsappNumbers[index]}`,
+    latitude: baseLat + ((index + 1) * 0.004 + offset * 0.001) * (index % 2 === 0 ? 1 : -1),
+    longitude: baseLng + ((index + 2) * 0.003 + offset * 0.001) * (index % 2 === 0 ? -1 : 1),
   }));
 }
 
@@ -188,6 +202,8 @@ export default function DashboardPage() {
   const [geoLoading, setGeoLoading] = useState(false);
 
   const [location, setLocation] = useState("");
+  const [showMap, setShowMap] = useState(false);
+  const [userLocation, setUserLocation] = useState(DEFAULT_CITY);
   const [facilities, setFacilities] = useState([]);
   const [activeFacility, setActiveFacility] = useState(null);
 
@@ -237,6 +253,27 @@ export default function DashboardPage() {
   const [liveScore, setLiveScore] = useState(82);
   const [liveReuse, setLiveReuse] = useState(64);
   const [liveDemand] = useState("High");
+
+  useEffect(() => {
+    if (!navigator.geolocation) {
+      setUserLocation(DEFAULT_CITY);
+      return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        setUserLocation({
+          name: "Current Location",
+          lat: pos.coords.latitude,
+          lng: pos.coords.longitude,
+        });
+      },
+      () => {
+        setUserLocation(DEFAULT_CITY);
+      },
+      { enableHighAccuracy: true, timeout: 8000, maximumAge: 60000 }
+    );
+  }, []);
 
   const fileInputRef = useRef(null);
 
@@ -715,7 +752,7 @@ export default function DashboardPage() {
     setFacilities([]);
 
     setTimeout(() => {
-      const allFacilities = generateFacilities(location.trim());
+      const allFacilities = generateFacilities(location.trim(), userLocation);
       const filtered = allFacilities.filter((item) => {
         if (purpose === "sell") return item.category === "buyer" || item.category === "second-hand";
         if (purpose === "repair") return item.category === "repair" || item.category === "service";
@@ -1467,39 +1504,69 @@ export default function DashboardPage() {
           <section id="geo" className="section card-panel full-width-panel">
             <div className="panel-header">
               <h3><iconify-icon icon="ph:map-pin-bold" /> Nearby Facilities</h3>
-              <div className="search-inline">
-                <input
-                  type="text"
-                  placeholder="Enter city..."
-                  value={location}
-                  onChange={(event) => setLocation(event.target.value)}
-                />
-                <button className="icon-only-btn" onClick={handleFindFacilities}>
-                  <iconify-icon icon="ph:arrow-right-bold" />
-                </button>
+              <div className="geo-header-actions">
+                <div className="geo-toggle">
+                  <button
+                    type="button"
+                    className={`toggle-btn ${showMap ? "" : "active"}`}
+                    onClick={() => setShowMap(false)}
+                  >
+                    List View
+                  </button>
+                  <button
+                    type="button"
+                    className={`toggle-btn ${showMap ? "active" : ""}`}
+                    onClick={() => setShowMap(true)}
+                  >
+                    Map View
+                  </button>
+                </div>
+                <div className="search-inline">
+                  <input
+                    type="text"
+                    placeholder="Enter city..."
+                    value={location}
+                    onChange={(event) => setLocation(event.target.value)}
+                  />
+                  <button className="icon-only-btn" onClick={handleFindFacilities}>
+                    <iconify-icon icon="ph:arrow-right-bold" />
+                  </button>
+                </div>
               </div>
             </div>
 
             <div className={`loader ${geoLoading ? "active" : ""}`} />
-            <div className="geo-grid">
-              {facilities.map((item) => (
-                <div className="facility-item" key={item.name}>
-                  <div className="f-header">
-                    <span className="f-name">{item.name}</span>
-                    <span className="f-dist">{item.distance} km</span>
+            {showMap ? (
+              facilities.length === 0 ? (
+                <div className="notification-empty">Search a city to load nearby facilities.</div>
+              ) : (
+                <MapView
+                  facilities={facilities}
+                  center={userLocation}
+                  onConnect={handleConnectClick}
+                />
+              )
+            ) : (
+              <div className="geo-grid">
+                {facilities.map((item) => (
+                  <div className="facility-item" key={item.name}>
+                    <div className="f-header">
+                      <span className="f-name">{item.name}</span>
+                      <span className="f-dist">{item.distance} km</span>
+                    </div>
+                    <span className="f-type">{item.type}</span>
+                    <div className="facility-actions">
+                      <button className="f-action" onClick={() => handleConnectClick(item)}>
+                        Connect
+                      </button>
+                      <button className="f-link" onClick={() => openShopProfile(item)}>
+                        View Profile
+                      </button>
+                    </div>
                   </div>
-                  <span className="f-type">{item.type}</span>
-                  <div className="facility-actions">
-                    <button className="f-action" onClick={() => handleConnectClick(item)}>
-                      Connect
-                    </button>
-                    <button className="f-link" onClick={() => openShopProfile(item)}>
-                      View Profile
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            )}
           </section>
         </main>
 
