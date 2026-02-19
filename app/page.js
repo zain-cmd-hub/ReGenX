@@ -39,6 +39,9 @@ const translations = {
       logout: "Logout",
       profile: "Profile",
     },
+    success: {
+      requestSent: "Request sent successfully!",
+    },
     flow: {
       upload: "Upload Product",
       purpose: "Select Purpose",
@@ -227,6 +230,9 @@ const translations = {
     actions: {
       logout: "लॉगआउट",
       profile: "प्रोफ़ाइल",
+    },
+    success: {
+      requestSent: "अनुरोध सफलतापूर्वक भेजा गया!",
     },
     flow: {
       upload: "उत्पाद अपलोड करें",
@@ -673,6 +679,8 @@ export default function DashboardPage() {
   const [isNotifOpen, setIsNotifOpen] = useState(false);
   const [theme, setTheme] = useState("light");
   const [language, setLanguage] = useState("en");
+  const [showSuccess, setShowSuccess] = useState(false);
+  const successTimerRef = useRef(null);
 
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isProfileEditing, setIsProfileEditing] = useState(true);
@@ -762,6 +770,14 @@ export default function DashboardPage() {
   useEffect(() => {
     localStorage.setItem("tscemLanguage", language);
   }, [language]);
+
+  useEffect(() => {
+    return () => {
+      if (successTimerRef.current) {
+        clearTimeout(successTimerRef.current);
+      }
+    };
+  }, []);
 
   useEffect(() => {
     if (!aiSuggestionAction) return;
@@ -1571,6 +1587,7 @@ export default function DashboardPage() {
     }
     openWhatsApp();
     scheduleNotification(activeFacility);
+    triggerSuccessAnimation();
     setFlowStep(5);
     setCurrentTransaction({
       id: getTransactionId(activeFacility),
@@ -1592,7 +1609,18 @@ export default function DashboardPage() {
       return;
     }
     setActiveFacility(facility);
+    triggerSuccessAnimation();
     setFlowStep(5);
+  }
+
+  function triggerSuccessAnimation() {
+    setShowSuccess(true);
+    if (successTimerRef.current) {
+      clearTimeout(successTimerRef.current);
+    }
+    successTimerRef.current = setTimeout(() => {
+      setShowSuccess(false);
+    }, 3000);
   }
 
   function markAllRead() {
@@ -2636,6 +2664,22 @@ export default function DashboardPage() {
           <div className="analyze-card">
             <div className="spinner-lg" />
             <p className="analyze-text">{t.upload.analyzing}</p>
+          </div>
+        </div>
+      ) : null}
+
+      {showSuccess ? (
+        <div className="success-toast" role="status" aria-live="polite">
+          <div className="confetti">
+            {Array.from({ length: 12 }).map((_, index) => (
+              <span key={`confetti_${index}`} className={`confetti-piece confetti-${index + 1}`} />
+            ))}
+          </div>
+          <div className="success-content">
+            <div className="success-check">
+              <span className="success-check-mark" />
+            </div>
+            <div className="success-text">🎉 {t.success.requestSent}</div>
           </div>
         </div>
       ) : null}

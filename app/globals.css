@@ -2145,6 +2145,97 @@ input:focus, select:focus {
   animation: pulseText 1.2s ease infinite;
 }
 
+.success-toast {
+  position: fixed;
+  top: 24px;
+  right: 24px;
+  z-index: 220;
+  background: var(--bg-card);
+  color: var(--text-main);
+  border: 1px solid var(--border-color);
+  border-radius: 16px;
+  box-shadow: var(--shadow-md);
+  padding: 14px 18px;
+  min-width: 260px;
+  overflow: hidden;
+  animation: fadeUp 0.35s ease both;
+}
+
+.success-content {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.success-check {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: rgba(34, 197, 94, 0.15);
+  display: grid;
+  place-items: center;
+  position: relative;
+}
+
+.success-check-mark {
+  width: 16px;
+  height: 8px;
+  border-left: 3px solid #22c55e;
+  border-bottom: 3px solid #22c55e;
+  transform: rotate(-45deg) scale(0);
+  animation: checkDraw 0.3s ease forwards 0.1s;
+}
+
+.success-text {
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.confetti {
+  position: absolute;
+  inset: -20px 0 0 0;
+  pointer-events: none;
+}
+
+.confetti-piece {
+  position: absolute;
+  width: 8px;
+  height: 12px;
+  opacity: 0.9;
+  animation: confettiFall 1.2s ease forwards;
+}
+
+.confetti-1 { left: 12%; background: #22c55e; animation-delay: 0.05s; }
+.confetti-2 { left: 20%; background: #38bdf8; animation-delay: 0.1s; }
+.confetti-3 { left: 28%; background: #fbbf24; animation-delay: 0.12s; }
+.confetti-4 { left: 36%; background: #f472b6; animation-delay: 0.08s; }
+.confetti-5 { left: 44%; background: #34d399; animation-delay: 0.14s; }
+.confetti-6 { left: 52%; background: #60a5fa; animation-delay: 0.06s; }
+.confetti-7 { left: 60%; background: #fb7185; animation-delay: 0.1s; }
+.confetti-8 { left: 68%; background: #a78bfa; animation-delay: 0.16s; }
+.confetti-9 { left: 76%; background: #22c55e; animation-delay: 0.12s; }
+.confetti-10 { left: 84%; background: #f59e0b; animation-delay: 0.08s; }
+.confetti-11 { left: 92%; background: #38bdf8; animation-delay: 0.11s; }
+.confetti-12 { left: 96%; background: #f472b6; animation-delay: 0.15s; }
+
+@keyframes confettiFall {
+  0% { transform: translateY(0) rotate(0deg); opacity: 1; }
+  100% { transform: translateY(80px) rotate(180deg); opacity: 0; }
+}
+
+@keyframes checkDraw {
+  to { transform: rotate(-45deg) scale(1); }
+}
+
+@media (max-width: 600px) {
+  .success-toast {
+    left: 16px;
+    right: 16px;
+    top: 16px;
+    min-width: unset;
+  }
+}
+
 /* Mobile Response */
 @media (max-width: 900px) {
   :root { --sidebar-width: 80px; }
