@@ -1,13 +1,51 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { onAuthStateChanged, signInWithPopup } from "firebase/auth";
+import { auth, googleProvider } from "../lib/firebase";
 
 export default function LoginPage() {
   const router = useRouter();
+  const [isLoading, setIsLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        router.push("/");
+      }
+    });
+
+    return () => unsubscribe();
+  }, [router]);
+
+  async function handleGoogleLogin() {
+    setErrorMessage("");
+    setIsLoading(true);
+
+    try {
+      const result = await signInWithPopup(auth, googleProvider);
+      const user = result.user;
+
+      const userProfile = {
+        name: user.displayName || "",
+        email: user.email || "",
+        photo: user.photoURL || "",
+      };
+
+      localStorage.setItem("tscemUser", JSON.stringify(userProfile));
+      router.push("/");
+    } catch (error) {
+      setErrorMessage("Google sign-in failed. Please try again.");
+    } finally {
+      setIsLoading(false);
+    }
+  }
 
   function handleLogin(event) {
     event.preventDefault();
-    router.push("/");
+    setErrorMessage("Use Google sign-in to continue.");
   }
 
   return (
@@ -92,10 +130,19 @@ export default function LoginPage() {
                 <iconify-icon icon="ph:arrow-right-bold" />
               </button>
 
-              <button type="button" className="btn-google">
+              <button
+                type="button"
+                className="btn-google"
+                onClick={handleGoogleLogin}
+                disabled={isLoading}
+              >
                 <iconify-icon icon="logos:google-icon" />
-                <span>Sign in with Google</span>
+                <span>{isLoading ? "Signing in..." : "Sign in with Google"}</span>
               </button>
+
+              {errorMessage ? (
+                <p className="auth-error">{errorMessage}</p>
+              ) : null}
 
               <p className="signup-link">
                 Don&apos;t have an account? <a href="#">Create free account</a>

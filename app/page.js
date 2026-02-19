@@ -2,6 +2,8 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import { onAuthStateChanged, signOut } from "firebase/auth";
+import { auth } from "./lib/firebase";
 
 function randomBetween(min, max) {
   return Math.floor(Math.random() * (max - min + 1)) + min;
@@ -77,6 +79,12 @@ function generateFacilities(location) {
 export default function DashboardPage() {
   const router = useRouter();
 
+  const [userProfile, setUserProfile] = useState({
+    name: "",
+    email: "",
+    photo: "",
+  });
+
   const [activeNav, setActiveNav] = useState("dashboard");
   const [productTypeInput, setProductTypeInput] = useState("");
   const [productAgeInput, setProductAgeInput] = useState("");
@@ -103,13 +111,37 @@ export default function DashboardPage() {
   const [liveDemand] = useState("High");
 
   useEffect(() => {
+    const storedUser = localStorage.getItem("tscemUser");
+    if (storedUser) {
+      setUserProfile(JSON.parse(storedUser));
+    }
+
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (!user) {
+        localStorage.removeItem("tscemUser");
+        router.push("/login");
+        return;
+      }
+
+      const nextProfile = {
+        name: user.displayName || "",
+        email: user.email || "",
+        photo: user.photoURL || "",
+      };
+      localStorage.setItem("tscemUser", JSON.stringify(nextProfile));
+      setUserProfile(nextProfile);
+    });
+
     const intervalId = setInterval(() => {
       setLiveScore(randomBetween(70, 95));
       setLiveReuse(randomBetween(50, 80));
     }, 3500);
 
-    return () => clearInterval(intervalId);
-  }, []);
+    return () => {
+      clearInterval(intervalId);
+      unsubscribe();
+    };
+  }, [router]);
 
   const dashboardAge = useMemo(() => {
     if (!productAgeInput) return "-";
@@ -233,6 +265,12 @@ export default function DashboardPage() {
     window.open(link, "_blank", "noopener,noreferrer");
   }
 
+  async function handleLogout() {
+    await signOut(auth);
+    localStorage.removeItem("tscemUser");
+    router.push("/login");
+  }
+
   return (
     <div className="dashboard-body">
       <aside className="sidebar">
@@ -273,13 +311,15 @@ export default function DashboardPage() {
         <div className="sidebar-footer">
           <div className="user-section">
             <div className="user-profile">
-              <div className="avatar">DK</div>
+              <div className="avatar">
+                {userProfile.name ? userProfile.name.slice(0, 2).toUpperCase() : "DK"}
+              </div>
               <div className="user-info">
-                <span className="user-name">Dev Kulshrestha</span>
-                <span className="user-role">Admin</span>
+                <span className="user-name">{userProfile.name || "Dev Kulshrestha"}</span>
+                <span className="user-role">{userProfile.email || "Admin"}</span>
               </div>
             </div>
-            <button className="logout-btn" title="Logout" onClick={() => router.push("/login")}>
+            <button className="logout-btn" title="Logout" onClick={handleLogout}>
               <iconify-icon icon="ph:sign-out-bold" />
             </button>
           </div>
@@ -302,7 +342,13 @@ export default function DashboardPage() {
               <span className="badge" />
             </button>
             <div className="profile-pic">
-              <img src="https://ui-avatars.com/api/?name=Dev+Kulshrestha&background=0D8ABC&color=fff" alt="Profile" />
+              <img
+                src={
+                  userProfile.photo ||
+                  "https://ui-avatars.com/api/?name=Dev+Kulshrestha&background=0D8ABC&color=fff"
+                }
+                alt="Profile"
+              />
             </div>
           </div>
         </header>
