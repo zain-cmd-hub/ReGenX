@@ -215,6 +215,13 @@ export default function DashboardPage() {
   const [currentTransaction, setCurrentTransaction] = useState(null);
   const [shopProfile, setShopProfile] = useState(null);
 
+  const [productHistory, setProductHistory] = useState([]);
+  const [impactStats, setImpactStats] = useState({
+    totalProducts: 0,
+    wasteSaved: 0,
+    co2Reduced: 0,
+  });
+
   const [liveScore, setLiveScore] = useState(82);
   const [liveReuse, setLiveReuse] = useState(64);
   const [liveDemand] = useState("High");
@@ -297,6 +304,17 @@ export default function DashboardPage() {
     localStorage.setItem("tscemReviews", JSON.stringify(reviews));
   }, [reviews]);
 
+  useEffect(() => {
+    const storedHistory = localStorage.getItem("tscemProductHistory");
+    if (storedHistory) {
+      setProductHistory(JSON.parse(storedHistory));
+    }
+  }, []);
+
+  useEffect(() => {
+    localStorage.setItem("tscemProductHistory", JSON.stringify(productHistory));
+  }, [productHistory]);
+
   function resetAnalysis() {
     setCondition("-");
     setScore(0);
@@ -356,6 +374,50 @@ export default function DashboardPage() {
     if (totalUsageDays <= 720) return "medium";
     return "high";
   }, [totalUsageDays]);
+
+  const impactTotals = useMemo(() => {
+    let waste = 0;
+    let co2 = 0;
+
+    productHistory.forEach((item) => {
+      if (item.purpose === "recycle") {
+        waste += 2.4;
+        co2 += 1.3;
+      } else if (item.purpose === "repair") {
+        waste += 1.6;
+        co2 += 0.9;
+      } else {
+        waste += 0.9;
+        co2 += 0.5;
+      }
+    });
+
+    return {
+      totalProducts: productHistory.length,
+      wasteSaved: Number(waste.toFixed(1)),
+      co2Reduced: Number(co2.toFixed(1)),
+    };
+  }, [productHistory]);
+
+  useEffect(() => {
+    const duration = 800;
+    const start = Date.now();
+
+    function tick() {
+      const progress = Math.min(1, (Date.now() - start) / duration);
+      setImpactStats({
+        totalProducts: Math.round(impactTotals.totalProducts * progress),
+        wasteSaved: Number((impactTotals.wasteSaved * progress).toFixed(1)),
+        co2Reduced: Number((impactTotals.co2Reduced * progress).toFixed(1)),
+      });
+
+      if (progress < 1) {
+        requestAnimationFrame(tick);
+      }
+    }
+
+    requestAnimationFrame(tick);
+  }, [impactTotals]);
 
   const dashboardCondition = condition && condition !== "-" ? `Condition: ${condition}` : "-";
   const dashboardScore = score ? `Score: ${score}/100` : "-";
@@ -561,8 +623,21 @@ export default function DashboardPage() {
         usageMessage: nextUsageMessage,
       };
 
+      const historyEntry = {
+        id: `${hash}_${Date.now()}`,
+        image: productImage,
+        productName: productTypeInput.trim(),
+        purpose,
+        price: purpose === "repair" ? estimatedRepairCost : purpose === "recycle" ? recyclingEstimate : estimatedPrice,
+        condition: nextCondition,
+        suggestion: nextUsageMessage || "Analysis complete.",
+        date: new Date().toISOString(),
+      };
+
       cache[cacheKey] = result;
       writeImageCache(cache);
+
+      setProductHistory((prev) => [historyEntry, ...prev]);
 
       setCondition(result.condition);
       setScore(result.score);
@@ -915,6 +990,7 @@ export default function DashboardPage() {
             <p>Welcome back, complete your circular economy tasks.</p>
           </div>
           <div className="header-actions">
+            <button className="btn-secondary" onClick={() => scrollToSection("history")}>Dashboard</button>
             <div className="search-bar">
               <iconify-icon icon="ph:magnifying-glass-bold" />
               <input type="text" placeholder="Search..." />
@@ -1041,6 +1117,59 @@ export default function DashboardPage() {
                       </div>
                     ))
                   )}
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section id="history" className="section card-panel">
+            <div className="panel-header">
+              <h3><iconify-icon icon="ph:clock-counter-clockwise-bold" /> My Products / History</h3>
+            </div>
+            <div className="history-grid">
+              {productHistory.length === 0 ? (
+                <div className="notification-empty">No products analyzed yet.</div>
+              ) : (
+                productHistory.map((item) => (
+                  <div key={item.id} className="history-card">
+                    <img src={item.image} alt={item.productName} />
+                    <div className="history-info">
+                      <h4>{item.productName}</h4>
+                      <p className="history-meta">Purpose: {item.purpose}</p>
+                      <p className="history-meta">Detected value: ₹{item.price}</p>
+                      <p className="history-meta">Uploaded: {new Date(item.date).toLocaleDateString()}</p>
+                      <p className="history-note">Your Previous Analysis: {item.condition} • {item.suggestion}</p>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </section>
+
+          <section id="impact" className="section card-panel">
+            <div className="panel-header">
+              <h3><iconify-icon icon="ph:leaf-bold" /> Your Impact</h3>
+            </div>
+            <div className="impact-grid">
+              <div className="impact-card">
+                <iconify-icon icon="ph:package-bold" />
+                <div>
+                  <strong>{impactStats.totalProducts}</strong>
+                  <span>Products analyzed</span>
+                </div>
+              </div>
+              <div className="impact-card">
+                <iconify-icon icon="ph:leaf-bold" />
+                <div>
+                  <strong>{impactStats.wasteSaved} kg</strong>
+                  <span>Waste reduced</span>
+                </div>
+              </div>
+              <div className="impact-card">
+                <iconify-icon icon="ph:cloud-bold" />
+                <div>
+                  <strong>{impactStats.co2Reduced} kg</strong>
+                  <span>CO₂ reduced</span>
                 </div>
               </div>
             </div>

@@ -666,6 +666,78 @@ body {
   border: 1px solid transparent;
 }
 
+.history-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 16px;
+}
+
+.history-card {
+  display: grid;
+  grid-template-columns: 100px 1fr;
+  gap: 12px;
+  padding: 12px;
+  border-radius: 14px;
+  border: 1px solid var(--border-color);
+  background: #f8fafc;
+}
+
+.history-card img {
+  width: 100px;
+  height: 100px;
+  border-radius: 12px;
+  object-fit: cover;
+}
+
+.history-info h4 {
+  font-size: 15px;
+  margin-bottom: 6px;
+}
+
+.history-meta {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-bottom: 4px;
+}
+
+.history-note {
+  font-size: 12px;
+  color: var(--text-main);
+  font-weight: 600;
+}
+
+.impact-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+}
+
+.impact-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+  border-radius: 14px;
+  border: 1px solid rgba(25, 169, 116, 0.2);
+  background: #f0fdf4;
+}
+
+.impact-card iconify-icon {
+  font-size: 28px;
+  color: var(--secondary);
+}
+
+.impact-card strong {
+  display: block;
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.impact-card span {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
 .panel-header {
   display: flex;
   justify-content: space-between;
