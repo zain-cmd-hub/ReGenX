@@ -197,11 +197,13 @@ export default function DashboardPage() {
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isProfileEditing, setIsProfileEditing] = useState(true);
   const [profileStatus, setProfileStatus] = useState("");
+  const [flowStep, setFlowStep] = useState(0);
   const [profileData, setProfileData] = useState({
     name: "",
     email: "",
     phone: "",
     address: "",
+      setFlowStep(0);
     about: "",
   });
 
@@ -211,6 +213,8 @@ export default function DashboardPage() {
 
   const fileInputRef = useRef(null);
 
+    setPurpose("");
+    setFlowStep(1);
   useEffect(() => {
     const storedUser = localStorage.getItem("tscemUser");
     if (storedUser) {
@@ -223,6 +227,7 @@ export default function DashboardPage() {
       setIsProfileEditing(false);
     }
 
+    setFlowStep((prev) => (prev < 3 ? 3 : prev));
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       if (!user) {
         localStorage.removeItem("tscemUser");
@@ -230,13 +235,41 @@ export default function DashboardPage() {
         return;
       }
 
+    setFlowStep((prev) => (prev < 4 ? 4 : prev));
       const nextProfile = {
         name: user.displayName || "",
         email: user.email || "",
         photo: user.photoURL || "",
+    if (flowStep < 4) {
+      alert("Please complete analysis and pricing before connecting.");
+      return;
+    }
       };
       localStorage.setItem("tscemUser", JSON.stringify(nextProfile));
+    setFlowStep(5);
       setUserProfile(nextProfile);
+
+  function handlePurposeSelect(nextPurpose) {
+    setPurpose(nextPurpose);
+    setFlowStep((prev) => (prev < 2 ? 2 : prev));
+  }
+
+  function handleConnectClick(facility) {
+    if (flowStep < 4) {
+      alert("Please complete analysis and pricing before connecting.");
+      return;
+    }
+    setActiveFacility(facility);
+    setFlowStep(5);
+  }
+
+  const flowSteps = [
+    { id: 1, label: "Upload Product" },
+    { id: 2, label: "Select Purpose" },
+    { id: 3, label: "AI Analysis" },
+    { id: 4, label: "Price & Value" },
+    { id: 5, label: "Connect Facility" },
+  ];
 
       setProfileData((prev) => {
         const merged = {
@@ -754,6 +787,25 @@ export default function DashboardPage() {
       </aside>
 
       <div className="main-wrapper">
+        <div className="flow-steps">
+          {flowSteps.map((step) => {
+            const isCompleted = flowStep > step.id;
+            const isActive = flowStep === step.id;
+
+            return (
+              <div
+                key={step.id}
+                className={`flow-step ${isCompleted ? "completed" : ""} ${isActive ? "active" : ""}`}
+              >
+                <div className="step-circle">
+                  {isCompleted ? "✓" : step.id}
+                </div>
+                <span className="step-label">{step.label}</span>
+              </div>
+            );
+          })}
+        </div>
+
         <header className="top-header">
           <div className="header-welcome">
             <h1>Dashboard</h1>
@@ -980,21 +1032,21 @@ export default function DashboardPage() {
                       <button
                         type="button"
                         className={`purpose-btn ${purpose === "sell" ? "active" : ""}`}
-                        onClick={() => setPurpose("sell")}
+                        onClick={() => handlePurposeSelect("sell")}
                       >
                         ✅ Sell
                       </button>
                       <button
                         type="button"
                         className={`purpose-btn ${purpose === "repair" ? "active" : ""}`}
-                        onClick={() => setPurpose("repair")}
+                        onClick={() => handlePurposeSelect("repair")}
                       >
                         🔧 Repair
                       </button>
                       <button
                         type="button"
                         className={`purpose-btn ${purpose === "recycle" ? "active" : ""}`}
-                        onClick={() => setPurpose("recycle")}
+                        onClick={() => handlePurposeSelect("recycle")}
                       >
                         ♻️ Recycle
                       </button>
@@ -1183,7 +1235,7 @@ export default function DashboardPage() {
                     <span className="f-dist">{item.distance} km</span>
                   </div>
                   <span className="f-type">{item.type}</span>
-                  <button className="f-action" onClick={() => setActiveFacility(item)}>
+                  <button className="f-action" onClick={() => handleConnectClick(item)}>
                     Connect
                   </button>
                 </div>
