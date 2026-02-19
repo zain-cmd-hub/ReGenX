@@ -195,6 +195,7 @@ export default function DashboardPage() {
   const [repairCost, setRepairCost] = useState(0);
   const [recyclingValue, setRecyclingValue] = useState(0);
   const [analysisReady, setAnalysisReady] = useState(false);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
 
   const [uploadLoading, setUploadLoading] = useState(false);
   const [lifeLoading, setLifeLoading] = useState(false);
@@ -555,6 +556,7 @@ export default function DashboardPage() {
     }
 
     setUploadLoading(true);
+    setIsAnalyzing(true);
 
     const hash = imageHash || hashString(productImage);
     const cacheKey = `${hash}|purpose:${purpose}|age:${ageValue}|usageDays:${totalUsageDays}|type:${productTypeInput.trim()}|material:${materialType}|weight:${materialWeight}`;
@@ -573,6 +575,7 @@ export default function DashboardPage() {
       setUsageMessage(cachedResult.usageMessage || "");
       setAnalysisReady(true);
       setUploadLoading(false);
+      setIsAnalyzing(false);
       return;
     }
 
@@ -704,6 +707,7 @@ export default function DashboardPage() {
       alert("Image analysis failed. Please try another image.");
     } finally {
       setUploadLoading(false);
+      setIsAnalyzing(false);
     }
   }
 
@@ -1371,21 +1375,30 @@ export default function DashboardPage() {
                         className={`purpose-btn ${purpose === "sell" ? "active" : ""}`}
                         onClick={() => handlePurposeSelect("sell")}
                       >
-                        ✅ Sell
+                        <span className="purpose-icon">
+                          <iconify-icon icon="ph:repeat-bold" />
+                        </span>
+                        <span className="purpose-label">Sell</span>
                       </button>
                       <button
                         type="button"
                         className={`purpose-btn ${purpose === "repair" ? "active" : ""}`}
                         onClick={() => handlePurposeSelect("repair")}
                       >
-                        🔧 Repair
+                        <span className="purpose-icon">
+                          <iconify-icon icon="ph:wrench-bold" />
+                        </span>
+                        <span className="purpose-label">Repair</span>
                       </button>
                       <button
                         type="button"
                         className={`purpose-btn ${purpose === "recycle" ? "active" : ""}`}
                         onClick={() => handlePurposeSelect("recycle")}
                       >
-                        ♻️ Recycle
+                        <span className="purpose-icon">
+                          <iconify-icon icon="ph:recycle-bold" />
+                        </span>
+                        <span className="purpose-label">Recycle</span>
                       </button>
                     </div>
                   </div>
@@ -1857,6 +1870,15 @@ export default function DashboardPage() {
           </form>
         </div>
       </div>
+
+      {isAnalyzing ? (
+        <div className="analyze-overlay" role="status" aria-live="polite">
+          <div className="analyze-card">
+            <div className="spinner-lg" />
+            <p className="analyze-text">AI is analyzing product condition...</p>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }

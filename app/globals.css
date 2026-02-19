@@ -1139,7 +1139,7 @@ input:focus, select:focus {
 .btn-primary {
   width: 100%;
   padding: 14px;
-  background: var(--primary);
+  background: linear-gradient(135deg, #14b8a6, #0ea5e9);
   color: white;
   border: none;
   border-radius: 12px;
@@ -1155,7 +1155,7 @@ input:focus, select:focus {
 }
 
 .btn-primary:hover {
-  background: #0d9695;
+  background: linear-gradient(135deg, #0f766e, #0284c7);
   transform: translateY(-2px);
   box-shadow: 0 6px 16px rgba(14, 165, 164, 0.4);
 }
@@ -1196,6 +1196,13 @@ input:focus, select:focus {
   opacity: 1;
   transform: translateY(0);
 }
+
+.results-summary.show .res-item {
+  animation: fadeUp 0.35s ease both;
+}
+
+.results-summary.show .res-item:nth-child(2) { animation-delay: 0.05s; }
+.results-summary.show .res-item:nth-child(3) { animation-delay: 0.1s; }
 
 .res-item {
   display: flex;
@@ -1256,26 +1263,41 @@ input:focus, select:focus {
 }
 
 .purpose-btn {
-  padding: 10px 12px;
-  border-radius: 12px;
+  padding: 12px 10px;
+  border-radius: 16px;
   border: 1px solid var(--border-color);
   background: white;
   font-weight: 600;
   font-size: 14px;
   cursor: pointer;
   transition: all 0.2s ease;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  box-shadow: var(--shadow-sm);
 }
 
 .purpose-btn:hover {
   border-color: var(--primary);
   color: var(--primary);
+  transform: translateY(-2px) scale(1.02);
 }
 
 .purpose-btn.active {
   background: var(--primary);
   color: white;
   border-color: var(--primary);
-  box-shadow: 0 8px 16px -6px rgba(14, 165, 164, 0.4);
+  box-shadow: 0 12px 22px -10px rgba(14, 165, 164, 0.6);
+  transform: scale(1.03);
+}
+
+.purpose-icon {
+  font-size: 20px;
+}
+
+.purpose-label {
+  font-size: 13px;
 }
 
 /* Progress & Pricing */
@@ -1552,13 +1574,14 @@ input:focus, select:focus {
     display: flex;
     flex-direction: column;
     gap: 8px;
-    transition: all 0.2s;
+  transition: all 0.2s;
+  animation: fadeUp 0.35s ease both;
 }
 
 .facility-item:hover {
     border-color: var(--primary);
     box-shadow: var(--shadow-sm);
-    transform: translateY(-2px);
+  transform: translateY(-2px) scale(1.03);
 }
 
 .f-header { display: flex; justify-content: space-between; align-items: flex-start;}
@@ -1649,6 +1672,54 @@ input:focus, select:focus {
 }
 .loader.active { display: block; }
 @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes pulseText {
+  0%, 100% { opacity: 0.65; }
+  50% { opacity: 1; }
+}
+
+.analyze-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.55);
+  backdrop-filter: blur(6px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 200;
+  animation: fadeIn 0.2s ease;
+}
+
+.analyze-card {
+  background: white;
+  padding: 28px 32px;
+  border-radius: 24px;
+  text-align: center;
+  box-shadow: 0 30px 60px -30px rgba(15, 23, 42, 0.6);
+  animation: zoomIn 0.2s ease;
+}
+
+.spinner-lg {
+  width: 52px;
+  height: 52px;
+  border: 4px solid #e2e8f0;
+  border-top: 4px solid var(--primary);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin: 0 auto 16px;
+}
+
+.analyze-text {
+  font-size: 14px;
+  color: var(--text-main);
+  font-weight: 600;
+  animation: pulseText 1.2s ease infinite;
+}
 
 /* Mobile Response */
 @media (max-width: 900px) {
