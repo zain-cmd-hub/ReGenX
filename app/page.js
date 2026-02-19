@@ -131,6 +131,48 @@ function computeEcoScore({ purpose, condition, remainingLife }) {
   return clamp(Math.round(baseScore + conditionBoost + lifeBoost), 0, 100);
 }
 
+function computeCo2Saving(purpose, remainingLife) {
+  const life = clamp(Number(remainingLife || 0), 0, 100);
+  if (purpose === "sell") return (1.2 + (life / 100) * 1.3).toFixed(1);
+  if (purpose === "repair") return (0.8 + (life / 100) * 0.7).toFixed(1);
+  return (0.3 + (life / 100) * 0.5).toFixed(1);
+}
+
+function computeAiSuggestion({ purpose, condition, remainingLife, ecoScore }) {
+  const life = clamp(Number(remainingLife || 0), 0, 100);
+  let recommended = "recycle";
+
+  if (condition === "Good") {
+    recommended = "sell";
+  } else if (condition === "Medium" && life > 40) {
+    recommended = "repair";
+  } else if (condition === "Poor" && life < 20) {
+    recommended = "recycle";
+  } else if (ecoScore >= 70) {
+    recommended = "sell";
+  } else if (ecoScore >= 40) {
+    recommended = "repair";
+  }
+
+  const years = clamp(Math.max(1, Math.round(life / 40)), 1, 3);
+  const co2 = computeCo2Saving(recommended, life);
+  const yearLabel = years === 1 ? "year" : "years";
+
+  let message = "";
+  if (recommended === "sell") {
+    message = `This product can be reused via resale for about ${years} more ${yearLabel}. This saves ~${co2}kg CO₂.`;
+  } else if (recommended === "repair") {
+    message = `This product can be repaired easily and reused for about ${years} more ${yearLabel}. This saves ~${co2}kg CO₂.`;
+  } else {
+    message = `Condition suggests responsible recycling to recover materials. This saves ~${co2}kg CO₂.`;
+  }
+
+  return {
+    action: recommended,
+    message,
+  };
+}
+
 function generateFacilities(location, baseCoords) {
   const baseNames = [
     "GreenFix Repair Hub",
@@ -213,6 +255,8 @@ export default function DashboardPage() {
   const [ecoScoreSell, setEcoScoreSell] = useState(0);
   const [ecoScoreRepair, setEcoScoreRepair] = useState(0);
   const [ecoScoreRecycle, setEcoScoreRecycle] = useState(0);
+  const [aiSuggestion, setAiSuggestion] = useState("");
+  const [aiSuggestionAction, setAiSuggestionAction] = useState("");
   const [analysisReady, setAnalysisReady] = useState(false);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
 
@@ -399,6 +443,8 @@ export default function DashboardPage() {
     setEcoScoreSell(0);
     setEcoScoreRepair(0);
     setEcoScoreRecycle(0);
+    setAiSuggestion("");
+    setAiSuggestionAction("");
     setUsageMessage("");
     setAnalysisReady(false);
   }
@@ -643,6 +689,14 @@ export default function DashboardPage() {
     const cachedResult = cache[cacheKey];
 
     if (cachedResult) {
+      const cachedSuggestion = cachedResult.aiSuggestion
+        ? { action: cachedResult.aiSuggestionAction || "", message: cachedResult.aiSuggestion }
+        : computeAiSuggestion({
+          purpose,
+          condition: cachedResult.condition,
+          remainingLife: cachedResult.remainingLife,
+          ecoScore: cachedResult.ecoScore ?? 0,
+        });
       const cachedSellPrice = cachedResult.sellPrice ?? cachedResult.price ?? 0;
       const cachedEcoScoreSell = cachedResult.ecoScoreSell ?? computeEcoScore({
         purpose: "sell",
@@ -674,6 +728,8 @@ export default function DashboardPage() {
       setRecyclingValue(cachedResult.recyclingValue || 0);
       setSellPrice(cachedSellPrice);
       setUsageMessage(cachedResult.usageMessage || "");
+      setAiSuggestion(cachedSuggestion.message || "");
+      setAiSuggestionAction(cachedSuggestion.action || "");
       setEcoScoreSell(cachedEcoScoreSell);
       setEcoScoreRepair(cachedEcoScoreRepair);
       setEcoScoreRecycle(cachedEcoScoreRecycle);
@@ -775,6 +831,13 @@ export default function DashboardPage() {
         remainingLife: remaining,
       });
 
+      const nextSuggestion = computeAiSuggestion({
+        purpose,
+        condition: nextCondition,
+        remainingLife: remaining,
+        ecoScore: nextEcoScore,
+      });
+
       const nextEcoScoreSell = computeEcoScore({
         purpose: "sell",
         condition: nextCondition,
@@ -806,6 +869,8 @@ export default function DashboardPage() {
         ecoScoreSell: nextEcoScoreSell,
         ecoScoreRepair: nextEcoScoreRepair,
         ecoScoreRecycle: nextEcoScoreRecycle,
+        aiSuggestion: nextSuggestion.message,
+        aiSuggestionAction: nextSuggestion.action,
       };
 
       const historyEntry = {
@@ -822,6 +887,8 @@ export default function DashboardPage() {
         ecoScoreSell: nextEcoScoreSell,
         ecoScoreRepair: nextEcoScoreRepair,
         ecoScoreRecycle: nextEcoScoreRecycle,
+        aiSuggestion: nextSuggestion.message,
+        aiSuggestionAction: nextSuggestion.action,
         suggestion: nextUsageMessage || "Analysis complete.",
         date: new Date().toISOString(),
       };
@@ -841,6 +908,8 @@ export default function DashboardPage() {
       setRecyclingValue(result.recyclingValue);
       setSellPrice(result.sellPrice);
       setUsageMessage(result.usageMessage);
+      setAiSuggestion(result.aiSuggestion);
+      setAiSuggestionAction(result.aiSuggestionAction);
       setEcoScoreSell(result.ecoScoreSell);
       setEcoScoreRepair(result.ecoScoreRepair);
       setEcoScoreRecycle(result.ecoScoreRecycle);
@@ -1391,6 +1460,9 @@ export default function DashboardPage() {
                       <p className="history-meta">Purpose: {item.purpose}</p>
                       <p className="history-meta">Detected value: ₹{item.price}</p>
                       <p className="history-meta">Eco Score: {item.ecoScore ? `${item.ecoScore}/100` : "-"} 🌱</p>
+                      {item.aiSuggestion ? (
+                        <p className="history-meta">AI Tip: {item.aiSuggestion}</p>
+                      ) : null}
                       <p className="history-meta">Uploaded: {new Date(item.date).toLocaleDateString()}</p>
                       <p className="history-note">Your Previous Analysis: {item.condition} • {item.suggestion}</p>
                     </div>
@@ -1706,6 +1778,16 @@ export default function DashboardPage() {
                           );
                         })}
                       </div>
+                    </div>
+                  ) : null}
+
+                  {analysisReady && aiSuggestion ? (
+                    <div className="ai-suggestion-card">
+                      <div className="ai-suggestion-header">
+                        <iconify-icon icon="ph:robot-bold" />
+                        <span>AI Recommendation</span>
+                      </div>
+                      <p className="ai-suggestion-text">{aiSuggestion}</p>
                     </div>
                   ) : null}
                 </div>
