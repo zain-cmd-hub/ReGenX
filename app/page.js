@@ -13,6 +13,387 @@ const DEFAULT_CITY = {
   lng: 77.2090,
 };
 
+const translations = {
+  en: {
+    nav: {
+      dashboard: "Dashboard",
+      overview: "Overview",
+      upload: "Upload",
+      life: "Life Cycle",
+      pricing: "Pricing",
+      facilities: "Facilities",
+    },
+    stats: {
+      uploadedProduct: "Uploaded Product",
+      currentCondition: "Current Condition",
+      remainingLife: "Remaining Life",
+      estPrice: "Est. Price",
+    },
+    header: {
+      title: "Dashboard",
+      welcome: "Welcome back, complete your circular economy tasks.",
+      dashboardBtn: "Dashboard",
+      searchPlaceholder: "Search...",
+    },
+    actions: {
+      logout: "Logout",
+      profile: "Profile",
+    },
+    flow: {
+      upload: "Upload Product",
+      purpose: "Select Purpose",
+      analysis: "AI Analysis",
+      price: "Price & Value",
+      connect: "Connect Facility",
+    },
+    upload: {
+      title: "Upload Product",
+      dragTitle: "Click or drag an image here",
+      dragHint: "PNG, JPG, or WEBP up to 10MB",
+      changeImage: "Change Image",
+      productType: "Product Type",
+      productPlaceholder: "e.g., Laptop",
+      purpose: "Purpose",
+      ageYears: "Age (years)",
+      usageDuration: "Usage Duration",
+      years: "Years",
+      months: "Months",
+      days: "Days",
+      materialType: "Material Type",
+      weight: "Weight (kg)",
+      weightPlaceholder: "e.g., 2.5",
+      analyze: "Analyze",
+      analyzing: "AI is analyzing product condition...",
+    },
+    purpose: {
+      sell: "Sell",
+      repair: "Repair",
+      recycle: "Recycle",
+    },
+    results: {
+      condition: "Condition",
+      remainingLife: "Remaining Life",
+      resalePrice: "Resale Price",
+      damageLevel: "Damage Level",
+      repairCost: "Repair Cost",
+      material: "Material",
+      weight: "Weight",
+      recyclingValue: "Recycling Value",
+      selectPurpose: "Select above",
+    },
+    eco: {
+      label: "Eco Score",
+      best: "Best for environment 🌍",
+      moderate: "Moderate impact",
+      low: "Low eco benefit",
+    },
+    comparison: {
+      title: "Compare Options",
+      subtitle: "See Sell vs Repair vs Recycle for this product.",
+      bestSell: "Best option for environment: Sell (Reuse) ✅",
+      bestRepair: "Best option for environment: Repair ✅",
+      bestRecycle: "Best option for environment: Recycle ✅",
+      bestBadge: "Best ✅",
+    },
+    ai: {
+      title: "AI Recommendation",
+    },
+    facilities: {
+      recommended: "Recommended Facilities",
+      nearby: "Nearby Facilities",
+      enterCity: "Enter city...",
+      listView: "List View",
+      mapView: "Map View",
+      connect: "Connect",
+      viewProfile: "View Profile",
+      noRecent: "No recent facilities found.",
+      searchPrompt: "Search a city to load nearby facilities.",
+    },
+    map: {
+      yourLocation: "Your location",
+      autoCentered: "Auto-centered",
+      connect: "Connect",
+      whatsapp: "WhatsApp",
+      facility: "Facility",
+      close: "Close",
+    },
+    history: {
+      title: "My Products / History",
+      empty: "No products analyzed yet.",
+      purpose: "Purpose",
+      value: "Detected value",
+      uploaded: "Uploaded",
+      ecoScore: "Eco Score",
+      aiTip: "AI Tip",
+      prevAnalysis: "Your Previous Analysis",
+    },
+    impact: {
+      title: "Your Impact",
+      products: "Products analyzed",
+      waste: "Waste reduced",
+      co2: "CO₂ reduced",
+    },
+    hero: {
+      tag: "AI Powered",
+      title: "Circular Economy Marketplace",
+      subtitle: "Reduce waste. Reuse smartly. Build a zero-waste future.",
+      ecoScore: "Eco Score",
+      reuse: "Reuse Potential",
+      demand: "Market Demand",
+    },
+    life: {
+      title: "Life Cycle",
+      descriptionRepair: "Review damage impact from AI analysis.",
+      descriptionDefault: "Predict remaining lifespan based on AI analysis.",
+      predict: "Predict",
+    },
+    pricing: {
+      title: "Fair Price",
+      demandRepair: "Estimated repair cost",
+      demandRecycle: "Estimated recycling value",
+      demandSell: "Resale price",
+      calculate: "Calculate",
+    },
+    notifications: {
+      title: "Notifications",
+      markAll: "Mark all read",
+      empty: "No responses yet.",
+      markRead: "Mark read",
+    },
+    user: {
+      verified: "✅ Verified User",
+      incomplete: "❌ Profile Incomplete",
+    },
+    profile: {
+      title: "Profile",
+      subtitle: "Manage your marketplace details.",
+      fullName: "Full Name",
+      email: "Email (read-only)",
+      phone: "Phone Number",
+      address: "Address",
+      about: "About Me",
+      aboutPlaceholder: "Tell us about your business or products.",
+      completed: "Profile Completed 100%",
+      incomplete: "Profile Incomplete",
+      badgeVerified: "Verified",
+      badgeIncomplete: "Incomplete",
+      edit: "Edit Profile",
+      save: "Save",
+    },
+    safety: {
+      title: "Safety & Trust",
+      note: "Manage your local demo data and sessions.",
+      clear: "Clear My Data",
+    },
+    modals: {
+      prefilled: "Pre-filled Message",
+      sendMessage: "Send Message",
+      rateService: "Rate Service",
+      shareExperience: "Share your experience with",
+      thisShop: "this shop",
+      submitReview: "Submit Review",
+      noReviews: "No reviews yet.",
+      reviewPlaceholder: "Write a short review...",
+      averageRating: "Average Rating",
+      totalReviews: "Total Reviews",
+      noComments: "(No comments)",
+      anonymous: "Anonymous",
+    },
+    footer: {
+      privacyNote: "Your data is stored locally for demo purpose only.",
+    },
+  },
+  hi: {
+    nav: {
+      dashboard: "डैशबोर्ड",
+      overview: "ओवरव्यू",
+      upload: "अपलोड",
+      life: "लाइफ साइकिल",
+      pricing: "प्राइसिंग",
+      facilities: "सुविधाएं",
+    },
+    stats: {
+      uploadedProduct: "अपलोडेड उत्पाद",
+      currentCondition: "वर्तमान स्थिति",
+      remainingLife: "शेष जीवन",
+      estPrice: "अनुमानित मूल्य",
+    },
+    header: {
+      title: "डैशबोर्ड",
+      welcome: "वापसी पर स्वागत है, अपने सर्कुलर इकॉनमी कार्य पूरे करें।",
+      dashboardBtn: "डैशबोर्ड",
+      searchPlaceholder: "खोजें...",
+    },
+    actions: {
+      logout: "लॉगआउट",
+      profile: "प्रोफ़ाइल",
+    },
+    flow: {
+      upload: "उत्पाद अपलोड करें",
+      purpose: "उद्देश्य चुनें",
+      analysis: "AI विश्लेषण",
+      price: "मूल्य और वैल्यू",
+      connect: "सुविधा से जुड़ें",
+    },
+    upload: {
+      title: "उत्पाद अपलोड करें",
+      dragTitle: "यहां क्लिक करें या इमेज ड्रैग करें",
+      dragHint: "PNG, JPG, या WEBP 10MB तक",
+      changeImage: "इमेज बदलें",
+      productType: "उत्पाद प्रकार",
+      productPlaceholder: "उदा., लैपटॉप",
+      purpose: "उद्देश्य",
+      ageYears: "उम्र (वर्ष)",
+      usageDuration: "उपयोग अवधि",
+      years: "वर्ष",
+      months: "महीने",
+      days: "दिन",
+      materialType: "सामग्री प्रकार",
+      weight: "वजन (किग्रा)",
+      weightPlaceholder: "उदा., 2.5",
+      analyze: "विश्लेषण करें",
+      analyzing: "AI उत्पाद की स्थिति का विश्लेषण कर रहा है...",
+    },
+    purpose: {
+      sell: "बेचें",
+      repair: "मरम्मत",
+      recycle: "रीसायकल",
+    },
+    results: {
+      condition: "स्थिति",
+      remainingLife: "शेष जीवन",
+      resalePrice: "पुनर्विक्रय मूल्य",
+      damageLevel: "क्षति स्तर",
+      repairCost: "मरम्मत लागत",
+      material: "सामग्री",
+      weight: "वजन",
+      recyclingValue: "रीसायकल मूल्य",
+      selectPurpose: "ऊपर चुनें",
+    },
+    eco: {
+      label: "इको स्कोर",
+      best: "पर्यावरण के लिए बेहतर 🌍",
+      moderate: "मध्यम प्रभाव",
+      low: "कम इको लाभ",
+    },
+    comparison: {
+      title: "विकल्प तुलना",
+      subtitle: "इस उत्पाद के लिए बेचें, मरम्मत, रीसायकल तुलना करें।",
+      bestSell: "पर्यावरण के लिए सर्वश्रेष्ठ: बेचें (रीयूज़) ✅",
+      bestRepair: "पर्यावरण के लिए सर्वश्रेष्ठ: मरम्मत ✅",
+      bestRecycle: "पर्यावरण के लिए सर्वश्रेष्ठ: रीसायकल ✅",
+      bestBadge: "सर्वश्रेष्ठ ✅",
+    },
+    ai: {
+      title: "AI सिफारिश",
+    },
+    facilities: {
+      recommended: "अनुशंसित सुविधाएं",
+      nearby: "नजदीकी सुविधाएं",
+      enterCity: "शहर लिखें...",
+      listView: "लिस्ट व्यू",
+      mapView: "मैप व्यू",
+      connect: "कनेक्ट",
+      viewProfile: "प्रोफ़ाइल देखें",
+      noRecent: "हाल की सुविधाएं नहीं मिलीं।",
+      searchPrompt: "नजदीकी सुविधाएं देखने के लिए शहर खोजें।",
+    },
+    map: {
+      yourLocation: "आपका स्थान",
+      autoCentered: "ऑटो-सेंटर",
+      connect: "कनेक्ट",
+      whatsapp: "व्हाट्सएप",
+      facility: "सुविधा",
+      close: "बंद करें",
+    },
+    history: {
+      title: "मेरे उत्पाद / इतिहास",
+      empty: "अभी तक कोई उत्पाद विश्लेषित नहीं।",
+      purpose: "उद्देश्य",
+      value: "मूल्य",
+      uploaded: "अपलोड",
+      ecoScore: "इको स्कोर",
+      aiTip: "AI सुझाव",
+      prevAnalysis: "आपका पिछला विश्लेषण",
+    },
+    impact: {
+      title: "आपका प्रभाव",
+      products: "विश्लेषित उत्पाद",
+      waste: "कचरा कम",
+      co2: "CO₂ कम",
+    },
+    hero: {
+      tag: "AI संचालित",
+      title: "सर्कुलर इकॉनमी मार्केटप्लेस",
+      subtitle: "कचरा घटाएं। स्मार्ट री-यूज़ करें। शून्य-कचरा भविष्य बनाएं।",
+      ecoScore: "इको स्कोर",
+      reuse: "री-यूज़ क्षमता",
+      demand: "मार्केट मांग",
+    },
+    life: {
+      title: "लाइफ साइकिल",
+      descriptionRepair: "AI विश्लेषण से क्षति प्रभाव देखें।",
+      descriptionDefault: "AI विश्लेषण से शेष जीवन अनुमान करें।",
+      predict: "अनुमान करें",
+    },
+    pricing: {
+      title: "उचित मूल्य",
+      demandRepair: "अनुमानित मरम्मत लागत",
+      demandRecycle: "अनुमानित रीसायकल मूल्य",
+      demandSell: "पुनर्विक्रय मूल्य",
+      calculate: "गणना करें",
+    },
+    notifications: {
+      title: "सूचनाएं",
+      markAll: "सब पढ़ा हुआ",
+      empty: "कोई प्रतिक्रिया नहीं।",
+      markRead: "पढ़ा हुआ",
+    },
+    user: {
+      verified: "✅ सत्यापित उपयोगकर्ता",
+      incomplete: "❌ प्रोफ़ाइल अधूरी",
+    },
+    profile: {
+      title: "प्रोफ़ाइल",
+      subtitle: "अपने मार्केटप्लेस विवरण प्रबंधित करें।",
+      fullName: "पूरा नाम",
+      email: "ईमेल (रीड-ओनली)",
+      phone: "फोन नंबर",
+      address: "पता",
+      about: "मेरे बारे में",
+      aboutPlaceholder: "अपने व्यवसाय या उत्पादों के बारे में बताएं।",
+      completed: "प्रोफ़ाइल पूर्ण 100%",
+      incomplete: "प्रोफ़ाइल अधूरी",
+      badgeVerified: "सत्यापित",
+      badgeIncomplete: "अधूरी",
+      edit: "प्रोफ़ाइल संपादित करें",
+      save: "सेव करें",
+    },
+    safety: {
+      title: "सेफ्टी और ट्रस्ट",
+      note: "अपने लोकल डेमो डेटा और सेशन प्रबंधित करें।",
+      clear: "मेरा डेटा साफ करें",
+    },
+    modals: {
+      prefilled: "पहले से भरा संदेश",
+      sendMessage: "संदेश भेजें",
+      rateService: "सेवा रेट करें",
+      shareExperience: "अपने अनुभव साझा करें:",
+      thisShop: "यह दुकान",
+      submitReview: "रिव्यू सबमिट करें",
+      noReviews: "अभी तक कोई रिव्यू नहीं।",
+      reviewPlaceholder: "एक छोटा रिव्यू लिखें...",
+      averageRating: "औसत रेटिंग",
+      totalReviews: "कुल रिव्यू",
+      noComments: "(कोई टिप्पणी नहीं)",
+      anonymous: "अनाम",
+    },
+    footer: {
+      privacyNote: "आपका डेटा केवल डेमो के लिए लोकल रूप से स्टोर होता है।",
+    },
+  },
+};
+
 function clamp(value, min, max) {
   return Math.min(Math.max(value, min), max);
 }
@@ -156,21 +537,36 @@ function computeAiSuggestion({ purpose, condition, remainingLife, ecoScore }) {
 
   const years = clamp(Math.max(1, Math.round(life / 40)), 1, 3);
   const co2 = computeCo2Saving(recommended, life);
-  const yearLabel = years === 1 ? "year" : "years";
-
-  let message = "";
-  if (recommended === "sell") {
-    message = `This product can be reused via resale for about ${years} more ${yearLabel}. This saves ~${co2}kg CO₂.`;
-  } else if (recommended === "repair") {
-    message = `This product can be repaired easily and reused for about ${years} more ${yearLabel}. This saves ~${co2}kg CO₂.`;
-  } else {
-    message = `Condition suggests responsible recycling to recover materials. This saves ~${co2}kg CO₂.`;
-  }
 
   return {
     action: recommended,
-    message,
+    years,
+    co2,
   };
+}
+
+function formatAiSuggestion({ action, years, co2 }, language) {
+  const lang = language === "hi" ? "hi" : "en";
+  if (!action || !years || !co2) return "";
+
+  if (lang === "hi") {
+    if (action === "sell") {
+      return `यह उत्पाद पुन: उपयोग के लिए बेचा जा सकता है और लगभग ${years} वर्ष तक चल सकता है। इससे लगभग ${co2}kg CO₂ की बचत होती है।`;
+    }
+    if (action === "repair") {
+      return `यह उत्पाद आसानी से मरम्मत किया जा सकता है और लगभग ${years} वर्ष तक चल सकता है। इससे लगभग ${co2}kg CO₂ की बचत होती है।`;
+    }
+    return `स्थिति के अनुसार इसे जिम्मेदारी से रीसायकल करें। इससे लगभग ${co2}kg CO₂ की बचत होती है।`;
+  }
+
+  const yearLabel = years === 1 ? "year" : "years";
+  if (action === "sell") {
+    return `This product can be reused via resale for about ${years} more ${yearLabel}. This saves ~${co2}kg CO₂.`;
+  }
+  if (action === "repair") {
+    return `This product can be repaired easily and reused for about ${years} more ${yearLabel}. This saves ~${co2}kg CO₂.`;
+  }
+  return `Condition suggests responsible recycling to recover materials. This saves ~${co2}kg CO₂.`;
 }
 
 function generateFacilities(location, baseCoords) {
@@ -257,6 +653,8 @@ export default function DashboardPage() {
   const [ecoScoreRecycle, setEcoScoreRecycle] = useState(0);
   const [aiSuggestion, setAiSuggestion] = useState("");
   const [aiSuggestionAction, setAiSuggestionAction] = useState("");
+  const [aiSuggestionYears, setAiSuggestionYears] = useState(0);
+  const [aiSuggestionCo2, setAiSuggestionCo2] = useState("");
   const [analysisReady, setAnalysisReady] = useState(false);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
 
@@ -274,6 +672,7 @@ export default function DashboardPage() {
   const [notifications, setNotifications] = useState([]);
   const [isNotifOpen, setIsNotifOpen] = useState(false);
   const [theme, setTheme] = useState("light");
+  const [language, setLanguage] = useState("en");
 
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isProfileEditing, setIsProfileEditing] = useState(true);
@@ -349,9 +748,32 @@ export default function DashboardPage() {
   }, []);
 
   useEffect(() => {
+    const storedLanguage = localStorage.getItem("tscemLanguage");
+    if (storedLanguage === "hi" || storedLanguage === "en") {
+      setLanguage(storedLanguage);
+    }
+  }, []);
+
+  useEffect(() => {
     document.body.classList.toggle("dark", theme === "dark");
     localStorage.setItem("tscemTheme", theme);
   }, [theme]);
+
+  useEffect(() => {
+    localStorage.setItem("tscemLanguage", language);
+  }, [language]);
+
+  useEffect(() => {
+    if (!aiSuggestionAction) return;
+    const nextText = formatAiSuggestion({
+      action: aiSuggestionAction,
+      years: aiSuggestionYears,
+      co2: aiSuggestionCo2,
+    }, language);
+    if (nextText) {
+      setAiSuggestion(nextText);
+    }
+  }, [aiSuggestionAction, aiSuggestionYears, aiSuggestionCo2, language]);
 
   const fileInputRef = useRef(null);
 
@@ -458,6 +880,8 @@ export default function DashboardPage() {
     setEcoScoreRecycle(0);
     setAiSuggestion("");
     setAiSuggestionAction("");
+    setAiSuggestionYears(0);
+    setAiSuggestionCo2("");
     setUsageMessage("");
     setAnalysisReady(false);
   }
@@ -553,18 +977,26 @@ export default function DashboardPage() {
     requestAnimationFrame(tick);
   }, [impactTotals]);
 
-  const dashboardCondition = condition && condition !== "-" ? `Condition: ${condition}` : "-";
-  const dashboardEcoScore = ecoScore ? `Eco: ${ecoScore}/100` : "-";
-  const dashboardLife = remainingLife ? `Remaining life: ${remainingLife}%` : "-";
-  const dashboardPrice = price ? `Estimated price: ₹${price}` : "-";
+  const t = translations[language] || translations.en;
+  const flowSteps = useMemo(() => ([
+    { id: 1, label: t.flow.upload },
+    { id: 2, label: t.flow.purpose },
+    { id: 3, label: t.flow.analysis },
+    { id: 4, label: t.flow.price },
+    { id: 5, label: t.flow.connect },
+  ]), [t]);
+  const dashboardCondition = condition && condition !== "-" ? `${t.stats.currentCondition}: ${condition}` : "-";
+  const dashboardEcoScore = ecoScore ? `${ecoScore}/100` : "-";
+  const dashboardLife = remainingLife ? `${t.stats.remainingLife}: ${remainingLife}%` : "-";
+  const dashboardPrice = price ? `${t.stats.estPrice}: ₹${price}` : "-";
   const dashboardDemand = demand ? `Demand: ${demand}` : "-";
 
   const ecoLabel = useMemo(() => {
     if (!analysisReady) return "";
-    if (ecoScore > 70) return "Best for environment 🌍";
-    if (ecoScore >= 40) return "Moderate impact";
-    return "Low eco benefit";
-  }, [analysisReady, ecoScore]);
+    if (ecoScore > 70) return t.eco.best;
+    if (ecoScore >= 40) return t.eco.moderate;
+    return t.eco.low;
+  }, [analysisReady, ecoScore, t]);
 
   const ecoTone = useMemo(() => {
     if (ecoScore > 70) return "eco-high";
@@ -575,7 +1007,6 @@ export default function DashboardPage() {
   const comparisonOptions = useMemo(() => ([
     {
       key: "sell",
-      label: "Sell",
       icon: "ph:repeat-bold",
       value: sellPrice,
       ecoScore: ecoScoreSell,
@@ -583,7 +1014,6 @@ export default function DashboardPage() {
     },
     {
       key: "repair",
-      label: "Repair",
       icon: "ph:wrench-bold",
       value: repairCost,
       ecoScore: ecoScoreRepair,
@@ -591,7 +1021,6 @@ export default function DashboardPage() {
     },
     {
       key: "recycle",
-      label: "Recycle",
       icon: "ph:recycle-bold",
       value: recyclingValue,
       ecoScore: ecoScoreRecycle,
@@ -609,10 +1038,10 @@ export default function DashboardPage() {
 
   const ecoRecommendation = useMemo(() => {
     if (!bestEcoOption) return "";
-    if (bestEcoOption.key === "sell") return "Best option for environment: Sell (Reuse) ✅";
-    if (bestEcoOption.key === "repair") return "Best option for environment: Repair ✅";
-    return "Best option for environment: Recycle ✅";
-  }, [bestEcoOption]);
+    if (bestEcoOption.key === "sell") return t.comparison.bestSell;
+    if (bestEcoOption.key === "repair") return t.comparison.bestRepair;
+    return t.comparison.bestRecycle;
+  }, [bestEcoOption, t]);
 
   function scrollToSection(target) {
     setActiveNav(target);
@@ -702,14 +1131,20 @@ export default function DashboardPage() {
     const cachedResult = cache[cacheKey];
 
     if (cachedResult) {
-      const cachedSuggestion = cachedResult.aiSuggestion
-        ? { action: cachedResult.aiSuggestionAction || "", message: cachedResult.aiSuggestion }
-        : computeAiSuggestion({
-          purpose,
-          condition: cachedResult.condition,
-          remainingLife: cachedResult.remainingLife,
-          ecoScore: cachedResult.ecoScore ?? 0,
-        });
+      const fallbackSuggestion = computeAiSuggestion({
+        purpose,
+        condition: cachedResult.condition,
+        remainingLife: cachedResult.remainingLife,
+        ecoScore: cachedResult.ecoScore ?? 0,
+      });
+      const cachedSuggestion = cachedResult.aiSuggestionAction
+        ? {
+          action: cachedResult.aiSuggestionAction || fallbackSuggestion.action,
+          years: cachedResult.aiSuggestionYears || fallbackSuggestion.years,
+          co2: cachedResult.aiSuggestionCo2 || fallbackSuggestion.co2,
+        }
+        : fallbackSuggestion;
+      const cachedSuggestionText = formatAiSuggestion(cachedSuggestion, language);
       const cachedSellPrice = cachedResult.sellPrice ?? cachedResult.price ?? 0;
       const cachedEcoScoreSell = cachedResult.ecoScoreSell ?? computeEcoScore({
         purpose: "sell",
@@ -741,8 +1176,10 @@ export default function DashboardPage() {
       setRecyclingValue(cachedResult.recyclingValue || 0);
       setSellPrice(cachedSellPrice);
       setUsageMessage(cachedResult.usageMessage || "");
-      setAiSuggestion(cachedSuggestion.message || "");
+      setAiSuggestion(cachedSuggestionText || "");
       setAiSuggestionAction(cachedSuggestion.action || "");
+      setAiSuggestionYears(cachedSuggestion.years || 0);
+      setAiSuggestionCo2(cachedSuggestion.co2 || "");
       setEcoScoreSell(cachedEcoScoreSell);
       setEcoScoreRepair(cachedEcoScoreRepair);
       setEcoScoreRecycle(cachedEcoScoreRecycle);
@@ -850,6 +1287,7 @@ export default function DashboardPage() {
         remainingLife: remaining,
         ecoScore: nextEcoScore,
       });
+      const nextSuggestionText = formatAiSuggestion(nextSuggestion, language);
 
       const nextEcoScoreSell = computeEcoScore({
         purpose: "sell",
@@ -882,8 +1320,10 @@ export default function DashboardPage() {
         ecoScoreSell: nextEcoScoreSell,
         ecoScoreRepair: nextEcoScoreRepair,
         ecoScoreRecycle: nextEcoScoreRecycle,
-        aiSuggestion: nextSuggestion.message,
+        aiSuggestion: nextSuggestionText,
         aiSuggestionAction: nextSuggestion.action,
+        aiSuggestionYears: nextSuggestion.years,
+        aiSuggestionCo2: nextSuggestion.co2,
       };
 
       const historyEntry = {
@@ -900,8 +1340,10 @@ export default function DashboardPage() {
         ecoScoreSell: nextEcoScoreSell,
         ecoScoreRepair: nextEcoScoreRepair,
         ecoScoreRecycle: nextEcoScoreRecycle,
-        aiSuggestion: nextSuggestion.message,
+        aiSuggestion: nextSuggestionText,
         aiSuggestionAction: nextSuggestion.action,
+        aiSuggestionYears: nextSuggestion.years,
+        aiSuggestionCo2: nextSuggestion.co2,
         suggestion: nextUsageMessage || "Analysis complete.",
         date: new Date().toISOString(),
       };
@@ -923,6 +1365,8 @@ export default function DashboardPage() {
       setUsageMessage(result.usageMessage);
       setAiSuggestion(result.aiSuggestion);
       setAiSuggestionAction(result.aiSuggestionAction);
+      setAiSuggestionYears(result.aiSuggestionYears || 0);
+      setAiSuggestionCo2(result.aiSuggestionCo2 || "");
       setEcoScoreSell(result.ecoScoreSell);
       setEcoScoreRepair(result.ecoScoreRepair);
       setEcoScoreRecycle(result.ecoScoreRecycle);
@@ -1219,14 +1663,6 @@ export default function DashboardPage() {
   }
 
   const unreadCount = notifications.filter((item) => !item.read).length;
-  const flowSteps = [
-    { id: 1, label: "Upload Product" },
-    { id: 2, label: "Select Purpose" },
-    { id: 3, label: "AI Analysis" },
-    { id: 4, label: "Price & Value" },
-    { id: 5, label: "Connect Facility" },
-  ];
-
   const shopReviews = shopProfile
     ? reviews.filter((item) => item.shopName === shopProfile.name)
     : [];
@@ -1247,27 +1683,27 @@ export default function DashboardPage() {
         <nav className="sidebar-nav">
           <button className={`nav-btn ${activeNav === "dashboard" ? "active" : ""}`} onClick={() => scrollToSection("dashboard")}>
             <iconify-icon icon="ph:squares-four-bold" />
-            <span>Dashboard</span>
+            <span>{t.nav.dashboard}</span>
           </button>
           <button className={`nav-btn ${activeNav === "landing" ? "active" : ""}`} onClick={() => scrollToSection("landing")}>
             <iconify-icon icon="ph:house-bold" />
-            <span>Overview</span>
+            <span>{t.nav.overview}</span>
           </button>
           <button className={`nav-btn ${activeNav === "upload" ? "active" : ""}`} onClick={() => scrollToSection("upload")}>
             <iconify-icon icon="ph:upload-simple-bold" />
-            <span>Upload</span>
+            <span>{t.nav.upload}</span>
           </button>
           <button className={`nav-btn ${activeNav === "life" ? "active" : ""}`} onClick={() => scrollToSection("life")}>
             <iconify-icon icon="ph:chart-line-up-bold" />
-            <span>Life Cycle</span>
+            <span>{t.nav.life}</span>
           </button>
           <button className={`nav-btn ${activeNav === "pricing" ? "active" : ""}`} onClick={() => scrollToSection("pricing")}>
             <iconify-icon icon="ph:currency-dollar-bold" />
-            <span>Pricing</span>
+            <span>{t.nav.pricing}</span>
           </button>
           <button className={`nav-btn ${activeNav === "geo" ? "active" : ""}`} onClick={() => scrollToSection("geo")}>
             <iconify-icon icon="ph:map-pin-bold" />
-            <span>Facilities</span>
+            <span>{t.nav.facilities}</span>
           </button>
         </nav>
 
@@ -1281,18 +1717,18 @@ export default function DashboardPage() {
                 <span className="user-name">
                   {userProfile.name || "Dev Kulshrestha"}
                   {profileCompletion === 100 ? (
-                    <span className="verified-badge">✅ Verified User</span>
+                    <span className="verified-badge">{t.user.verified}</span>
                   ) : null}
                 </span>
                 <span className="user-role">
                   {userProfile.email || "Admin"}
                   {profileCompletion < 100 ? (
-                    <span className="incomplete-badge">❌ Profile Incomplete</span>
+                    <span className="incomplete-badge">{t.user.incomplete}</span>
                   ) : null}
                 </span>
               </div>
             </div>
-            <button className="logout-btn" title="Logout" onClick={handleLogout}>
+            <button className="logout-btn" title={t.actions.logout} onClick={handleLogout}>
               <iconify-icon icon="ph:sign-out-bold" />
             </button>
           </div>
@@ -1321,14 +1757,30 @@ export default function DashboardPage() {
 
         <header className="top-header">
           <div className="header-welcome">
-            <h1>Dashboard</h1>
-            <p>Welcome back, complete your circular economy tasks.</p>
+            <h1>{t.header.title}</h1>
+            <p>{t.header.welcome}</p>
           </div>
           <div className="header-actions">
-            <button className="btn-secondary" onClick={() => scrollToSection("history")}>Dashboard</button>
+            <button className="btn-secondary" onClick={() => scrollToSection("history")}>{t.header.dashboardBtn}</button>
             <div className="search-bar">
               <iconify-icon icon="ph:magnifying-glass-bold" />
-              <input type="text" placeholder="Search..." />
+              <input type="text" placeholder={t.header.searchPlaceholder} />
+            </div>
+            <div className="lang-toggle" role="group" aria-label="Language">
+              <button
+                type="button"
+                className={`lang-btn ${language === "hi" ? "active" : ""}`}
+                onClick={() => setLanguage("hi")}
+              >
+                🇮🇳 Hindi
+              </button>
+              <button
+                type="button"
+                className={`lang-btn ${language === "en" ? "active" : ""}`}
+                onClick={() => setLanguage("en")}
+              >
+                🇬🇧 English
+              </button>
             </div>
             <button
               type="button"
@@ -1339,7 +1791,7 @@ export default function DashboardPage() {
               <span className="theme-icon">{theme === "dark" ? "☀️" : "🌙"}</span>
               <span className="theme-label">{theme === "dark" ? "Light" : "Dark"}</span>
             </button>
-            <button className="icon-btn profile-btn" onClick={() => setIsProfileOpen(true)}>
+            <button className="icon-btn profile-btn" onClick={() => setIsProfileOpen(true)} aria-label={t.actions.profile}>
               <iconify-icon icon="ph:user-circle-bold" />
             </button>
 
@@ -1357,14 +1809,14 @@ export default function DashboardPage() {
               {isNotifOpen ? (
                 <div className="notification-panel">
                   <div className="notification-header">
-                    <span>Notifications</span>
+                    <span>{t.notifications.title}</span>
                     <button className="mark-read" onClick={markAllRead}>
-                      Mark all read
+                      {t.notifications.markAll}
                     </button>
                   </div>
                   <div className="notification-list">
                     {notifications.length === 0 ? (
-                      <div className="notification-empty">No responses yet.</div>
+                      <div className="notification-empty">{t.notifications.empty}</div>
                     ) : (
                       notifications.map((item) => (
                         <div key={item.id} className={`notification-item ${item.read ? "read" : ""}`}>
@@ -1377,7 +1829,7 @@ export default function DashboardPage() {
                           </div>
                           {!item.read ? (
                             <button className="mark-read" onClick={() => markNotificationRead(item.id)}>
-                              Mark read
+                              {t.notifications.markRead}
                             </button>
                           ) : null}
                         </div>
@@ -1402,7 +1854,7 @@ export default function DashboardPage() {
         <main className="content-area">
           <section id="dashboard" className="section dashboard-section">
             <div className="section-header">
-              <h3>Overview</h3>
+              <h3>{t.nav.overview}</h3>
             </div>
             <div className="stats-grid">
               <div className="stat-card blue">
@@ -1426,7 +1878,7 @@ export default function DashboardPage() {
               <div className="stat-card purple">
                 <div className="icon-box"><iconify-icon icon="ph:chart-pie-slice-bold" /></div>
                 <div className="stat-info">
-                  <span className="stat-label">Remaining Life</span>
+                  <span className="stat-label">{t.stats.remainingLife}</span>
                   <strong className="stat-value">{dashboardLife}</strong>
                   <div className="progress-bar-container">
                     <div className="progress-fill" style={{ width: `${remainingLife || 0}%` }} />
@@ -1437,7 +1889,7 @@ export default function DashboardPage() {
               <div className="stat-card orange">
                 <div className="icon-box"><iconify-icon icon="ph:tag-bold" /></div>
                 <div className="stat-info">
-                  <span className="stat-label">Est. Price</span>
+                  <span className="stat-label">{t.stats.estPrice}</span>
                   <strong className="stat-value">{dashboardPrice}</strong>
                   <span className="stat-meta">{dashboardDemand}</span>
                 </div>
@@ -1446,10 +1898,10 @@ export default function DashboardPage() {
 
             <div className="dashboard-row">
               <div className="card-panel full-width">
-                <h4>Recommended Facilities</h4>
+                <h4>{t.facilities.recommended}</h4>
                 <div className="facility-list">
                   {facilities.length === 0 ? (
-                    "No recent facilities found."
+                    t.facilities.noRecent
                   ) : (
                     facilities.slice(0, 3).map((item) => (
                       <div className="facility-item" key={item.name}>
@@ -1468,25 +1920,33 @@ export default function DashboardPage() {
 
           <section id="history" className="section card-panel">
             <div className="panel-header">
-              <h3><iconify-icon icon="ph:clock-counter-clockwise-bold" /> My Products / History</h3>
+              <h3><iconify-icon icon="ph:clock-counter-clockwise-bold" /> {t.history.title}</h3>
             </div>
             <div className="history-grid">
               {productHistory.length === 0 ? (
-                <div className="notification-empty">No products analyzed yet.</div>
+                <div className="notification-empty">{t.history.empty}</div>
               ) : (
                 productHistory.map((item) => (
                   <div key={item.id} className="history-card">
                     <img src={item.image} alt={item.productName} />
                     <div className="history-info">
                       <h4>{item.productName}</h4>
-                      <p className="history-meta">Purpose: {item.purpose}</p>
-                      <p className="history-meta">Detected value: ₹{item.price}</p>
-                      <p className="history-meta">Eco Score: {item.ecoScore ? `${item.ecoScore}/100` : "-"} 🌱</p>
+                      <p className="history-meta">{t.history.purpose}: {t.purpose[item.purpose] || item.purpose}</p>
+                      <p className="history-meta">{t.history.value}: ₹{item.price}</p>
+                      <p className="history-meta">{t.history.ecoScore}: {item.ecoScore ? `${item.ecoScore}/100` : "-"} 🌱</p>
                       {item.aiSuggestion ? (
-                        <p className="history-meta">AI Tip: {item.aiSuggestion}</p>
+                        <p className="history-meta">
+                          {t.history.aiTip}: {item.aiSuggestionAction && item.aiSuggestionYears && item.aiSuggestionCo2
+                            ? formatAiSuggestion({
+                              action: item.aiSuggestionAction,
+                              years: item.aiSuggestionYears,
+                              co2: item.aiSuggestionCo2,
+                            }, language)
+                            : item.aiSuggestion}
+                        </p>
                       ) : null}
-                      <p className="history-meta">Uploaded: {new Date(item.date).toLocaleDateString()}</p>
-                      <p className="history-note">Your Previous Analysis: {item.condition} • {item.suggestion}</p>
+                      <p className="history-meta">{t.history.uploaded}: {new Date(item.date).toLocaleDateString()}</p>
+                      <p className="history-note">{t.history.prevAnalysis}: {item.condition} • {item.suggestion}</p>
                     </div>
                   </div>
                 ))
@@ -1496,28 +1956,28 @@ export default function DashboardPage() {
 
           <section id="impact" className="section card-panel">
             <div className="panel-header">
-              <h3><iconify-icon icon="ph:leaf-bold" /> Your Impact</h3>
+              <h3><iconify-icon icon="ph:leaf-bold" /> {t.impact.title}</h3>
             </div>
             <div className="impact-grid">
               <div className="impact-card">
                 <iconify-icon icon="ph:package-bold" />
                 <div>
                   <strong>{impactStats.totalProducts}</strong>
-                  <span>Products analyzed</span>
+                  <span>{t.impact.products}</span>
                 </div>
               </div>
               <div className="impact-card">
                 <iconify-icon icon="ph:leaf-bold" />
                 <div>
                   <strong>{impactStats.wasteSaved} kg</strong>
-                  <span>Waste reduced</span>
+                  <span>{t.impact.waste}</span>
                 </div>
               </div>
               <div className="impact-card">
                 <iconify-icon icon="ph:cloud-bold" />
                 <div>
                   <strong>{impactStats.co2Reduced} kg</strong>
-                  <span>CO₂ reduced</span>
+                  <span>{t.impact.co2}</span>
                 </div>
               </div>
             </div>
@@ -1525,21 +1985,21 @@ export default function DashboardPage() {
 
           <section id="landing" className="section hero-card">
             <div className="hero-content">
-              <span className="tag">AI Powered</span>
-              <h2>Circular Economy Marketplace</h2>
-              <p>Reduce waste. Reuse smartly. Build a zero-waste future.</p>
+              <span className="tag">{t.hero.tag}</span>
+              <h2>{t.hero.title}</h2>
+              <p>{t.hero.subtitle}</p>
               <div className="hero-stats">
                 <div className="mini-stat">
                   <span className="val">{liveScore}</span>
-                  <span className="lbl">Eco Score</span>
+                  <span className="lbl">{t.hero.ecoScore}</span>
                 </div>
                 <div className="mini-stat">
                   <span className="val">{liveReuse}%</span>
-                  <span className="lbl">Reuse Potential</span>
+                  <span className="lbl">{t.hero.reuse}</span>
                 </div>
                 <div className="mini-stat">
                   <span className="val">{liveDemand}</span>
-                  <span className="lbl">Market Demand</span>
+                  <span className="lbl">{t.hero.demand}</span>
                 </div>
               </div>
             </div>
@@ -1551,7 +2011,7 @@ export default function DashboardPage() {
           <div className="grid-layout">
             <section id="upload" className="section card-panel">
               <div className="panel-header">
-                <h3><iconify-icon icon="ph:upload-simple-bold" /> Upload Product</h3>
+                <h3><iconify-icon icon="ph:upload-simple-bold" /> {t.upload.title}</h3>
                 <button className="more-btn"><iconify-icon icon="ph:dots-three-bold" /></button>
               </div>
               <div className="upload-container">
@@ -1576,8 +2036,8 @@ export default function DashboardPage() {
                     ) : (
                       <div className="upload-content">
                         <iconify-icon icon="ph:cloud-arrow-up-bold" className="upload-icon" />
-                        <span className="upload-title">Click or drag an image here</span>
-                        <span className="upload-hint">PNG, JPG, or WEBP up to 10MB</span>
+                        <span className="upload-title">{t.upload.dragTitle}</span>
+                        <span className="upload-hint">{t.upload.dragHint}</span>
                       </div>
                     )}
                     {productImage ? (
@@ -1589,7 +2049,7 @@ export default function DashboardPage() {
                           fileInputRef.current?.click();
                         }}
                       >
-                        Change Image
+                        {t.upload.changeImage}
                       </button>
                     ) : null}
                   </label>
@@ -1597,17 +2057,17 @@ export default function DashboardPage() {
                 </div>
                 <div className="form-group">
                   <div>
-                    <label>Product Type</label>
+                    <label>{t.upload.productType}</label>
                     <input
                       type="text"
-                      placeholder="e.g., Laptop"
+                      placeholder={t.upload.productPlaceholder}
                       value={productTypeInput}
                       onChange={(event) => setProductTypeInput(event.target.value)}
                     />
                   </div>
 
                   <div className="purpose-group">
-                    <label>Purpose</label>
+                    <label>{t.upload.purpose}</label>
                     <div className="purpose-buttons">
                       <button
                         type="button"
@@ -1617,7 +2077,7 @@ export default function DashboardPage() {
                         <span className="purpose-icon">
                           <iconify-icon icon="ph:repeat-bold" />
                         </span>
-                        <span className="purpose-label">Sell</span>
+                        <span className="purpose-label">{t.purpose.sell}</span>
                       </button>
                       <button
                         type="button"
@@ -1627,7 +2087,7 @@ export default function DashboardPage() {
                         <span className="purpose-icon">
                           <iconify-icon icon="ph:wrench-bold" />
                         </span>
-                        <span className="purpose-label">Repair</span>
+                        <span className="purpose-label">{t.purpose.repair}</span>
                       </button>
                       <button
                         type="button"
@@ -1637,14 +2097,14 @@ export default function DashboardPage() {
                         <span className="purpose-icon">
                           <iconify-icon icon="ph:recycle-bold" />
                         </span>
-                        <span className="purpose-label">Recycle</span>
+                        <span className="purpose-label">{t.purpose.recycle}</span>
                       </button>
                     </div>
                   </div>
 
                   <div className="row">
                     <div className="col">
-                      <label>Age (years)</label>
+                      <label>{t.upload.ageYears}</label>
                       <input
                         type="number"
                         min="0"
@@ -1658,13 +2118,13 @@ export default function DashboardPage() {
 
                   {productImage ? (
                     <div className="usage-block">
-                      <label>Usage Duration</label>
+                      <label>{t.upload.usageDuration}</label>
                       <div className="row usage-row">
                         <div className="col">
                           <input
                             type="number"
                             min="0"
-                            placeholder="Years"
+                            placeholder={t.upload.years}
                             value={usageYears}
                             onChange={(event) => setUsageYears(event.target.value)}
                           />
@@ -1673,7 +2133,7 @@ export default function DashboardPage() {
                           <input
                             type="number"
                             min="0"
-                            placeholder="Months"
+                            placeholder={t.upload.months}
                             value={usageMonths}
                             onChange={(event) => setUsageMonths(event.target.value)}
                           />
@@ -1682,7 +2142,7 @@ export default function DashboardPage() {
                           <input
                             type="number"
                             min="0"
-                            placeholder="Days"
+                            placeholder={t.upload.days}
                             value={usageDays}
                             onChange={(event) => setUsageDays(event.target.value)}
                           />
@@ -1698,7 +2158,7 @@ export default function DashboardPage() {
                   {purpose === "recycle" ? (
                     <div className="row">
                       <div className="col">
-                        <label>Material Type</label>
+                        <label>{t.upload.materialType}</label>
                         <select value={materialType} onChange={(event) => setMaterialType(event.target.value)}>
                           <option value="plastic">Plastic</option>
                           <option value="metal">Metal</option>
@@ -1707,12 +2167,12 @@ export default function DashboardPage() {
                         </select>
                       </div>
                       <div className="col">
-                        <label>Weight (kg)</label>
+                        <label>{t.upload.weight}</label>
                         <input
                           type="number"
                           min="0"
                           step="0.1"
-                          placeholder="e.g., 2.5"
+                          placeholder={t.upload.weightPlaceholder}
                           value={materialWeight}
                           onChange={(event) => setMaterialWeight(event.target.value)}
                         />
@@ -1725,34 +2185,34 @@ export default function DashboardPage() {
                     className="btn-primary full-width"
                     disabled={!productImage || !purpose || totalUsageDays <= 0}
                   >
-                    <iconify-icon icon="ph:magic-wand-bold" /> Analyze
+                    <iconify-icon icon="ph:magic-wand-bold" /> {t.upload.analyze}
                   </button>
                   <div className={`loader ${uploadLoading ? "active" : ""}`} />
 
                   <div className={`results-summary ${analysisReady ? "show" : ""}`}>
                     {purpose === "sell" ? (
                       <>
-                        <div className="res-item"><span>Condition</span><strong>{condition}</strong></div>
-                        <div className="res-item"><span>Remaining Life</span><strong>{remainingLife ? `${remainingLife}%` : "-"}</strong></div>
-                        <div className="res-item"><span>Resale Price</span><strong>{price ? `₹${price}` : "-"}</strong></div>
+                        <div className="res-item"><span>{t.results.condition}</span><strong>{condition}</strong></div>
+                        <div className="res-item"><span>{t.results.remainingLife}</span><strong>{remainingLife ? `${remainingLife}%` : "-"}</strong></div>
+                        <div className="res-item"><span>{t.results.resalePrice}</span><strong>{price ? `₹${price}` : "-"}</strong></div>
                       </>
                     ) : null}
                     {purpose === "repair" ? (
                       <>
-                        <div className="res-item"><span>Damage Level</span><strong>{damageLevel ? `${damageLevel}/100` : "-"}</strong></div>
-                        <div className="res-item"><span>Repair Cost</span><strong>{repairCost ? `₹${repairCost}` : "-"}</strong></div>
-                        <div className="res-item"><span>Condition</span><strong>{condition}</strong></div>
+                        <div className="res-item"><span>{t.results.damageLevel}</span><strong>{damageLevel ? `${damageLevel}/100` : "-"}</strong></div>
+                        <div className="res-item"><span>{t.results.repairCost}</span><strong>{repairCost ? `₹${repairCost}` : "-"}</strong></div>
+                        <div className="res-item"><span>{t.results.condition}</span><strong>{condition}</strong></div>
                       </>
                     ) : null}
                     {purpose === "recycle" ? (
                       <>
-                        <div className="res-item"><span>Material</span><strong>{materialType || "-"}</strong></div>
-                        <div className="res-item"><span>Weight</span><strong>{materialWeight ? `${materialWeight} kg` : "-"}</strong></div>
-                        <div className="res-item"><span>Recycling Value</span><strong>{recyclingValue ? `₹${recyclingValue}` : "-"}</strong></div>
+                        <div className="res-item"><span>{t.results.material}</span><strong>{materialType || "-"}</strong></div>
+                        <div className="res-item"><span>{t.results.weight}</span><strong>{materialWeight ? `${materialWeight} kg` : "-"}</strong></div>
+                        <div className="res-item"><span>{t.results.recyclingValue}</span><strong>{recyclingValue ? `₹${recyclingValue}` : "-"}</strong></div>
                       </>
                     ) : null}
                     {!purpose ? (
-                      <div className="res-item"><span>Purpose</span><strong>Select above</strong></div>
+                      <div className="res-item"><span>{t.upload.purpose}</span><strong>{t.results.selectPurpose}</strong></div>
                     ) : null}
                   </div>
 
@@ -1765,7 +2225,7 @@ export default function DashboardPage() {
                           <div className="eco-score-leaf">🌱</div>
                         </div>
                       </div>
-                      <div className="eco-score-label">Eco Score</div>
+                      <div className="eco-score-label">{t.eco.label}</div>
                       <div className="eco-score-note">{ecoLabel}</div>
                     </div>
                   ) : null}
@@ -1774,8 +2234,8 @@ export default function DashboardPage() {
                     <div className="comparison-panel">
                       <div className="comparison-header">
                         <div>
-                          <h4>Compare Options</h4>
-                          <p>See Sell vs Repair vs Recycle for this product.</p>
+                          <h4>{t.comparison.title}</h4>
+                          <p>{t.comparison.subtitle}</p>
                         </div>
                         {ecoRecommendation ? (
                           <div className="comparison-reco">
@@ -1791,14 +2251,14 @@ export default function DashboardPage() {
                             <div key={option.key} className={`comparison-card ${isBest ? "best" : ""}`}>
                               <div className="comparison-title">
                                 <iconify-icon icon={option.icon} />
-                                <span>{option.label}</span>
+                                <span>{t.purpose[option.key]}</span>
                               </div>
                               <div className="comparison-value">
                                 {option.value ? `₹${option.value}` : "-"}
                               </div>
-                              <div className="comparison-meta">Eco: {option.ecoScore}/100</div>
+                              <div className="comparison-meta">{t.eco.label}: {option.ecoScore}/100</div>
                               {isBest ? (
-                                <div className="comparison-badge">Best ✅</div>
+                                <div className="comparison-badge">{t.comparison.bestBadge}</div>
                               ) : null}
                             </div>
                           );
@@ -1811,7 +2271,7 @@ export default function DashboardPage() {
                     <div className="ai-suggestion-card">
                       <div className="ai-suggestion-header">
                         <iconify-icon icon="ph:robot-bold" />
-                        <span>AI Recommendation</span>
+                        <span>{t.ai.title}</span>
                       </div>
                       <p className="ai-suggestion-text">{aiSuggestion}</p>
                     </div>
@@ -1822,10 +2282,10 @@ export default function DashboardPage() {
 
             <div className="vertical-stack">
               <section id="life" className="section card-panel small-panel">
-                <div className="panel-header"><h3><iconify-icon icon="ph:chart-line-up-bold" /> Life Cycle</h3></div>
+                <div className="panel-header"><h3><iconify-icon icon="ph:chart-line-up-bold" /> {t.life.title}</h3></div>
                 <div className="panel-body">
                   <p className="desc-text">
-                    {purpose === "repair" ? "Review damage impact from AI analysis." : "Predict remaining lifespan based on AI analysis."}
+                    {purpose === "repair" ? t.life.descriptionRepair : t.life.descriptionDefault}
                   </p>
                   <div className="progress-circle-wrap">
                     <div className="progress-bar-container">
@@ -1836,13 +2296,13 @@ export default function DashboardPage() {
                       {purpose === "repair" ? " Damage" : " Remaining"}
                     </div>
                   </div>
-                  <button onClick={handlePredictLife} className="btn-secondary full-width">Predict</button>
+                  <button onClick={handlePredictLife} className="btn-secondary full-width">{t.life.predict}</button>
                   <div className={`loader ${lifeLoading ? "active" : ""}`} />
                 </div>
               </section>
 
               <section id="pricing" className="section card-panel small-panel">
-                <div className="panel-header"><h3><iconify-icon icon="ph:currency-dollar-bold" /> Fair Price</h3></div>
+                <div className="panel-header"><h3><iconify-icon icon="ph:currency-dollar-bold" /> {t.pricing.title}</h3></div>
                 <div className="panel-body">
                   <div className="price-display">
                     <span className="currency">₹</span>
@@ -1851,9 +2311,9 @@ export default function DashboardPage() {
                     </strong>
                   </div>
                   <div className="demand-tag">
-                    {purpose === "repair" ? "Estimated repair cost" : purpose === "recycle" ? "Estimated recycling value" : price ? "Resale price" : ""}
+                    {purpose === "repair" ? t.pricing.demandRepair : purpose === "recycle" ? t.pricing.demandRecycle : price ? t.pricing.demandSell : ""}
                   </div>
-                  <button onClick={handleCalculatePrice} className="btn-secondary full-width">Calculate</button>
+                  <button onClick={handleCalculatePrice} className="btn-secondary full-width">{t.pricing.calculate}</button>
                   <div className={`loader ${priceLoading ? "active" : ""}`} />
                 </div>
               </section>
@@ -1862,7 +2322,7 @@ export default function DashboardPage() {
 
           <section id="geo" className="section card-panel full-width-panel">
             <div className="panel-header">
-              <h3><iconify-icon icon="ph:map-pin-bold" /> Nearby Facilities</h3>
+              <h3><iconify-icon icon="ph:map-pin-bold" /> {t.facilities.nearby}</h3>
               <div className="geo-header-actions">
                 <div className="geo-toggle">
                   <button
@@ -1870,20 +2330,20 @@ export default function DashboardPage() {
                     className={`toggle-btn ${showMap ? "" : "active"}`}
                     onClick={() => setShowMap(false)}
                   >
-                    List View
+                    {t.facilities.listView}
                   </button>
                   <button
                     type="button"
                     className={`toggle-btn ${showMap ? "active" : ""}`}
                     onClick={() => setShowMap(true)}
                   >
-                    Map View
+                    {t.facilities.mapView}
                   </button>
                 </div>
                 <div className="search-inline">
                   <input
                     type="text"
-                    placeholder="Enter city..."
+                    placeholder={t.facilities.enterCity}
                     value={location}
                     onChange={(event) => setLocation(event.target.value)}
                   />
@@ -1897,12 +2357,13 @@ export default function DashboardPage() {
             <div className={`loader ${geoLoading ? "active" : ""}`} />
             {showMap ? (
               facilities.length === 0 ? (
-                <div className="notification-empty">Search a city to load nearby facilities.</div>
+                <div className="notification-empty">{t.facilities.searchPrompt}</div>
               ) : (
                 <MapView
                   facilities={facilities}
                   center={userLocation}
                   onConnect={handleConnectClick}
+                  labels={t.map}
                 />
               )
             ) : (
@@ -1916,10 +2377,10 @@ export default function DashboardPage() {
                     <span className="f-type">{item.type}</span>
                     <div className="facility-actions">
                       <button className="f-action" onClick={() => handleConnectClick(item)}>
-                        Connect
+                        {t.facilities.connect}
                       </button>
                       <button className="f-link" onClick={() => openShopProfile(item)}>
-                        View Profile
+                        {t.facilities.viewProfile}
                       </button>
                     </div>
                   </div>
@@ -1933,7 +2394,7 @@ export default function DashboardPage() {
           <p>© 2026 Smart Circular Economy Marketplace.</p>
           <div className="privacy-note">
             <span className="privacy-icon">🔒</span>
-            <span>Your data is stored locally for demo purpose only.</span>
+            <span>{t.footer.privacyNote}</span>
           </div>
         </footer>
       </div>
@@ -1960,15 +2421,15 @@ export default function DashboardPage() {
           </div>
 
           <div className="modal-message-box">
-            <label>Pre-filled Message</label>
+            <label>{t.modals.prefilled}</label>
             <div className="message-preview">{buildWhatsappMessage()}</div>
           </div>
           <button className="btn-primary full-width" onClick={handleSendMessage}>
-            Send Message
+            {t.modals.sendMessage}
           </button>
           {currentTransaction && activeFacility && currentTransaction.shopName === activeFacility.name ? (
             <button className="btn-secondary full-width" onClick={() => handleOpenRating(activeFacility)}>
-              Rate Service
+              {t.modals.rateService}
             </button>
           ) : null}
         </div>
@@ -1983,8 +2444,8 @@ export default function DashboardPage() {
           <div className="modal-header-icon">
             <iconify-icon icon="ph:star-fill" />
           </div>
-          <h3>Rate Service</h3>
-          <p className="modal-sub">Share your experience with {currentTransaction?.shopName || "this shop"}.</p>
+          <h3>{t.modals.rateService}</h3>
+          <p className="modal-sub">{t.modals.shareExperience} {currentTransaction?.shopName || t.modals.thisShop}.</p>
 
           <form className="rating-form" onSubmit={handleSubmitRating}>
             <div className="star-row">
@@ -2001,14 +2462,14 @@ export default function DashboardPage() {
             </div>
             <textarea
               rows="3"
-              placeholder="Write a short review..."
+              placeholder={t.modals.reviewPlaceholder}
               value={ratingText}
               onChange={(event) => setRatingText(event.target.value)}
             />
             {ratingError ? <div className="rating-error">{ratingError}</div> : null}
             {ratingSuccess ? <div className="rating-success">{ratingSuccess}</div> : null}
             <button type="submit" className="btn-primary full-width">
-              Submit Review
+              {t.modals.submitReview}
             </button>
           </form>
         </div>
@@ -2029,17 +2490,17 @@ export default function DashboardPage() {
           <div className="shop-rating">
             <div className="shop-score">
               <span className="score-value">{shopAverage ? shopAverage.toFixed(1) : "0.0"}</span>
-              <span className="score-label">Average Rating</span>
+              <span className="score-label">{t.modals.averageRating}</span>
             </div>
             <div className="shop-count">
               <span className="score-value">{shopReviews.length}</span>
-              <span className="score-label">Total Reviews</span>
+              <span className="score-label">{t.modals.totalReviews}</span>
             </div>
           </div>
 
           <div className="review-list">
             {shopReviews.length === 0 ? (
-              <div className="notification-empty">No reviews yet.</div>
+              <div className="notification-empty">{t.modals.noReviews}</div>
             ) : (
               shopReviews.slice(0, 5).map((review) => (
                 <div key={review.id} className="review-item">
@@ -2047,8 +2508,8 @@ export default function DashboardPage() {
                     <span className="review-stars">{"★".repeat(review.rating)}{"☆".repeat(5 - review.rating)}</span>
                     <span className="review-date">{new Date(review.date).toLocaleDateString()}</span>
                   </div>
-                  <div className="review-text">{review.reviewText || "(No comments)"}</div>
-                  <div className="review-meta">{review.userEmail || "Anonymous"}</div>
+                  <div className="review-text">{review.reviewText || t.modals.noComments}</div>
+                  <div className="review-meta">{review.userEmail || t.modals.anonymous}</div>
                 </div>
               ))
             )}
@@ -2065,8 +2526,8 @@ export default function DashboardPage() {
           <div className="modal-header-icon">
             <iconify-icon icon="ph:user-circle-bold" />
           </div>
-          <h3>Profile</h3>
-          <p className="modal-sub">Manage your marketplace details.</p>
+          <h3>{t.profile.title}</h3>
+          <p className="modal-sub">{t.profile.subtitle}</p>
 
           <form className="profile-form" onSubmit={handleProfileSave}>
             <div className="profile-card">
@@ -2078,11 +2539,11 @@ export default function DashboardPage() {
                   {profileData.name || "Your Profile"}
                 </div>
                 <div className="profile-sub">
-                  {profileCompletion === 100 ? "✔ Profile Completed 100%" : "❌ Profile Incomplete"}
+                  {profileCompletion === 100 ? `✔ ${t.profile.completed}` : `❌ ${t.profile.incomplete}`}
                 </div>
               </div>
               <span className={`profile-badge ${profileCompletion === 100 ? "verified" : "incomplete"}`}>
-                {profileCompletion === 100 ? "Verified" : "Incomplete"}
+                {profileCompletion === 100 ? t.profile.badgeVerified : t.profile.badgeIncomplete}
               </span>
             </div>
 
@@ -2094,7 +2555,7 @@ export default function DashboardPage() {
             </div>
 
             <label>
-              Full Name
+              {t.profile.fullName}
               <input
                 type="text"
                 value={profileData.name}
@@ -2103,11 +2564,11 @@ export default function DashboardPage() {
               />
             </label>
             <label>
-              Email (read-only)
+              {t.profile.email}
               <input type="email" value={profileData.email} readOnly />
             </label>
             <label>
-              Phone Number
+              {t.profile.phone}
               <input
                 type="tel"
                 placeholder="+91 98765 43210"
@@ -2117,7 +2578,7 @@ export default function DashboardPage() {
               />
             </label>
             <label>
-              Address
+              {t.profile.address}
               <input
                 type="text"
                 placeholder="City, State"
@@ -2127,10 +2588,10 @@ export default function DashboardPage() {
               />
             </label>
             <label>
-              About Me
+              {t.profile.about}
               <textarea
                 rows="3"
-                placeholder="Tell us about your business or products."
+                placeholder={t.profile.aboutPlaceholder}
                 value={profileData.about}
                 onChange={(event) => setProfileData((prev) => ({ ...prev, about: event.target.value }))}
                 readOnly={!isProfileEditing}
@@ -2143,15 +2604,15 @@ export default function DashboardPage() {
             <div className="safety-panel">
               <div className="safety-header">
                 <iconify-icon icon="ph:shield-check-bold" />
-                <span>Safety & Trust</span>
+                <span>{t.safety.title}</span>
               </div>
-              <p className="safety-note">Manage your local demo data and sessions.</p>
+              <p className="safety-note">{t.safety.note}</p>
               <button
                 type="button"
                 className="btn-warning full-width"
                 onClick={handleClearData}
               >
-                Clear My Data
+                {t.safety.clear}
               </button>
             </div>
 
@@ -2161,10 +2622,10 @@ export default function DashboardPage() {
                 className="btn-secondary"
                 onClick={() => setIsProfileEditing(true)}
               >
-                Edit Profile
+                {t.profile.edit}
               </button>
               <button type="submit" className="btn-primary">
-                Save
+                {t.profile.save}
               </button>
             </div>
           </form>
@@ -2175,7 +2636,7 @@ export default function DashboardPage() {
         <div className="analyze-overlay" role="status" aria-live="polite">
           <div className="analyze-card">
             <div className="spinner-lg" />
-            <p className="analyze-text">AI is analyzing product condition...</p>
+            <p className="analyze-text">{t.upload.analyzing}</p>
           </div>
         </div>
       ) : null}

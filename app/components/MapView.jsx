@@ -57,10 +57,18 @@ function MapInteractionLock({ locked }) {
   return null;
 }
 
-export default function MapView({ facilities, center, onConnect }) {
+export default function MapView({ facilities, center, onConnect, labels }) {
   const safeCenter = center || { lat: 28.6139, lng: 77.2090 };
   const [showContactModal, setShowContactModal] = useState(false);
   const [selectedFacility, setSelectedFacility] = useState(null);
+  const safeLabels = labels || {
+    yourLocation: "Your location",
+    autoCentered: "Auto-centered",
+    connect: "Connect",
+    whatsapp: "WhatsApp",
+    facility: "Facility",
+    close: "Close",
+  };
   const icons = useMemo(() => ({
     repair: buildMarkerIcon("repair"),
     recycling: buildMarkerIcon("recycling"),
@@ -117,8 +125,8 @@ export default function MapView({ facilities, center, onConnect }) {
         <Marker position={[safeCenter.lat, safeCenter.lng]} icon={icons.user}>
           <Popup>
             <div className="map-popup">
-              <strong>Your location</strong>
-              <span className="map-popup-meta">Auto-centered</span>
+              <strong>{safeLabels.yourLocation}</strong>
+              <span className="map-popup-meta">{safeLabels.autoCentered}</span>
             </div>
           </Popup>
         </Marker>
@@ -148,16 +156,16 @@ export default function MapView({ facilities, center, onConnect }) {
               ×
             </button>
             <div className="map-contact-icon">📍</div>
-            <h3>{selectedFacility?.name || "Facility"}</h3>
+            <h3>{selectedFacility?.name || safeLabels.facility}</h3>
             <p className="map-contact-sub">
-              {selectedFacility?.type || "Facility"}
+              {selectedFacility?.type || safeLabels.facility}
             </p>
             <div className="map-contact-actions">
               <button type="button" className="map-contact-btn primary" onClick={handleConnect}>
-                Connect
+                {safeLabels.connect}
               </button>
               <button type="button" className="map-contact-btn ghost" onClick={handleWhatsApp}>
-                WhatsApp
+                {safeLabels.whatsapp}
               </button>
             </div>
           </div>
