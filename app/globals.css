@@ -28,6 +28,86 @@ body {
   color: var(--text-main);
   min-height: 100vh;
   overflow-x: hidden;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+body.dark {
+  --bg-body: #0b1220;
+  --bg-sidebar: #0f172a;
+  --bg-card: #111827;
+  --text-main: #e2e8f0;
+  --text-muted: #94a3b8;
+  --border-color: #1f2937;
+  --shadow-sm: 0 4px 6px -1px rgba(0, 0, 0, 0.35);
+  --shadow-md: 0 10px 20px -6px rgba(0, 0, 0, 0.45);
+}
+
+body.dark .sidebar,
+body.dark .card-panel,
+body.dark .stat-card,
+body.dark .facility-item,
+body.dark .comparison-panel,
+body.dark .comparison-card,
+body.dark .modal-card,
+body.dark .notification-panel,
+body.dark .results-summary,
+body.dark .profile-card,
+body.dark .upload-card,
+body.dark .search-bar input {
+  background: var(--bg-card);
+  color: var(--text-main);
+  border-color: var(--border-color);
+}
+
+body.dark .results-summary {
+  background: #0f172a;
+}
+
+body.dark .ai-suggestion-card {
+  background: #0f1f17;
+  border-color: rgba(22, 163, 74, 0.35);
+}
+
+body.dark .comparison-card {
+  background: #0f172a;
+}
+
+.sidebar,
+.card-panel,
+.stat-card,
+.facility-item,
+.comparison-panel,
+.comparison-card,
+.modal-card,
+.notification-panel,
+.results-summary,
+.search-bar input,
+.upload-card {
+  transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+}
+
+.theme-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--border-color);
+  background: var(--bg-card);
+  color: var(--text-main);
+  font-weight: 700;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.theme-toggle:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-sm);
+}
+
+.theme-icon {
+  font-size: 14px;
 }
 
 /* Sidebar */

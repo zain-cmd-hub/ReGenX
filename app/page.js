@@ -273,6 +273,7 @@ export default function DashboardPage() {
 
   const [notifications, setNotifications] = useState([]);
   const [isNotifOpen, setIsNotifOpen] = useState(false);
+  const [theme, setTheme] = useState("light");
 
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isProfileEditing, setIsProfileEditing] = useState(true);
@@ -339,6 +340,18 @@ export default function DashboardPage() {
       { enableHighAccuracy: true, timeout: 8000, maximumAge: 60000 }
     );
   }, []);
+
+  useEffect(() => {
+    const storedTheme = localStorage.getItem("tscemTheme");
+    if (storedTheme === "dark" || storedTheme === "light") {
+      setTheme(storedTheme);
+    }
+  }, []);
+
+  useEffect(() => {
+    document.body.classList.toggle("dark", theme === "dark");
+    localStorage.setItem("tscemTheme", theme);
+  }, [theme]);
 
   const fileInputRef = useRef(null);
 
@@ -1317,6 +1330,15 @@ export default function DashboardPage() {
               <iconify-icon icon="ph:magnifying-glass-bold" />
               <input type="text" placeholder="Search..." />
             </div>
+            <button
+              type="button"
+              className="theme-toggle"
+              onClick={() => setTheme((prev) => (prev === "dark" ? "light" : "dark"))}
+              aria-label="Toggle theme"
+            >
+              <span className="theme-icon">{theme === "dark" ? "☀️" : "🌙"}</span>
+              <span className="theme-label">{theme === "dark" ? "Light" : "Dark"}</span>
+            </button>
             <button className="icon-btn profile-btn" onClick={() => setIsProfileOpen(true)}>
               <iconify-icon icon="ph:user-circle-bold" />
             </button>
