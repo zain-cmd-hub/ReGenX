@@ -2,7 +2,12 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { onAuthStateChanged, signInWithPopup } from "firebase/auth";
+import {
+  getRedirectResult,
+  onAuthStateChanged,
+  signInWithPopup,
+  signInWithRedirect,
+} from "firebase/auth";
 import { auth, googleProvider } from "../lib/firebase";
 
 export default function LoginPage() {
@@ -11,13 +16,41 @@ export default function LoginPage() {
   const [errorMessage, setErrorMessage] = useState("");
 
   useEffect(() => {
+    let isMounted = true;
+
+    async function handleRedirectResult() {
+      try {
+        const result = await getRedirectResult(auth);
+        if (!isMounted || !result?.user) return;
+
+        const userProfile = {
+          name: result.user.displayName || "",
+          email: result.user.email || "",
+          photo: result.user.photoURL || "",
+        };
+
+        localStorage.setItem("tscemUser", JSON.stringify(userProfile));
+        router.push("/");
+      } catch (error) {
+        if (!isMounted) return;
+        setErrorMessage(
+          `Google sign-in failed. ${error?.code || "auth/error"}`
+        );
+      }
+    }
+
+    handleRedirectResult();
+
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       if (user) {
         router.push("/");
       }
     });
 
-    return () => unsubscribe();
+    return () => {
+      isMounted = false;
+      unsubscribe();
+    };
   }, [router]);
 
   async function handleGoogleLogin() {
@@ -37,7 +70,12 @@ export default function LoginPage() {
       localStorage.setItem("tscemUser", JSON.stringify(userProfile));
       router.push("/");
     } catch (error) {
-      setErrorMessage("Google sign-in failed. Please try again.");
+      const errorCode = error?.code || "auth/error";
+      if (errorCode === "auth/popup-blocked" || errorCode === "auth/popup-closed-by-user") {
+        await signInWithRedirect(auth, googleProvider);
+        return;
+      }
+      setErrorMessage(`Google sign-in failed. ${errorCode}`);
     } finally {
       setIsLoading(false);
     }
