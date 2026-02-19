@@ -779,3 +779,245 @@ footer {
     margin-top: 40px;
     padding-bottom: 20px;
 }
+
+/* LOGIN PAGE STYLES */
+.login-body {
+  background: white;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  padding: 0;
+}
+
+.login-container {
+  display: flex;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+}
+
+.login-visual {
+  flex: 1;
+  background: linear-gradient(135deg, var(--bg-body) 0%, #e0faff 100%);
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 60px;
+}
+
+.visual-content {
+  z-index: 2;
+  color: var(--text-main);
+  max-width: 480px;
+}
+
+.visual-content .brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--primary);
+  margin-bottom: 40px;
+}
+
+.visual-content h2 {
+  font-size: 56px;
+  line-height: 1.1;
+  font-family: 'Poppins', sans-serif;
+  margin-bottom: 24px;
+  color: var(--text-main);
+}
+
+.visual-content p {
+  font-size: 18px;
+  color: var(--text-muted);
+  line-height: 1.6;
+  margin-bottom: 48px;
+}
+
+.visual-footer {
+  display: flex;
+  gap: 16px;
+}
+
+.stat-pill {
+  background: white;
+  padding: 12px 20px;
+  border-radius: 50px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  box-shadow: var(--shadow-sm);
+  font-weight: 600;
+  color: var(--primary);
+  font-size: 14px;
+}
+
+.login-form-wrapper {
+  flex: 1;
+  max-width: 600px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 60px;
+  background: white;
+  box-shadow: -10px 0 40px rgba(0,0,0,0.02);
+  z-index: 5;
+}
+
+.login-form-card {
+  width: 100%;
+  max-width: 420px;
+  margin: 0 auto;
+}
+
+.form-header {
+  margin-bottom: 32px;
+}
+
+.form-header h3 {
+  font-size: 32px;
+  font-weight: 700;
+  font-family: 'Poppins', sans-serif;
+  margin-bottom: 8px;
+}
+
+.form-header p {
+  color: var(--text-muted);
+}
+
+.input-icon-wrapper {
+  position: relative;
+  margin-top: 8px;
+}
+
+.input-icon-wrapper iconify-icon {
+  position: absolute;
+  left: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-muted);
+  font-size: 20px;
+}
+
+.input-icon-wrapper input {
+  padding-left: 48px;
+}
+
+.form-group {
+  margin-bottom: 24px;
+}
+
+.form-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 32px;
+  font-size: 14px;
+}
+
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  color: var(--text-muted);
+}
+
+.checkbox-label input {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+  accent-color: var(--primary);
+}
+
+.forgot-link {
+  color: var(--primary);
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.btn-login {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 12px;
+  font-size: 16px;
+  margin-bottom: 20px;
+}
+
+.btn-google {
+  width: 100%;
+  padding: 14px;
+  background: white;
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  font-weight: 600;
+  color: var(--text-main);
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: inherit;
+}
+
+.btn-google:hover {
+  background: #f8fafc;
+  border-color: #cbd5e1;
+}
+
+.signup-link {
+  text-align: center;
+  margin-top: 32px;
+  font-size: 14px;
+  color: var(--text-muted);
+}
+
+.signup-link a {
+  color: var(--primary);
+  text-decoration: none;
+  font-weight: 700;
+}
+
+@media (max-width: 900px) {
+  .login-visual {
+    display: none;
+  }
+  .login-form-wrapper {
+    max-width: 100%;
+    width: 100%;
+    align-items: center;
+  }
+}
+
+/* Logout Button Styles */
+.user-section {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+}
+
+.logout-btn {
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    font-size: 20px;
+    display: grid;
+    place-items: center;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.logout-btn:hover {
+    background: #fee2e2;
+    color: #ef4444;
+}
