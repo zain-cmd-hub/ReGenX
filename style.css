@@ -103,7 +103,7 @@ body {
   background: rgba(14, 165, 164, 0.05);
   color: var(--primary);
 }
-
+/* add */
 .nav-btn.active {
   background: var(--primary);
   color: white;

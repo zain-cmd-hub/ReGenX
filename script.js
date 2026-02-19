@@ -189,7 +189,7 @@ function buildWhatsappMessage() {
   const score = state.score ? `${state.score}/100` : "Pending";
   const price = state.price ? `₹${state.price}` : "Pending";
 
-  return `Hello, I want to connect regarding my product.\n\nProduct: ${name}\nAge: ${age}\nCondition: ${condition}\nRemaining Life: ${life}\nSustainability Score: ${score}\nEstimated Price: ${price}\n\nPlease contact me for reuse/repair/recycling.`;
+  return `Hello, I want too connect regarding my product.\n\nProduct: ${name}\nAge: ${age}\nCondition: ${condition}\nRemaining Life: ${life}\nSustainability Score: ${score}\nEstimated Price: ${price}\n\nPlease contact me for reuse/repair/recycling.`;
 }
 
 function openModal(facility) {
