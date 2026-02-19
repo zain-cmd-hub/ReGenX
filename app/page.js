@@ -40,6 +40,28 @@ function calculateRemainingLife(condition, age) {
   return clamp(Math.round(adjusted), 5, 95);
 }
 
+function hashString(value) {
+  let hash = 0;
+  for (let i = 0; i < value.length; i += 1) {
+    hash = (hash << 5) - hash + value.charCodeAt(i);
+    hash |= 0;
+  }
+  return `img_${Math.abs(hash)}`;
+}
+
+function readImageCache() {
+  try {
+    const raw = localStorage.getItem("tscemImageCache");
+    return raw ? JSON.parse(raw) : {};
+  } catch (error) {
+    return {};
+  }
+}
+
+function writeImageCache(cache) {
+  localStorage.setItem("tscemImageCache", JSON.stringify(cache));
+}
+
 function generateFacilities(location) {
   const baseNames = [
     "GreenFix Repair Hub",
@@ -90,6 +112,7 @@ export default function DashboardPage() {
   const [productAgeInput, setProductAgeInput] = useState("");
   const [usageLevel, setUsageLevel] = useState("moderate");
   const [productImage, setProductImage] = useState("");
+  const [imageHash, setImageHash] = useState("");
 
   const [condition, setCondition] = useState("-");
   const [score, setScore] = useState(0);
@@ -143,6 +166,37 @@ export default function DashboardPage() {
     };
   }, [router]);
 
+  useEffect(() => {
+    if (!productImage) {
+      setImageHash("");
+      setCondition("-");
+      setScore(0);
+      setRemainingLife(0);
+      setPrice(0);
+      setDemand("");
+      return;
+    }
+
+    const hash = hashString(productImage);
+    setImageHash(hash);
+
+    const cache = readImageCache();
+    const cachedResult = cache[hash];
+    if (cachedResult) {
+      setCondition(cachedResult.condition);
+      setScore(cachedResult.score);
+      setRemainingLife(cachedResult.remainingLife);
+      setPrice(cachedResult.price);
+      setDemand(cachedResult.demand);
+    } else {
+      setCondition("-");
+      setScore(0);
+      setRemainingLife(0);
+      setPrice(0);
+      setDemand("");
+    }
+  }, [productImage]);
+
   const dashboardAge = useMemo(() => {
     if (!productAgeInput) return "-";
     return `Age: ${productAgeInput} year(s)`;
@@ -177,6 +231,11 @@ export default function DashboardPage() {
 
   function handleAnalyze() {
     const ageValue = Number(productAgeInput);
+    if (!productImage) {
+      alert("Please upload a product image before analyzing.");
+      return;
+    }
+
     if (!productTypeInput.trim() || Number.isNaN(ageValue)) {
       alert("Please fill product type and age before analyzing.");
       return;
@@ -184,13 +243,48 @@ export default function DashboardPage() {
 
     setUploadLoading(true);
     setTimeout(() => {
+      const hash = imageHash || hashString(productImage);
+      const cache = readImageCache();
+      const cachedResult = cache[hash];
+
+      if (cachedResult) {
+        setCondition(cachedResult.condition);
+        setScore(cachedResult.score);
+        setRemainingLife(cachedResult.remainingLife);
+        setPrice(cachedResult.price);
+        setDemand(cachedResult.demand);
+        setUploadLoading(false);
+        return;
+      }
+
       const nextCondition = calculateCondition(ageValue, usageLevel);
       const nextScore = calculateSustainability(nextCondition, usageLevel, ageValue);
       const nextLife = calculateRemainingLife(nextCondition, ageValue);
 
-      setCondition(nextCondition);
-      setScore(nextScore);
-      setRemainingLife(nextLife);
+      const demandScore = randomBetween(60, 120);
+      const demandLabel = demandScore > 100 ? "High" : demandScore > 80 ? "Moderate" : "Low";
+      const baseValue = 12000;
+      const conditionMultiplier = nextCondition === "Good" ? 1.2 : nextCondition === "Medium" ? 0.9 : 0.6;
+      const lifeMultiplier = nextLife / 100;
+      const demandMultiplier = demandScore / 100;
+      const estimatedPrice = Math.round(baseValue * conditionMultiplier * lifeMultiplier * demandMultiplier);
+
+      const result = {
+        condition: nextCondition,
+        score: nextScore,
+        remainingLife: nextLife,
+        price: estimatedPrice,
+        demand: demandLabel,
+      };
+
+      cache[hash] = result;
+      writeImageCache(cache);
+
+      setCondition(result.condition);
+      setScore(result.score);
+      setRemainingLife(result.remainingLife);
+      setPrice(result.price);
+      setDemand(result.demand);
       setUploadLoading(false);
     }, 1200);
   }
@@ -211,26 +305,20 @@ export default function DashboardPage() {
   }
 
   function handleCalculatePrice() {
-    if (!remainingLife) {
-      alert("Run life cycle prediction first.");
+    if (!imageHash) {
+      alert("Upload an image and analyze it first.");
+      return;
+    }
+
+    if (!price) {
+      alert("Price is only generated once during Analyze Product.");
       return;
     }
 
     setPriceLoading(true);
     setTimeout(() => {
-      const demandScore = randomBetween(60, 120);
-      const demandLabel = demandScore > 100 ? "High" : demandScore > 80 ? "Moderate" : "Low";
-
-      const baseValue = 12000;
-      const conditionMultiplier = condition === "Good" ? 1.2 : condition === "Medium" ? 0.9 : 0.6;
-      const lifeMultiplier = remainingLife / 100;
-      const demandMultiplier = demandScore / 100;
-      const estimatedPrice = Math.round(baseValue * conditionMultiplier * lifeMultiplier * demandMultiplier);
-
-      setDemand(demandLabel);
-      setPrice(estimatedPrice);
       setPriceLoading(false);
-    }, 1100);
+    }, 400);
   }
 
   function handleFindFacilities() {
