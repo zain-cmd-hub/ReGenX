@@ -32,12 +32,13 @@ body {
 }
 
 body.dark {
-  --bg-body: #0b1220;
-  --bg-sidebar: #0f172a;
-  --bg-card: #111827;
-  --text-main: #e2e8f0;
-  --text-muted: #94a3b8;
-  --border-color: #1f2937;
+  --bg-body: #0f172a;
+  --bg-sidebar: #111827;
+  --bg-card: #1e293b;
+  --text-main: #ffffff;
+  --text-muted: #9ca3af;
+  --border-color: #273449;
+  --secondary: #22c55e;
   --shadow-sm: 0 4px 6px -1px rgba(0, 0, 0, 0.35);
   --shadow-md: 0 10px 20px -6px rgba(0, 0, 0, 0.45);
 }
@@ -60,16 +61,66 @@ body.dark .search-bar input {
 }
 
 body.dark .results-summary {
-  background: #0f172a;
+  background: #111827;
 }
 
 body.dark .ai-suggestion-card {
   background: #0f1f17;
-  border-color: rgba(22, 163, 74, 0.35);
+  border-color: rgba(34, 197, 94, 0.4);
 }
 
 body.dark .comparison-card {
+  background: #111827;
+}
+
+body.dark .history-card,
+body.dark .impact-card,
+body.dark .hero-card,
+body.dark .upload-card,
+body.dark .usage-block,
+body.dark .contact-details,
+body.dark .eco-score-card {
+  background: var(--bg-card);
+  border-color: var(--border-color);
+}
+
+body.dark .impact-card {
+  border-color: rgba(34, 197, 94, 0.25);
+}
+
+body.dark .hero-card {
+  background: linear-gradient(135deg, #111827 0%, #0f172a 100%);
+}
+
+body.dark .tag {
+  background: rgba(34, 197, 94, 0.15);
+  color: #22c55e;
+}
+
+body.dark .notification-item:hover,
+body.dark .upload-card.drag {
   background: #0f172a;
+}
+
+body.dark .upload-card {
+  border-color: rgba(34, 197, 94, 0.35);
+}
+
+body.dark .upload-content,
+body.dark .hero-content p,
+body.dark .mini-stat .lbl,
+body.dark .history-meta,
+body.dark .impact-card span {
+  color: var(--text-muted);
+}
+
+body.dark .panel-header h3,
+body.dark .hero-content h2,
+body.dark .history-info h4,
+body.dark .stat-value,
+body.dark .comparison-title,
+body.dark .comparison-value {
+  color: var(--text-main);
 }
 
 .sidebar,
