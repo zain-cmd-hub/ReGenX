@@ -1761,7 +1761,6 @@ export default function DashboardPage() {
             <p>{t.header.welcome}</p>
           </div>
           <div className="header-actions">
-            <button className="btn-secondary" onClick={() => scrollToSection("history")}>{t.header.dashboardBtn}</button>
             <div className="search-bar">
               <iconify-icon icon="ph:magnifying-glass-bold" />
               <input type="text" placeholder={t.header.searchPlaceholder} />
