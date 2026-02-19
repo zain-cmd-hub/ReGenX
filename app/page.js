@@ -209,6 +209,10 @@ export default function DashboardPage() {
   const [repairCost, setRepairCost] = useState(0);
   const [recyclingValue, setRecyclingValue] = useState(0);
   const [ecoScore, setEcoScore] = useState(0);
+  const [sellPrice, setSellPrice] = useState(0);
+  const [ecoScoreSell, setEcoScoreSell] = useState(0);
+  const [ecoScoreRepair, setEcoScoreRepair] = useState(0);
+  const [ecoScoreRecycle, setEcoScoreRecycle] = useState(0);
   const [analysisReady, setAnalysisReady] = useState(false);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
 
@@ -391,6 +395,10 @@ export default function DashboardPage() {
     setRepairCost(0);
     setRecyclingValue(0);
     setEcoScore(0);
+    setSellPrice(0);
+    setEcoScoreSell(0);
+    setEcoScoreRepair(0);
+    setEcoScoreRecycle(0);
     setUsageMessage("");
     setAnalysisReady(false);
   }
@@ -505,6 +513,48 @@ export default function DashboardPage() {
     return "eco-low";
   }, [ecoScore]);
 
+  const comparisonOptions = useMemo(() => ([
+    {
+      key: "sell",
+      label: "Sell",
+      icon: "ph:repeat-bold",
+      value: sellPrice,
+      ecoScore: ecoScoreSell,
+      meta: "Reuse",
+    },
+    {
+      key: "repair",
+      label: "Repair",
+      icon: "ph:wrench-bold",
+      value: repairCost,
+      ecoScore: ecoScoreRepair,
+      meta: "Repair",
+    },
+    {
+      key: "recycle",
+      label: "Recycle",
+      icon: "ph:recycle-bold",
+      value: recyclingValue,
+      ecoScore: ecoScoreRecycle,
+      meta: "Recycle",
+    },
+  ]), [sellPrice, repairCost, recyclingValue, ecoScoreSell, ecoScoreRepair, ecoScoreRecycle]);
+
+  const bestEcoOption = useMemo(() => {
+    if (!analysisReady) return null;
+    return comparisonOptions.reduce((best, current) => {
+      if (!best || current.ecoScore > best.ecoScore) return current;
+      return best;
+    }, null);
+  }, [analysisReady, comparisonOptions]);
+
+  const ecoRecommendation = useMemo(() => {
+    if (!bestEcoOption) return "";
+    if (bestEcoOption.key === "sell") return "Best option for environment: Sell (Reuse) ✅";
+    if (bestEcoOption.key === "repair") return "Best option for environment: Repair ✅";
+    return "Best option for environment: Recycle ✅";
+  }, [bestEcoOption]);
+
   function scrollToSection(target) {
     setActiveNav(target);
     const section = document.getElementById(target);
@@ -593,6 +643,22 @@ export default function DashboardPage() {
     const cachedResult = cache[cacheKey];
 
     if (cachedResult) {
+      const cachedSellPrice = cachedResult.sellPrice ?? cachedResult.price ?? 0;
+      const cachedEcoScoreSell = cachedResult.ecoScoreSell ?? computeEcoScore({
+        purpose: "sell",
+        condition: cachedResult.condition,
+        remainingLife: cachedResult.remainingLife,
+      });
+      const cachedEcoScoreRepair = cachedResult.ecoScoreRepair ?? computeEcoScore({
+        purpose: "repair",
+        condition: cachedResult.condition,
+        remainingLife: cachedResult.remainingLife,
+      });
+      const cachedEcoScoreRecycle = cachedResult.ecoScoreRecycle ?? computeEcoScore({
+        purpose: "recycle",
+        condition: cachedResult.condition,
+        remainingLife: cachedResult.remainingLife,
+      });
       const cachedEcoScore = cachedResult.ecoScore ?? computeEcoScore({
         purpose,
         condition: cachedResult.condition,
@@ -606,7 +672,11 @@ export default function DashboardPage() {
       setDamageLevel(cachedResult.damageLevel || 0);
       setRepairCost(cachedResult.repairCost || 0);
       setRecyclingValue(cachedResult.recyclingValue || 0);
+      setSellPrice(cachedSellPrice);
       setUsageMessage(cachedResult.usageMessage || "");
+      setEcoScoreSell(cachedEcoScoreSell);
+      setEcoScoreRepair(cachedEcoScoreRepair);
+      setEcoScoreRecycle(cachedEcoScoreRecycle);
       setEcoScore(cachedEcoScore);
       setAnalysisReady(true);
       setUploadLoading(false);
@@ -705,17 +775,37 @@ export default function DashboardPage() {
         remainingLife: remaining,
       });
 
+      const nextEcoScoreSell = computeEcoScore({
+        purpose: "sell",
+        condition: nextCondition,
+        remainingLife: remaining,
+      });
+      const nextEcoScoreRepair = computeEcoScore({
+        purpose: "repair",
+        condition: nextCondition,
+        remainingLife: remaining,
+      });
+      const nextEcoScoreRecycle = computeEcoScore({
+        purpose: "recycle",
+        condition: nextCondition,
+        remainingLife: remaining,
+      });
+
       const result = {
         condition: nextCondition,
         score: nextScore,
         remainingLife: remaining,
         price: estimatedPrice,
+        sellPrice: estimatedPrice,
         demand: "",
         damageLevel: nextDamageLevel,
         repairCost: estimatedRepairCost,
         recyclingValue: recyclingEstimate,
         usageMessage: nextUsageMessage,
         ecoScore: nextEcoScore,
+        ecoScoreSell: nextEcoScoreSell,
+        ecoScoreRepair: nextEcoScoreRepair,
+        ecoScoreRecycle: nextEcoScoreRecycle,
       };
 
       const historyEntry = {
@@ -724,8 +814,14 @@ export default function DashboardPage() {
         productName: productTypeInput.trim(),
         purpose,
         price: purpose === "repair" ? estimatedRepairCost : purpose === "recycle" ? recyclingEstimate : estimatedPrice,
+        sellPrice: estimatedPrice,
+        repairCost: estimatedRepairCost,
+        recycleValue: recyclingEstimate,
         condition: nextCondition,
         ecoScore: nextEcoScore,
+        ecoScoreSell: nextEcoScoreSell,
+        ecoScoreRepair: nextEcoScoreRepair,
+        ecoScoreRecycle: nextEcoScoreRecycle,
         suggestion: nextUsageMessage || "Analysis complete.",
         date: new Date().toISOString(),
       };
@@ -743,7 +839,11 @@ export default function DashboardPage() {
       setDamageLevel(result.damageLevel);
       setRepairCost(result.repairCost);
       setRecyclingValue(result.recyclingValue);
+      setSellPrice(result.sellPrice);
       setUsageMessage(result.usageMessage);
+      setEcoScoreSell(result.ecoScoreSell);
+      setEcoScoreRepair(result.ecoScoreRepair);
+      setEcoScoreRecycle(result.ecoScoreRecycle);
       setEcoScore(result.ecoScore);
       setAnalysisReady(true);
     } catch (error) {
@@ -1571,6 +1671,43 @@ export default function DashboardPage() {
                       <div className="res-item"><span>Purpose</span><strong>Select above</strong></div>
                     ) : null}
                   </div>
+
+                  {analysisReady ? (
+                    <div className="comparison-panel">
+                      <div className="comparison-header">
+                        <div>
+                          <h4>Compare Options</h4>
+                          <p>See Sell vs Repair vs Recycle for this product.</p>
+                        </div>
+                        {ecoRecommendation ? (
+                          <div className="comparison-reco">
+                            <iconify-icon icon="ph:leaf-bold" />
+                            <span>{ecoRecommendation}</span>
+                          </div>
+                        ) : null}
+                      </div>
+                      <div className="comparison-grid">
+                        {comparisonOptions.map((option) => {
+                          const isBest = bestEcoOption?.key === option.key;
+                          return (
+                            <div key={option.key} className={`comparison-card ${isBest ? "best" : ""}`}>
+                              <div className="comparison-title">
+                                <iconify-icon icon={option.icon} />
+                                <span>{option.label}</span>
+                              </div>
+                              <div className="comparison-value">
+                                {option.value ? `₹${option.value}` : "-"}
+                              </div>
+                              <div className="comparison-meta">Eco: {option.ecoScore}/100</div>
+                              {isBest ? (
+                                <div className="comparison-badge">Best ✅</div>
+                              ) : null}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  ) : null}
                 </div>
               </div>
             </section>

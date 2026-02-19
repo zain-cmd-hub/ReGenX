@@ -1279,6 +1279,118 @@ input:focus, select:focus {
 .eco-card.eco-mid { --eco-color: #f59e0b; }
 .eco-card.eco-low { --eco-color: #ef4444; }
 
+.comparison-panel {
+  margin-top: 18px;
+  background: white;
+  border: 1px solid var(--border-color);
+  border-radius: 16px;
+  padding: 16px;
+  animation: fadeUp 0.35s ease both;
+}
+
+.comparison-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+
+.comparison-header h4 {
+  margin: 0;
+  font-size: 16px;
+  color: var(--text-main);
+}
+
+.comparison-header p {
+  margin: 4px 0 0;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.comparison-reco {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  background: #ecfdf3;
+  border: 1px solid rgba(22, 163, 74, 0.2);
+  border-radius: 999px;
+  color: #15803d;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.comparison-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.comparison-card {
+  border-radius: 14px;
+  border: 1px solid var(--border-color);
+  padding: 12px;
+  background: #f8fafc;
+  display: grid;
+  gap: 8px;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.comparison-card:hover {
+  transform: translateY(-2px) scale(1.02);
+  box-shadow: var(--shadow-sm);
+}
+
+.comparison-card.best {
+  border-color: #16a34a;
+  box-shadow: 0 12px 24px -16px rgba(22, 163, 74, 0.7);
+  transform: translateY(-2px) scale(1.03);
+}
+
+.comparison-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 700;
+  color: var(--text-main);
+}
+
+.comparison-value {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text-main);
+}
+
+.comparison-meta {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.comparison-badge {
+  display: inline-flex;
+  width: fit-content;
+  padding: 4px 8px;
+  border-radius: 999px;
+  background: #dcfce7;
+  color: #166534;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+@media (max-width: 900px) {
+  .comparison-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 520px) {
+  .comparison-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
 @media (max-width: 900px) {
   .results-summary {
     grid-template-columns: repeat(2, minmax(0, 1fr));
