@@ -194,6 +194,17 @@ export default function DashboardPage() {
   const [notifications, setNotifications] = useState([]);
   const [isNotifOpen, setIsNotifOpen] = useState(false);
 
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const [isProfileEditing, setIsProfileEditing] = useState(true);
+  const [profileStatus, setProfileStatus] = useState("");
+  const [profileData, setProfileData] = useState({
+    name: "",
+    email: "",
+    phone: "",
+    address: "",
+    about: "",
+  });
+
   const [liveScore, setLiveScore] = useState(82);
   const [liveReuse, setLiveReuse] = useState(64);
   const [liveDemand] = useState("High");
@@ -204,6 +215,12 @@ export default function DashboardPage() {
     const storedUser = localStorage.getItem("tscemUser");
     if (storedUser) {
       setUserProfile(JSON.parse(storedUser));
+    }
+
+    const storedProfile = localStorage.getItem("tscemProfile");
+    if (storedProfile) {
+      setProfileData(JSON.parse(storedProfile));
+      setIsProfileEditing(false);
     }
 
     const unsubscribe = onAuthStateChanged(auth, (user) => {
@@ -220,6 +237,16 @@ export default function DashboardPage() {
       };
       localStorage.setItem("tscemUser", JSON.stringify(nextProfile));
       setUserProfile(nextProfile);
+
+      setProfileData((prev) => {
+        const merged = {
+          ...prev,
+          name: prev.name || nextProfile.name,
+          email: prev.email || nextProfile.email,
+        };
+        localStorage.setItem("tscemProfile", JSON.stringify(merged));
+        return merged;
+      });
     });
 
     const scoreCycle = [82, 85, 88, 84, 90];
@@ -590,8 +617,11 @@ export default function DashboardPage() {
     const life = remainingLife ? `${remainingLife}%` : "Pending";
     const localScore = score ? `${score}/100` : "Pending";
     const localPrice = price ? `₹${price}` : "Pending";
+    const buyerName = profileData.name || "Pending";
+    const buyerEmail = profileData.email || "Pending";
+    const buyerPhone = profileData.phone || "Pending";
 
-    return `Hello, I want to connect regarding my product.\n\nProduct: ${name}\nAge: ${age}\nCondition: ${condition}\nRemaining Life: ${life}\nSustainability Score: ${localScore}\nEstimated Price: ${localPrice}\n\nPlease contact me for reuse/repair/recycling.`;
+    return `Hello, I want to connect regarding my product.\n\nProduct: ${name}\nAge: ${age}\nCondition: ${condition}\nRemaining Life: ${life}\nSustainability Score: ${localScore}\nEstimated Price: ${localPrice}\n\nContact Details\nName: ${buyerName}\nEmail: ${buyerEmail}\nPhone: ${buyerPhone}\n\nPlease contact me for reuse/repair/recycling.`;
   }
 
   function openWhatsApp() {
@@ -656,6 +686,14 @@ export default function DashboardPage() {
     await signOut(auth);
     localStorage.removeItem("tscemUser");
     router.push("/login");
+  }
+
+  function handleProfileSave(event) {
+    event.preventDefault();
+    localStorage.setItem("tscemProfile", JSON.stringify(profileData));
+    setProfileStatus("Profile updated successfully");
+    setIsProfileEditing(false);
+    setTimeout(() => setProfileStatus(""), 2500);
   }
 
   const unreadCount = notifications.filter((item) => !item.read).length;
@@ -726,6 +764,10 @@ export default function DashboardPage() {
               <iconify-icon icon="ph:magnifying-glass-bold" />
               <input type="text" placeholder="Search..." />
             </div>
+            <button className="icon-btn profile-btn" onClick={() => setIsProfileOpen(true)}>
+              <iconify-icon icon="ph:user-circle-bold" />
+            </button>
+
             <div className="notification-wrapper">
               <button
                 className="icon-btn notification-btn"
@@ -1183,6 +1225,81 @@ export default function DashboardPage() {
           <button className="btn-primary full-width" onClick={handleSendMessage}>
             Send Message
           </button>
+        </div>
+      </div>
+
+      <div className={`modal ${isProfileOpen ? "" : "hidden"}`} aria-hidden={!isProfileOpen}>
+        <div className="modal-overlay" onClick={() => setIsProfileOpen(false)} />
+        <div className="modal-card profile-modal" role="dialog" aria-modal="true">
+          <button className="modal-close" aria-label="Close" onClick={() => setIsProfileOpen(false)}>
+            ×
+          </button>
+          <div className="modal-header-icon">
+            <iconify-icon icon="ph:user-circle-bold" />
+          </div>
+          <h3>Profile</h3>
+          <p className="modal-sub">Manage your marketplace details.</p>
+
+          <form className="profile-form" onSubmit={handleProfileSave}>
+            <label>
+              Full Name
+              <input
+                type="text"
+                value={profileData.name}
+                onChange={(event) => setProfileData((prev) => ({ ...prev, name: event.target.value }))}
+                readOnly={!isProfileEditing}
+              />
+            </label>
+            <label>
+              Email (read-only)
+              <input type="email" value={profileData.email} readOnly />
+            </label>
+            <label>
+              Phone Number
+              <input
+                type="tel"
+                placeholder="+91 98765 43210"
+                value={profileData.phone}
+                onChange={(event) => setProfileData((prev) => ({ ...prev, phone: event.target.value }))}
+                readOnly={!isProfileEditing}
+              />
+            </label>
+            <label>
+              Address
+              <input
+                type="text"
+                placeholder="City, State"
+                value={profileData.address}
+                onChange={(event) => setProfileData((prev) => ({ ...prev, address: event.target.value }))}
+                readOnly={!isProfileEditing}
+              />
+            </label>
+            <label>
+              About Me
+              <textarea
+                rows="3"
+                placeholder="Tell us about your business or products."
+                value={profileData.about}
+                onChange={(event) => setProfileData((prev) => ({ ...prev, about: event.target.value }))}
+                readOnly={!isProfileEditing}
+              />
+            </label>
+
+            {profileStatus ? <div className="profile-success">{profileStatus}</div> : null}
+
+            <div className="profile-actions">
+              <button
+                type="button"
+                className="btn-secondary"
+                onClick={() => setIsProfileEditing(true)}
+              >
+                Edit Profile
+              </button>
+              <button type="submit" className="btn-primary">
+                Save
+              </button>
+            </div>
+          </form>
         </div>
       </div>
     </div>

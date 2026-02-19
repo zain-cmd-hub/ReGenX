@@ -340,6 +340,57 @@ body {
   cursor: pointer;
 }
 
+.profile-btn {
+  font-size: 22px;
+}
+
+.profile-modal {
+  max-width: 520px;
+  text-align: left;
+}
+
+.profile-form {
+  display: grid;
+  gap: 14px;
+  margin-top: 16px;
+}
+
+.profile-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-main);
+}
+
+.profile-form input,
+.profile-form textarea {
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid var(--border-color);
+  font-family: inherit;
+  font-size: 14px;
+}
+
+.profile-form input[readonly],
+.profile-form textarea[readonly] {
+  background: #f8fafc;
+  color: #94a3b8;
+}
+
+.profile-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+}
+
+.profile-success {
+  font-size: 12px;
+  font-weight: 700;
+  color: #10b981;
+}
+
 .profile-pic img {
   width: 44px;
   height: 44px;
