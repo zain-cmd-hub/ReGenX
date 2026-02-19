@@ -206,6 +206,18 @@ export default function DashboardPage() {
     about: "",
   });
 
+  const profileCompletion = useMemo(() => {
+    const fields = [
+      profileData.name,
+      profileData.email,
+      profileData.phone,
+      profileData.address,
+      profileData.about,
+    ];
+    const filled = fields.filter((item) => String(item || "").trim().length > 0).length;
+    return Math.round((filled / 5) * 100);
+  }, [profileData]);
+
   const [reviews, setReviews] = useState([]);
   const [isRatingOpen, setIsRatingOpen] = useState(false);
   const [ratingValue, setRatingValue] = useState(0);
@@ -953,8 +965,18 @@ export default function DashboardPage() {
                 {userProfile.name ? userProfile.name.slice(0, 2).toUpperCase() : "DK"}
               </div>
               <div className="user-info">
-                <span className="user-name">{userProfile.name || "Dev Kulshrestha"}</span>
-                <span className="user-role">{userProfile.email || "Admin"}</span>
+                <span className="user-name">
+                  {userProfile.name || "Dev Kulshrestha"}
+                  {profileCompletion === 100 ? (
+                    <span className="verified-badge">✅ Verified User</span>
+                  ) : null}
+                </span>
+                <span className="user-role">
+                  {userProfile.email || "Admin"}
+                  {profileCompletion < 100 ? (
+                    <span className="incomplete-badge">❌ Profile Incomplete</span>
+                  ) : null}
+                </span>
               </div>
             </div>
             <button className="logout-btn" title="Logout" onClick={handleLogout}>
@@ -1617,6 +1639,30 @@ export default function DashboardPage() {
           <p className="modal-sub">Manage your marketplace details.</p>
 
           <form className="profile-form" onSubmit={handleProfileSave}>
+            <div className="profile-card">
+              <div className="profile-avatar">
+                {profileData.name ? profileData.name.slice(0, 2).toUpperCase() : "U"}
+              </div>
+              <div>
+                <div className="profile-title">
+                  {profileData.name || "Your Profile"}
+                </div>
+                <div className="profile-sub">
+                  {profileCompletion === 100 ? "✔ Profile Completed 100%" : "❌ Profile Incomplete"}
+                </div>
+              </div>
+              <span className={`profile-badge ${profileCompletion === 100 ? "verified" : "incomplete"}`}>
+                {profileCompletion === 100 ? "Verified" : "Incomplete"}
+              </span>
+            </div>
+
+            <div className="profile-progress">
+              <div className="progress-bar">
+                <div className="progress-fill" style={{ width: `${profileCompletion}%` }} />
+              </div>
+              <span>{profileCompletion}%</span>
+            </div>
+
             <label>
               Full Name
               <input
