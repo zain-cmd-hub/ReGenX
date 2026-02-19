@@ -191,6 +191,9 @@ export default function DashboardPage() {
   const [facilities, setFacilities] = useState([]);
   const [activeFacility, setActiveFacility] = useState(null);
 
+  const [notifications, setNotifications] = useState([]);
+  const [isNotifOpen, setIsNotifOpen] = useState(false);
+
   const [liveScore, setLiveScore] = useState(82);
   const [liveReuse, setLiveReuse] = useState(64);
   const [liveDemand] = useState("High");
@@ -234,6 +237,17 @@ export default function DashboardPage() {
       unsubscribe();
     };
   }, [router]);
+
+  useEffect(() => {
+    const stored = localStorage.getItem("tscemNotifications");
+    if (stored) {
+      setNotifications(JSON.parse(stored));
+    }
+  }, []);
+
+  useEffect(() => {
+    localStorage.setItem("tscemNotifications", JSON.stringify(notifications));
+  }, [notifications]);
 
   function resetAnalysis() {
     setCondition("-");
@@ -587,11 +601,64 @@ export default function DashboardPage() {
     window.open(link, "_blank", "noopener,noreferrer");
   }
 
+  function formatTime(timestamp) {
+    const date = new Date(timestamp);
+    return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+  }
+
+  function createNotificationPayload(facility) {
+    const purposeLabel = purpose === "sell" ? "Sell" : purpose === "repair" ? "Repair" : "Recycle";
+    const productSummary = `${productTypeInput || "Product"} • Usage ${totalUsageDays} days`;
+    let message = "";
+
+    if (purpose === "sell") {
+      message = `Interested in buying your product. Estimated price: ₹${price || "-"}`;
+    } else if (purpose === "repair") {
+      message = `Ready to repair your product. Estimated cost: ₹${repairCost || "-"}`;
+    } else {
+      message = `Accepting product for recycling. Estimated value: ₹${recyclingValue || "-"}`;
+    }
+
+    return {
+      id: `${Date.now()}_${facility.name.length}`,
+      shopName: facility.name,
+      purpose: purposeLabel,
+      productSummary,
+      message,
+      timestamp: Date.now(),
+      read: false,
+    };
+  }
+
+  function scheduleNotification(facility) {
+    const delay = 5000 + (facility.name.length % 6) * 1000;
+    setTimeout(() => {
+      const notification = createNotificationPayload(facility);
+      setNotifications((prev) => [notification, ...prev]);
+    }, delay);
+  }
+
+  function handleSendMessage() {
+    if (!activeFacility) return;
+    openWhatsApp();
+    scheduleNotification(activeFacility);
+  }
+
+  function markAllRead() {
+    setNotifications((prev) => prev.map((item) => ({ ...item, read: true })));
+  }
+
+  function markNotificationRead(id) {
+    setNotifications((prev) => prev.map((item) => (item.id === id ? { ...item, read: true } : item)));
+  }
+
   async function handleLogout() {
     await signOut(auth);
     localStorage.removeItem("tscemUser");
     router.push("/login");
   }
+
+  const unreadCount = notifications.filter((item) => !item.read).length;
 
   return (
     <div className="dashboard-body">
@@ -659,10 +726,50 @@ export default function DashboardPage() {
               <iconify-icon icon="ph:magnifying-glass-bold" />
               <input type="text" placeholder="Search..." />
             </div>
-            <button className="icon-btn notification-btn">
-              <iconify-icon icon="ph:bell-bold" />
-              <span className="badge" />
-            </button>
+            <div className="notification-wrapper">
+              <button
+                className="icon-btn notification-btn"
+                onClick={() => setIsNotifOpen((prev) => !prev)}
+              >
+                <iconify-icon icon="ph:bell-bold" />
+                {unreadCount > 0 ? (
+                  <span className="badge-count">{unreadCount}</span>
+                ) : null}
+              </button>
+
+              {isNotifOpen ? (
+                <div className="notification-panel">
+                  <div className="notification-header">
+                    <span>Notifications</span>
+                    <button className="mark-read" onClick={markAllRead}>
+                      Mark all read
+                    </button>
+                  </div>
+                  <div className="notification-list">
+                    {notifications.length === 0 ? (
+                      <div className="notification-empty">No responses yet.</div>
+                    ) : (
+                      notifications.map((item) => (
+                        <div key={item.id} className={`notification-item ${item.read ? "read" : ""}`}>
+                          <div>
+                            <div className="notification-title">{item.shopName}</div>
+                            <div className="notification-text">{item.message}</div>
+                            <div className="notification-meta">
+                              {item.purpose} • {item.productSummary} • {formatTime(item.timestamp)}
+                            </div>
+                          </div>
+                          {!item.read ? (
+                            <button className="mark-read" onClick={() => markNotificationRead(item.id)}>
+                              Mark read
+                            </button>
+                          ) : null}
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+              ) : null}
+            </div>
             <div className="profile-pic">
               <img
                 src={
@@ -1073,7 +1180,7 @@ export default function DashboardPage() {
             <label>Pre-filled Message</label>
             <div className="message-preview">{buildWhatsappMessage()}</div>
           </div>
-          <button className="btn-primary full-width" onClick={openWhatsApp}>
+          <button className="btn-primary full-width" onClick={handleSendMessage}>
             Send Message
           </button>
         </div>
