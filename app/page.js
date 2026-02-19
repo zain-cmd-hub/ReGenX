@@ -203,7 +203,6 @@ export default function DashboardPage() {
     email: "",
     phone: "",
     address: "",
-      setFlowStep(0);
     about: "",
   });
 
@@ -213,8 +212,6 @@ export default function DashboardPage() {
 
   const fileInputRef = useRef(null);
 
-    setPurpose("");
-    setFlowStep(1);
   useEffect(() => {
     const storedUser = localStorage.getItem("tscemUser");
     if (storedUser) {
@@ -227,7 +224,6 @@ export default function DashboardPage() {
       setIsProfileEditing(false);
     }
 
-    setFlowStep((prev) => (prev < 3 ? 3 : prev));
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       if (!user) {
         localStorage.removeItem("tscemUser");
@@ -235,41 +231,13 @@ export default function DashboardPage() {
         return;
       }
 
-    setFlowStep((prev) => (prev < 4 ? 4 : prev));
       const nextProfile = {
         name: user.displayName || "",
         email: user.email || "",
         photo: user.photoURL || "",
-    if (flowStep < 4) {
-      alert("Please complete analysis and pricing before connecting.");
-      return;
-    }
       };
       localStorage.setItem("tscemUser", JSON.stringify(nextProfile));
-    setFlowStep(5);
       setUserProfile(nextProfile);
-
-  function handlePurposeSelect(nextPurpose) {
-    setPurpose(nextPurpose);
-    setFlowStep((prev) => (prev < 2 ? 2 : prev));
-  }
-
-  function handleConnectClick(facility) {
-    if (flowStep < 4) {
-      alert("Please complete analysis and pricing before connecting.");
-      return;
-    }
-    setActiveFacility(facility);
-    setFlowStep(5);
-  }
-
-  const flowSteps = [
-    { id: 1, label: "Upload Product" },
-    { id: 2, label: "Select Purpose" },
-    { id: 3, label: "AI Analysis" },
-    { id: 4, label: "Price & Value" },
-    { id: 5, label: "Connect Facility" },
-  ];
 
       setProfileData((prev) => {
         const merged = {
@@ -326,6 +294,8 @@ export default function DashboardPage() {
     if (!productImage) {
       setImageHash("");
       resetAnalysis();
+      setPurpose("");
+      setFlowStep(0);
       return;
     }
 
@@ -335,6 +305,8 @@ export default function DashboardPage() {
     setUsageYears("");
     setUsageMonths("");
     setUsageDays("");
+    setPurpose("");
+    setFlowStep(1);
   }, [productImage]);
 
   useEffect(() => {
@@ -442,6 +414,8 @@ export default function DashboardPage() {
       alert("Please enter product usage before analyzing.");
       return;
     }
+
+    setFlowStep((prev) => (prev < 3 ? 3 : prev));
 
     if (purpose === "recycle" && (!materialWeight || Number(materialWeight) <= 0)) {
       alert("Please enter material weight for recycling analysis.");
@@ -611,6 +585,8 @@ export default function DashboardPage() {
       return;
     }
 
+    setFlowStep((prev) => (prev < 4 ? 4 : prev));
+
     setPriceLoading(true);
     setTimeout(() => {
       setPriceLoading(false);
@@ -703,8 +679,27 @@ export default function DashboardPage() {
 
   function handleSendMessage() {
     if (!activeFacility) return;
+    if (flowStep < 4) {
+      alert("Please complete analysis and pricing before connecting.");
+      return;
+    }
     openWhatsApp();
     scheduleNotification(activeFacility);
+    setFlowStep(5);
+  }
+
+  function handlePurposeSelect(nextPurpose) {
+    setPurpose(nextPurpose);
+    setFlowStep((prev) => (prev < 2 ? 2 : prev));
+  }
+
+  function handleConnectClick(facility) {
+    if (flowStep < 4) {
+      alert("Please complete analysis and pricing before connecting.");
+      return;
+    }
+    setActiveFacility(facility);
+    setFlowStep(5);
   }
 
   function markAllRead() {
@@ -730,6 +725,13 @@ export default function DashboardPage() {
   }
 
   const unreadCount = notifications.filter((item) => !item.read).length;
+  const flowSteps = [
+    { id: 1, label: "Upload Product" },
+    { id: 2, label: "Select Purpose" },
+    { id: 3, label: "AI Analysis" },
+    { id: 4, label: "Price & Value" },
+    { id: 5, label: "Connect Facility" },
+  ];
 
   return (
     <div className="dashboard-body">
