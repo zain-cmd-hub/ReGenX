@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { onAuthStateChanged, signOut } from "firebase/auth";
 import { auth } from "./lib/firebase";
@@ -166,6 +166,8 @@ export default function DashboardPage() {
   const [purpose, setPurpose] = useState("");
   const [materialType, setMaterialType] = useState("metal");
   const [materialWeight, setMaterialWeight] = useState("");
+  const [fileError, setFileError] = useState("");
+  const [isDragActive, setIsDragActive] = useState(false);
 
   const [condition, setCondition] = useState("-");
   const [score, setScore] = useState(0);
@@ -189,6 +191,8 @@ export default function DashboardPage() {
   const [liveScore, setLiveScore] = useState(82);
   const [liveReuse, setLiveReuse] = useState(64);
   const [liveDemand] = useState("High");
+
+  const fileInputRef = useRef(null);
 
   useEffect(() => {
     const storedUser = localStorage.getItem("tscemUser");
@@ -308,17 +312,46 @@ export default function DashboardPage() {
     }
   }
 
-  function handleImageChange(event) {
-    const file = event.target.files?.[0];
+  function handleFileSelection(file) {
     if (!file) {
       setProductImage("");
       return;
     }
+
+    if (!file.type.startsWith("image/")) {
+      setFileError("Please select a valid image file (JPG, PNG, WEBP).");
+      setProductImage("");
+      return;
+    }
+
+    setFileError("");
     const reader = new FileReader();
     reader.onload = (loadEvent) => {
       setProductImage(loadEvent.target?.result || "");
     };
     reader.readAsDataURL(file);
+  }
+
+  function handleImageChange(event) {
+    const file = event.target.files?.[0];
+    handleFileSelection(file);
+    event.target.value = "";
+  }
+
+  function handleDragOver(event) {
+    event.preventDefault();
+    setIsDragActive(true);
+  }
+
+  function handleDragLeave() {
+    setIsDragActive(false);
+  }
+
+  function handleDrop(event) {
+    event.preventDefault();
+    setIsDragActive(false);
+    const file = event.dataTransfer.files?.[0];
+    handleFileSelection(file);
   }
 
   async function handleAnalyze() {
@@ -722,17 +755,44 @@ export default function DashboardPage() {
               </div>
               <div className="upload-container">
                 <div className="upload-area">
-                  <input type="file" accept="image/*" onChange={handleImageChange} />
-                  <div className="image-preview">
+                  <input
+                    ref={fileInputRef}
+                    id="productImageInput"
+                    className="upload-input"
+                    type="file"
+                    accept="image/*"
+                    onChange={handleImageChange}
+                  />
+                  <label
+                    htmlFor="productImageInput"
+                    className={`upload-card ${isDragActive ? "drag" : ""} ${productImage ? "has-image" : ""}`}
+                    onDragOver={handleDragOver}
+                    onDragLeave={handleDragLeave}
+                    onDrop={handleDrop}
+                  >
                     {productImage ? (
-                      <img src={productImage} alt="Uploaded product" />
+                      <img className="upload-preview" src={productImage} alt="Uploaded product" />
                     ) : (
-                      <>
-                        <iconify-icon icon="ph:image-bold" style={{ fontSize: "48px", opacity: 0.5 }} />
-                        <span>Select Image</span>
-                      </>
+                      <div className="upload-content">
+                        <iconify-icon icon="ph:cloud-arrow-up-bold" className="upload-icon" />
+                        <span className="upload-title">Click or drag an image here</span>
+                        <span className="upload-hint">PNG, JPG, or WEBP up to 10MB</span>
+                      </div>
                     )}
-                  </div>
+                    {productImage ? (
+                      <button
+                        type="button"
+                        className="change-btn"
+                        onClick={(event) => {
+                          event.preventDefault();
+                          fileInputRef.current?.click();
+                        }}
+                      >
+                        Change Image
+                      </button>
+                    ) : null}
+                  </label>
+                  {fileError ? <p className="upload-error">{fileError}</p> : null}
                 </div>
                 <div className="form-group">
                   <div>
