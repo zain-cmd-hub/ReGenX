@@ -160,12 +160,15 @@ export default function DashboardPage() {
   const [activeNav, setActiveNav] = useState("dashboard");
   const [productTypeInput, setProductTypeInput] = useState("");
   const [productAgeInput, setProductAgeInput] = useState("");
-  const [usageLevel, setUsageLevel] = useState("moderate");
   const [productImage, setProductImage] = useState("");
   const [imageHash, setImageHash] = useState("");
   const [purpose, setPurpose] = useState("");
   const [materialType, setMaterialType] = useState("metal");
   const [materialWeight, setMaterialWeight] = useState("");
+  const [usageYears, setUsageYears] = useState("");
+  const [usageMonths, setUsageMonths] = useState("");
+  const [usageDays, setUsageDays] = useState("");
+  const [usageMessage, setUsageMessage] = useState("");
   const [fileError, setFileError] = useState("");
   const [isDragActive, setIsDragActive] = useState(false);
 
@@ -191,6 +194,8 @@ export default function DashboardPage() {
   const [liveScore, setLiveScore] = useState(82);
   const [liveReuse, setLiveReuse] = useState(64);
   const [liveDemand] = useState("High");
+
+  const fileInputRef = useRef(null);
 
   const fileInputRef = useRef(null);
 
@@ -241,6 +246,7 @@ export default function DashboardPage() {
     setDamageLevel(0);
     setRepairCost(0);
     setRecyclingValue(0);
+    setUsageMessage("");
     setAnalysisReady(false);
   }
 
@@ -254,49 +260,38 @@ export default function DashboardPage() {
     const hash = hashString(productImage);
     setImageHash(hash);
     resetAnalysis();
+    setUsageYears("");
+    setUsageMonths("");
+    setUsageDays("");
   }, [productImage]);
 
   useEffect(() => {
     if (imageHash) {
       resetAnalysis();
     }
-  }, [productAgeInput, usageLevel, purpose, materialType, materialWeight, imageHash]);
-
-  useEffect(() => {
-    if (!productImage) {
-      setImageHash("");
-      setCondition("-");
-      setScore(0);
-      setRemainingLife(0);
-      setPrice(0);
-      setDemand("");
-      return;
-    }
-
-    const hash = hashString(productImage);
-    setImageHash(hash);
-
-    const cache = readImageCache();
-    const cachedResult = cache[hash];
-    if (cachedResult) {
-      setCondition(cachedResult.condition);
-      setScore(cachedResult.score);
-      setRemainingLife(cachedResult.remainingLife);
-      setPrice(cachedResult.price);
-      setDemand(cachedResult.demand);
-    } else {
-      setCondition("-");
-      setScore(0);
-      setRemainingLife(0);
-      setPrice(0);
-      setDemand("");
-    }
-  }, [productImage]);
+  }, [productAgeInput, usageYears, usageMonths, usageDays, purpose, materialType, materialWeight, imageHash]);
 
   const dashboardAge = useMemo(() => {
     if (!productAgeInput) return "-";
     return `Age: ${productAgeInput} year(s)`;
   }, [productAgeInput]);
+
+  const totalUsageDays = useMemo(() => {
+    const years = Number(usageYears) || 0;
+    const months = Number(usageMonths) || 0;
+    const days = Number(usageDays) || 0;
+    return years * 365 + months * 30 + days;
+  }, [usageYears, usageMonths, usageDays]);
+
+  const usageSummary = useMemo(() => {
+    return `Total Usage: ${totalUsageDays} days`;
+  }, [totalUsageDays]);
+
+  const usageTier = useMemo(() => {
+    if (totalUsageDays <= 180) return "low";
+    if (totalUsageDays <= 720) return "medium";
+    return "high";
+  }, [totalUsageDays]);
 
   const dashboardCondition = condition && condition !== "-" ? `Condition: ${condition}` : "-";
   const dashboardScore = score ? `Score: ${score}/100` : "-";
@@ -371,6 +366,11 @@ export default function DashboardPage() {
       return;
     }
 
+    if (totalUsageDays <= 0) {
+      alert("Please enter product usage before analyzing.");
+      return;
+    }
+
     if (purpose === "recycle" && (!materialWeight || Number(materialWeight) <= 0)) {
       alert("Please enter material weight for recycling analysis.");
       return;
@@ -379,7 +379,7 @@ export default function DashboardPage() {
     setUploadLoading(true);
 
     const hash = imageHash || hashString(productImage);
-    const cacheKey = `${hash}|purpose:${purpose}|age:${ageValue}|usage:${usageLevel}|type:${productTypeInput.trim()}|material:${materialType}|weight:${materialWeight}`;
+    const cacheKey = `${hash}|purpose:${purpose}|age:${ageValue}|usageDays:${totalUsageDays}|type:${productTypeInput.trim()}|material:${materialType}|weight:${materialWeight}`;
     const cache = readImageCache();
     const cachedResult = cache[cacheKey];
 
@@ -392,6 +392,7 @@ export default function DashboardPage() {
       setDamageLevel(cachedResult.damageLevel || 0);
       setRepairCost(cachedResult.repairCost || 0);
       setRecyclingValue(cachedResult.recyclingValue || 0);
+      setUsageMessage(cachedResult.usageMessage || "");
       setAnalysisReady(true);
       setUploadLoading(false);
       return;
@@ -399,16 +400,10 @@ export default function DashboardPage() {
 
     try {
       const features = await analyzeImageFeatures(productImage);
-      const ageWeight = 3.5;
-      const usageFactor = usageLevel === "light" ? 10 : usageLevel === "moderate" ? 20 : 30;
-      const ageFactor = ageValue * ageWeight;
       const damageFactor = features.damageScore;
-
-      const remaining = clamp(
-        Math.round(100 - (ageFactor + damageFactor + usageFactor)),
-        0,
-        100
-      );
+      const damageImpact = clamp(damageFactor * 0.6, 0, 60);
+      const usageImpact = clamp((totalUsageDays / (365 * 5)) * 60, 0, 60);
+      const remaining = clamp(Math.round(100 - (usageImpact + damageImpact)), 0, 100);
 
       const clearImage = features.brightness >= 0.55 && features.sharpness >= 0.25;
       const poorImage = features.brightness < 0.35 || features.sharpness < 0.15;
@@ -426,14 +421,15 @@ export default function DashboardPage() {
       };
 
       const basePrice = 12000;
+      const usageMultiplier = usageTier === "low" ? 1.1 : usageTier === "medium" ? 1.0 : 0.85;
       const estimatedPrice = Math.round(
-        basePrice * (remaining / 100) * conditionWeights[nextCondition]
+        basePrice * (remaining / 100) * conditionWeights[nextCondition] * usageMultiplier
       );
 
       const nextScore = clamp(Math.round(remaining - damageFactor * 0.2), 10, 98);
       const nextDamageLevel = clamp(Math.round(damageFactor), 0, 100);
-      const repairFactor = 60;
-      const estimatedRepairCost = Math.round(nextDamageLevel * repairFactor);
+      const repairFactor = 50;
+      const estimatedRepairCost = Math.round(nextDamageLevel * repairFactor + totalUsageDays * 2);
 
       const scrapRates = {
         plastic: 15,
@@ -442,7 +438,31 @@ export default function DashboardPage() {
         "e-waste": 120,
       };
       const weightValue = Number(materialWeight || 0);
-      const recyclingEstimate = Math.round(weightValue * scrapRates[materialType]);
+      const recycleMultiplier = usageTier === "low" ? 1.0 : usageTier === "medium" ? 0.9 : 0.8;
+      const recyclingEstimate = Math.round(weightValue * scrapRates[materialType] * recycleMultiplier);
+
+      let nextUsageMessage = "";
+      if (purpose === "sell") {
+        nextUsageMessage = usageTier === "low"
+          ? "Low usage detected, resale value increased."
+          : usageTier === "medium"
+            ? "Medium usage detected, normal resale value."
+            : "High usage detected, resale value reduced.";
+      }
+      if (purpose === "repair") {
+        nextUsageMessage = usageTier === "high"
+          ? "High usage detected, repair recommended."
+          : usageTier === "medium"
+            ? "Medium usage detected, standard repairs expected."
+            : "Low usage detected, minor repairs expected.";
+      }
+      if (purpose === "recycle") {
+        nextUsageMessage = usageTier === "high"
+          ? "High usage detected, recycling value adjusted."
+          : usageTier === "medium"
+            ? "Medium usage detected, recycling value normal."
+            : "Low usage detected, material value preserved.";
+      }
 
       console.log("[AI] Image metrics", {
         brightness: features.brightness.toFixed(2),
@@ -452,15 +472,15 @@ export default function DashboardPage() {
         damageScore: features.damageScore,
       });
       console.log("[AI] Factors", {
-        ageFactor: ageFactor.toFixed(2),
-        damageFactor,
-        usageFactor,
+        usageImpact: usageImpact.toFixed(2),
+        damageImpact: damageImpact.toFixed(2),
         remainingLife: remaining,
         condition: nextCondition,
         conditionWeight: conditionWeights[nextCondition],
         resalePrice: estimatedPrice,
         repairCost: estimatedRepairCost,
         recyclingValue: recyclingEstimate,
+        usageMessage: nextUsageMessage,
       });
 
       const result = {
@@ -472,6 +492,7 @@ export default function DashboardPage() {
         damageLevel: nextDamageLevel,
         repairCost: estimatedRepairCost,
         recyclingValue: recyclingEstimate,
+        usageMessage: nextUsageMessage,
       };
 
       cache[cacheKey] = result;
@@ -485,6 +506,7 @@ export default function DashboardPage() {
       setDamageLevel(result.damageLevel);
       setRepairCost(result.repairCost);
       setRecyclingValue(result.recyclingValue);
+      setUsageMessage(result.usageMessage);
       setAnalysisReady(true);
     } catch (error) {
       console.error("[AI] Image analysis failed", error);
@@ -512,7 +534,7 @@ export default function DashboardPage() {
       return;
     }
 
-    if (!price) {
+    if (!analysisReady) {
       alert("Analyze the product to generate results first.");
       return;
     }
@@ -844,15 +866,46 @@ export default function DashboardPage() {
                         onChange={(event) => setProductAgeInput(event.target.value)}
                       />
                     </div>
-                    <div className="col">
-                      <label>Usage</label>
-                      <select value={usageLevel} onChange={(event) => setUsageLevel(event.target.value)}>
-                        <option value="light">Light</option>
-                        <option value="moderate">Moderate</option>
-                        <option value="heavy">Heavy</option>
-                      </select>
-                    </div>
                   </div>
+
+                  {productImage ? (
+                    <div className="usage-block">
+                      <label>Usage Duration</label>
+                      <div className="row usage-row">
+                        <div className="col">
+                          <input
+                            type="number"
+                            min="0"
+                            placeholder="Years"
+                            value={usageYears}
+                            onChange={(event) => setUsageYears(event.target.value)}
+                          />
+                        </div>
+                        <div className="col">
+                          <input
+                            type="number"
+                            min="0"
+                            placeholder="Months"
+                            value={usageMonths}
+                            onChange={(event) => setUsageMonths(event.target.value)}
+                          />
+                        </div>
+                        <div className="col">
+                          <input
+                            type="number"
+                            min="0"
+                            placeholder="Days"
+                            value={usageDays}
+                            onChange={(event) => setUsageDays(event.target.value)}
+                          />
+                        </div>
+                      </div>
+                      <div className="usage-summary">{usageSummary}</div>
+                      {usageMessage ? (
+                        <div className="usage-message">{usageMessage}</div>
+                      ) : null}
+                    </div>
+                  ) : null}
 
                   {purpose === "recycle" ? (
                     <div className="row">
@@ -882,7 +935,7 @@ export default function DashboardPage() {
                   <button
                     onClick={handleAnalyze}
                     className="btn-primary full-width"
-                    disabled={!purpose}
+                    disabled={!productImage || !purpose || totalUsageDays <= 0}
                   >
                     <iconify-icon icon="ph:magic-wand-bold" /> Analyze
                   </button>
