@@ -5,39 +5,86 @@ import { useRouter } from "next/navigation";
 import { onAuthStateChanged, signOut } from "firebase/auth";
 import { auth } from "./lib/firebase";
 
-function randomBetween(min, max) {
-  return Math.floor(Math.random() * (max - min + 1)) + min;
-}
-
 function clamp(value, min, max) {
   return Math.min(Math.max(value, min), max);
 }
 
-function calculateCondition(age, usage) {
-  let score = 80;
-  score -= age * 3;
-  if (usage === "heavy") score -= 18;
-  else if (usage === "moderate") score -= 8;
-  if (score >= 70) return "Good";
-  if (score >= 45) return "Medium";
-  return "Poor";
-}
+async function analyzeImageFeatures(imageSrc) {
+  const image = new Image();
+  image.src = imageSrc;
 
-function calculateSustainability(condition, usage, age) {
-  let score = 75;
-  if (condition === "Good") score += 15;
-  if (condition === "Medium") score += 5;
-  if (condition === "Poor") score -= 10;
-  if (usage === "light") score += 8;
-  if (usage === "heavy") score -= 8;
-  score -= age * 2;
-  return clamp(score, 12, 98);
-}
+  await new Promise((resolve, reject) => {
+    image.onload = resolve;
+    image.onerror = reject;
+  });
 
-function calculateRemainingLife(condition, age) {
-  const base = condition === "Good" ? 85 : condition === "Medium" ? 60 : 35;
-  const adjusted = base - age * 2.2;
-  return clamp(Math.round(adjusted), 5, 95);
+  const canvas = document.createElement("canvas");
+  const context = canvas.getContext("2d");
+  const size = 200;
+  canvas.width = size;
+  canvas.height = size;
+
+  if (!context) {
+    return {
+      brightness: 0.5,
+      contrast: 0.5,
+      sharpness: 0.5,
+      edgeDensity: 0.5,
+      damageScore: 50,
+    };
+  }
+
+  context.drawImage(image, 0, 0, size, size);
+  const { data } = context.getImageData(0, 0, size, size);
+
+  let totalBrightness = 0;
+  let totalSquared = 0;
+  let edgeSum = 0;
+  const pixelCount = size * size;
+
+  const gray = new Array(pixelCount);
+  for (let i = 0; i < pixelCount; i += 1) {
+    const r = data[i * 4];
+    const g = data[i * 4 + 1];
+    const b = data[i * 4 + 2];
+    const value = (r + g + b) / 3;
+    gray[i] = value;
+    totalBrightness += value;
+  }
+
+  const avgBrightness = totalBrightness / pixelCount;
+  for (let i = 0; i < pixelCount; i += 1) {
+    const diff = gray[i] - avgBrightness;
+    totalSquared += diff * diff;
+  }
+
+  for (let y = 0; y < size - 1; y += 1) {
+    for (let x = 0; x < size - 1; x += 1) {
+      const index = y * size + x;
+      const right = gray[index + 1];
+      const down = gray[index + size];
+      const current = gray[index];
+      edgeSum += Math.abs(current - right) + Math.abs(current - down);
+    }
+  }
+
+  const brightness = avgBrightness / 255;
+  const contrast = clamp(Math.sqrt(totalSquared / pixelCount) / 128, 0, 1);
+  const edgeDensity = clamp(edgeSum / (pixelCount * 255 * 2), 0, 1);
+  const sharpness = edgeDensity;
+  const damageScore = clamp(
+    Math.round((1 - brightness) * 40 + (1 - sharpness) * 40 + (1 - contrast) * 20),
+    0,
+    100
+  );
+
+  return {
+    brightness,
+    contrast,
+    sharpness,
+    edgeDensity,
+    damageScore,
+  };
 }
 
 function hashString(value) {
@@ -89,9 +136,10 @@ function generateFacilities(location) {
     "919898977880",
   ];
 
+  const offset = location.length % 5;
   return baseNames.map((name, index) => ({
     name: `${name} - ${location}`,
-    distance: randomBetween(1, 12) + index,
+    distance: 2 + index + offset,
     type: types[index % types.length],
     phone: phoneNumbers[index],
     whatsapp: whatsappNumbers[index],
@@ -155,9 +203,14 @@ export default function DashboardPage() {
       setUserProfile(nextProfile);
     });
 
+    const scoreCycle = [82, 85, 88, 84, 90];
+    const reuseCycle = [64, 66, 62, 68, 65];
+    let index = 0;
+
     const intervalId = setInterval(() => {
-      setLiveScore(randomBetween(70, 95));
-      setLiveReuse(randomBetween(50, 80));
+      setLiveScore(scoreCycle[index % scoreCycle.length]);
+      setLiveReuse(reuseCycle[index % reuseCycle.length]);
+      index += 1;
     }, 3500);
 
     return () => {
@@ -165,6 +218,32 @@ export default function DashboardPage() {
       unsubscribe();
     };
   }, [router]);
+
+  function resetAnalysis() {
+    setCondition("-");
+    setScore(0);
+    setRemainingLife(0);
+    setPrice(0);
+    setDemand("");
+  }
+
+  useEffect(() => {
+    if (!productImage) {
+      setImageHash("");
+      resetAnalysis();
+      return;
+    }
+
+    const hash = hashString(productImage);
+    setImageHash(hash);
+    resetAnalysis();
+  }, [productImage]);
+
+  useEffect(() => {
+    if (imageHash) {
+      resetAnalysis();
+    }
+  }, [productAgeInput, usageLevel, imageHash]);
 
   useEffect(() => {
     if (!productImage) {
@@ -229,7 +308,7 @@ export default function DashboardPage() {
     reader.readAsDataURL(file);
   }
 
-  function handleAnalyze() {
+  async function handleAnalyze() {
     const ageValue = Number(productAgeInput);
     if (!productImage) {
       alert("Please upload a product image before analyzing.");
@@ -242,42 +321,83 @@ export default function DashboardPage() {
     }
 
     setUploadLoading(true);
-    setTimeout(() => {
-      const hash = imageHash || hashString(productImage);
-      const cache = readImageCache();
-      const cachedResult = cache[hash];
 
-      if (cachedResult) {
-        setCondition(cachedResult.condition);
-        setScore(cachedResult.score);
-        setRemainingLife(cachedResult.remainingLife);
-        setPrice(cachedResult.price);
-        setDemand(cachedResult.demand);
-        setUploadLoading(false);
-        return;
-      }
+    const hash = imageHash || hashString(productImage);
+    const cacheKey = `${hash}|age:${ageValue}|usage:${usageLevel}|type:${productTypeInput.trim()}`;
+    const cache = readImageCache();
+    const cachedResult = cache[cacheKey];
 
-      const nextCondition = calculateCondition(ageValue, usageLevel);
-      const nextScore = calculateSustainability(nextCondition, usageLevel, ageValue);
-      const nextLife = calculateRemainingLife(nextCondition, ageValue);
+    if (cachedResult) {
+      setCondition(cachedResult.condition);
+      setScore(cachedResult.score);
+      setRemainingLife(cachedResult.remainingLife);
+      setPrice(cachedResult.price);
+      setDemand(cachedResult.demand);
+      setUploadLoading(false);
+      return;
+    }
 
-      const demandScore = randomBetween(60, 120);
-      const demandLabel = demandScore > 100 ? "High" : demandScore > 80 ? "Moderate" : "Low";
-      const baseValue = 12000;
-      const conditionMultiplier = nextCondition === "Good" ? 1.2 : nextCondition === "Medium" ? 0.9 : 0.6;
-      const lifeMultiplier = nextLife / 100;
-      const demandMultiplier = demandScore / 100;
-      const estimatedPrice = Math.round(baseValue * conditionMultiplier * lifeMultiplier * demandMultiplier);
+    try {
+      const features = await analyzeImageFeatures(productImage);
+      const ageWeight = 3.2;
+      const usageFactor = usageLevel === "light" ? 8 : usageLevel === "moderate" ? 18 : 28;
+      const ageFactor = ageValue * ageWeight;
+      const damageFactor = features.damageScore;
+
+      const remaining = clamp(
+        Math.round(100 - (ageFactor + damageFactor + usageFactor)),
+        0,
+        100
+      );
+
+      const clearImage = features.brightness >= 0.55 && features.sharpness >= 0.25;
+      const poorImage = features.brightness < 0.35 || features.sharpness < 0.15;
+      const lowAge = ageValue <= 2;
+      const highAge = ageValue >= 6;
+
+      let nextCondition = "Medium";
+      if (clearImage && lowAge) nextCondition = "Good";
+      if (poorImage && highAge) nextCondition = "Poor";
+
+      const conditionWeights = {
+        Good: 1.0,
+        Medium: 0.7,
+        Poor: 0.4,
+      };
+
+      const basePrice = 12000;
+      const estimatedPrice = Math.round(
+        basePrice * (remaining / 100) * conditionWeights[nextCondition]
+      );
+
+      const nextScore = clamp(Math.round(remaining - damageFactor * 0.2), 10, 98);
+
+      console.log("[AI] Image metrics", {
+        brightness: features.brightness.toFixed(2),
+        sharpness: features.sharpness.toFixed(2),
+        contrast: features.contrast.toFixed(2),
+        edgeDensity: features.edgeDensity.toFixed(2),
+        damageScore: features.damageScore,
+      });
+      console.log("[AI] Factors", {
+        ageFactor: ageFactor.toFixed(2),
+        damageFactor,
+        usageFactor,
+        remainingLife: remaining,
+        condition: nextCondition,
+        conditionWeight: conditionWeights[nextCondition],
+        price: estimatedPrice,
+      });
 
       const result = {
         condition: nextCondition,
         score: nextScore,
-        remainingLife: nextLife,
+        remainingLife: remaining,
         price: estimatedPrice,
-        demand: demandLabel,
+        demand: "",
       };
 
-      cache[hash] = result;
+      cache[cacheKey] = result;
       writeImageCache(cache);
 
       setCondition(result.condition);
@@ -285,23 +405,24 @@ export default function DashboardPage() {
       setRemainingLife(result.remainingLife);
       setPrice(result.price);
       setDemand(result.demand);
+    } catch (error) {
+      console.error("[AI] Image analysis failed", error);
+      alert("Image analysis failed. Please try another image.");
+    } finally {
       setUploadLoading(false);
-    }, 1200);
+    }
   }
 
   function handlePredictLife() {
-    if (!condition || condition === "-") {
+    if (!remainingLife) {
       alert("Please analyze a product first.");
       return;
     }
 
     setLifeLoading(true);
     setTimeout(() => {
-      const ageValue = Number(productAgeInput || 0);
-      const lifeValue = remainingLife || calculateRemainingLife(condition, ageValue);
-      setRemainingLife(lifeValue);
       setLifeLoading(false);
-    }, 900);
+    }, 400);
   }
 
   function handleCalculatePrice() {
@@ -318,7 +439,7 @@ export default function DashboardPage() {
     setPriceLoading(true);
     setTimeout(() => {
       setPriceLoading(false);
-    }, 400);
+    }, 300);
   }
 
   function handleFindFacilities() {
