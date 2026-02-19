@@ -576,6 +576,14 @@ input:focus, select:focus {
   background: #f1f5f9;
   padding: 16px;
   border-radius: 12px;
+  opacity: 0;
+  transform: translateY(6px);
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.results-summary.show {
+  opacity: 1;
+  transform: translateY(0);
 }
 
 .res-item {
@@ -596,6 +604,41 @@ input:focus, select:focus {
   font-size: 16px;
   color: var(--text-main);
   margin-top: 4px;
+}
+
+.purpose-group {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.purpose-buttons {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.purpose-btn {
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid var(--border-color);
+  background: white;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.purpose-btn:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+.purpose-btn.active {
+  background: var(--primary);
+  color: white;
+  border-color: var(--primary);
+  box-shadow: 0 8px 16px -6px rgba(14, 165, 164, 0.4);
 }
 
 /* Progress & Pricing */

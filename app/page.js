@@ -118,7 +118,8 @@ function generateFacilities(location) {
     "SecondLife Exchange",
   ];
 
-  const types = ["Repair Shop", "Recycling Center", "Buyer"];
+  const types = ["Repair Shop", "Recycling Center", "Buyer", "Second-hand Store", "Service Center"];
+  const categories = ["repair", "recycling", "buyer", "second-hand", "service"];
 
   const phoneNumbers = [
     "+91 98765 43210",
@@ -141,6 +142,7 @@ function generateFacilities(location) {
     name: `${name} - ${location}`,
     distance: 2 + index + offset,
     type: types[index % types.length],
+    category: categories[index % categories.length],
     phone: phoneNumbers[index],
     whatsapp: whatsappNumbers[index],
   }));
@@ -161,12 +163,19 @@ export default function DashboardPage() {
   const [usageLevel, setUsageLevel] = useState("moderate");
   const [productImage, setProductImage] = useState("");
   const [imageHash, setImageHash] = useState("");
+  const [purpose, setPurpose] = useState("");
+  const [materialType, setMaterialType] = useState("metal");
+  const [materialWeight, setMaterialWeight] = useState("");
 
   const [condition, setCondition] = useState("-");
   const [score, setScore] = useState(0);
   const [remainingLife, setRemainingLife] = useState(0);
   const [price, setPrice] = useState(0);
   const [demand, setDemand] = useState("");
+  const [damageLevel, setDamageLevel] = useState(0);
+  const [repairCost, setRepairCost] = useState(0);
+  const [recyclingValue, setRecyclingValue] = useState(0);
+  const [analysisReady, setAnalysisReady] = useState(false);
 
   const [uploadLoading, setUploadLoading] = useState(false);
   const [lifeLoading, setLifeLoading] = useState(false);
@@ -225,6 +234,10 @@ export default function DashboardPage() {
     setRemainingLife(0);
     setPrice(0);
     setDemand("");
+    setDamageLevel(0);
+    setRepairCost(0);
+    setRecyclingValue(0);
+    setAnalysisReady(false);
   }
 
   useEffect(() => {
@@ -243,7 +256,7 @@ export default function DashboardPage() {
     if (imageHash) {
       resetAnalysis();
     }
-  }, [productAgeInput, usageLevel, imageHash]);
+  }, [productAgeInput, usageLevel, purpose, materialType, materialWeight, imageHash]);
 
   useEffect(() => {
     if (!productImage) {
@@ -315,15 +328,25 @@ export default function DashboardPage() {
       return;
     }
 
+    if (!purpose) {
+      alert("Please select a purpose before analyzing.");
+      return;
+    }
+
     if (!productTypeInput.trim() || Number.isNaN(ageValue)) {
       alert("Please fill product type and age before analyzing.");
+      return;
+    }
+
+    if (purpose === "recycle" && (!materialWeight || Number(materialWeight) <= 0)) {
+      alert("Please enter material weight for recycling analysis.");
       return;
     }
 
     setUploadLoading(true);
 
     const hash = imageHash || hashString(productImage);
-    const cacheKey = `${hash}|age:${ageValue}|usage:${usageLevel}|type:${productTypeInput.trim()}`;
+    const cacheKey = `${hash}|purpose:${purpose}|age:${ageValue}|usage:${usageLevel}|type:${productTypeInput.trim()}|material:${materialType}|weight:${materialWeight}`;
     const cache = readImageCache();
     const cachedResult = cache[cacheKey];
 
@@ -333,14 +356,18 @@ export default function DashboardPage() {
       setRemainingLife(cachedResult.remainingLife);
       setPrice(cachedResult.price);
       setDemand(cachedResult.demand);
+      setDamageLevel(cachedResult.damageLevel || 0);
+      setRepairCost(cachedResult.repairCost || 0);
+      setRecyclingValue(cachedResult.recyclingValue || 0);
+      setAnalysisReady(true);
       setUploadLoading(false);
       return;
     }
 
     try {
       const features = await analyzeImageFeatures(productImage);
-      const ageWeight = 3.2;
-      const usageFactor = usageLevel === "light" ? 8 : usageLevel === "moderate" ? 18 : 28;
+      const ageWeight = 3.5;
+      const usageFactor = usageLevel === "light" ? 10 : usageLevel === "moderate" ? 20 : 30;
       const ageFactor = ageValue * ageWeight;
       const damageFactor = features.damageScore;
 
@@ -371,6 +398,18 @@ export default function DashboardPage() {
       );
 
       const nextScore = clamp(Math.round(remaining - damageFactor * 0.2), 10, 98);
+      const nextDamageLevel = clamp(Math.round(damageFactor), 0, 100);
+      const repairFactor = 60;
+      const estimatedRepairCost = Math.round(nextDamageLevel * repairFactor);
+
+      const scrapRates = {
+        plastic: 15,
+        metal: 80,
+        glass: 12,
+        "e-waste": 120,
+      };
+      const weightValue = Number(materialWeight || 0);
+      const recyclingEstimate = Math.round(weightValue * scrapRates[materialType]);
 
       console.log("[AI] Image metrics", {
         brightness: features.brightness.toFixed(2),
@@ -386,7 +425,9 @@ export default function DashboardPage() {
         remainingLife: remaining,
         condition: nextCondition,
         conditionWeight: conditionWeights[nextCondition],
-        price: estimatedPrice,
+        resalePrice: estimatedPrice,
+        repairCost: estimatedRepairCost,
+        recyclingValue: recyclingEstimate,
       });
 
       const result = {
@@ -395,6 +436,9 @@ export default function DashboardPage() {
         remainingLife: remaining,
         price: estimatedPrice,
         demand: "",
+        damageLevel: nextDamageLevel,
+        repairCost: estimatedRepairCost,
+        recyclingValue: recyclingEstimate,
       };
 
       cache[cacheKey] = result;
@@ -405,6 +449,10 @@ export default function DashboardPage() {
       setRemainingLife(result.remainingLife);
       setPrice(result.price);
       setDemand(result.demand);
+      setDamageLevel(result.damageLevel);
+      setRepairCost(result.repairCost);
+      setRecyclingValue(result.recyclingValue);
+      setAnalysisReady(true);
     } catch (error) {
       console.error("[AI] Image analysis failed", error);
       alert("Image analysis failed. Please try another image.");
@@ -432,7 +480,7 @@ export default function DashboardPage() {
     }
 
     if (!price) {
-      alert("Price is only generated once during Analyze Product.");
+      alert("Analyze the product to generate results first.");
       return;
     }
 
@@ -448,13 +496,25 @@ export default function DashboardPage() {
       return;
     }
 
+    if (!purpose) {
+      alert("Select a purpose to filter facilities.");
+      return;
+    }
+
     setGeoLoading(true);
     setFacilities([]);
 
     setTimeout(() => {
-      setFacilities(generateFacilities(location.trim()));
+      const allFacilities = generateFacilities(location.trim());
+      const filtered = allFacilities.filter((item) => {
+        if (purpose === "sell") return item.category === "buyer" || item.category === "second-hand";
+        if (purpose === "repair") return item.category === "repair" || item.category === "service";
+        if (purpose === "recycle") return item.category === "recycling";
+        return true;
+      });
+      setFacilities(filtered);
       setGeoLoading(false);
-    }, 1000);
+    }, 600);
   }
 
   function buildWhatsappMessage() {
@@ -685,6 +745,33 @@ export default function DashboardPage() {
                     />
                   </div>
 
+                  <div className="purpose-group">
+                    <label>Purpose</label>
+                    <div className="purpose-buttons">
+                      <button
+                        type="button"
+                        className={`purpose-btn ${purpose === "sell" ? "active" : ""}`}
+                        onClick={() => setPurpose("sell")}
+                      >
+                        ✅ Sell
+                      </button>
+                      <button
+                        type="button"
+                        className={`purpose-btn ${purpose === "repair" ? "active" : ""}`}
+                        onClick={() => setPurpose("repair")}
+                      >
+                        🔧 Repair
+                      </button>
+                      <button
+                        type="button"
+                        className={`purpose-btn ${purpose === "recycle" ? "active" : ""}`}
+                        onClick={() => setPurpose("recycle")}
+                      >
+                        ♻️ Recycle
+                      </button>
+                    </div>
+                  </div>
+
                   <div className="row">
                     <div className="col">
                       <label>Age (years)</label>
@@ -707,15 +794,65 @@ export default function DashboardPage() {
                     </div>
                   </div>
 
-                  <button onClick={handleAnalyze} className="btn-primary full-width">
+                  {purpose === "recycle" ? (
+                    <div className="row">
+                      <div className="col">
+                        <label>Material Type</label>
+                        <select value={materialType} onChange={(event) => setMaterialType(event.target.value)}>
+                          <option value="plastic">Plastic</option>
+                          <option value="metal">Metal</option>
+                          <option value="glass">Glass</option>
+                          <option value="e-waste">E-Waste</option>
+                        </select>
+                      </div>
+                      <div className="col">
+                        <label>Weight (kg)</label>
+                        <input
+                          type="number"
+                          min="0"
+                          step="0.1"
+                          placeholder="e.g., 2.5"
+                          value={materialWeight}
+                          onChange={(event) => setMaterialWeight(event.target.value)}
+                        />
+                      </div>
+                    </div>
+                  ) : null}
+
+                  <button
+                    onClick={handleAnalyze}
+                    className="btn-primary full-width"
+                    disabled={!purpose}
+                  >
                     <iconify-icon icon="ph:magic-wand-bold" /> Analyze
                   </button>
                   <div className={`loader ${uploadLoading ? "active" : ""}`} />
 
-                  <div className="results-summary">
-                    <div className="res-item"><span>Condition</span><strong>{condition}</strong></div>
-                    <div className="res-item"><span>Sus. Score</span><strong>{score ? `${score}/100` : "-"}</strong></div>
-                    <div className="res-item"><span>Life</span><strong>{remainingLife ? `${remainingLife}%` : "-"}</strong></div>
+                  <div className={`results-summary ${analysisReady ? "show" : ""}`}>
+                    {purpose === "sell" ? (
+                      <>
+                        <div className="res-item"><span>Condition</span><strong>{condition}</strong></div>
+                        <div className="res-item"><span>Remaining Life</span><strong>{remainingLife ? `${remainingLife}%` : "-"}</strong></div>
+                        <div className="res-item"><span>Resale Price</span><strong>{price ? `₹${price}` : "-"}</strong></div>
+                      </>
+                    ) : null}
+                    {purpose === "repair" ? (
+                      <>
+                        <div className="res-item"><span>Damage Level</span><strong>{damageLevel ? `${damageLevel}/100` : "-"}</strong></div>
+                        <div className="res-item"><span>Repair Cost</span><strong>{repairCost ? `₹${repairCost}` : "-"}</strong></div>
+                        <div className="res-item"><span>Condition</span><strong>{condition}</strong></div>
+                      </>
+                    ) : null}
+                    {purpose === "recycle" ? (
+                      <>
+                        <div className="res-item"><span>Material</span><strong>{materialType || "-"}</strong></div>
+                        <div className="res-item"><span>Weight</span><strong>{materialWeight ? `${materialWeight} kg` : "-"}</strong></div>
+                        <div className="res-item"><span>Recycling Value</span><strong>{recyclingValue ? `₹${recyclingValue}` : "-"}</strong></div>
+                      </>
+                    ) : null}
+                    {!purpose ? (
+                      <div className="res-item"><span>Purpose</span><strong>Select above</strong></div>
+                    ) : null}
                   </div>
                 </div>
               </div>
@@ -725,12 +862,17 @@ export default function DashboardPage() {
               <section id="life" className="section card-panel small-panel">
                 <div className="panel-header"><h3><iconify-icon icon="ph:chart-line-up-bold" /> Life Cycle</h3></div>
                 <div className="panel-body">
-                  <p className="desc-text">Predict remaining lifespan based on AI analysis.</p>
+                  <p className="desc-text">
+                    {purpose === "repair" ? "Review damage impact from AI analysis." : "Predict remaining lifespan based on AI analysis."}
+                  </p>
                   <div className="progress-circle-wrap">
                     <div className="progress-bar-container">
-                      <div className="progress-fill" style={{ width: `${remainingLife || 0}%` }} />
+                      <div className="progress-fill" style={{ width: `${purpose === "repair" ? damageLevel : remainingLife || 0}%` }} />
                     </div>
-                    <div className="progress-text"><span>{remainingLife || 0}%</span> Remaining</div>
+                    <div className="progress-text">
+                      <span>{purpose === "repair" ? damageLevel : remainingLife || 0}%</span>
+                      {purpose === "repair" ? " Damage" : " Remaining"}
+                    </div>
                   </div>
                   <button onClick={handlePredictLife} className="btn-secondary full-width">Predict</button>
                   <div className={`loader ${lifeLoading ? "active" : ""}`} />
@@ -740,8 +882,15 @@ export default function DashboardPage() {
               <section id="pricing" className="section card-panel small-panel">
                 <div className="panel-header"><h3><iconify-icon icon="ph:currency-dollar-bold" /> Fair Price</h3></div>
                 <div className="panel-body">
-                  <div className="price-display"><span className="currency">₹</span><strong className="huge-text">{price || "-"}</strong></div>
-                  <div className="demand-tag">{demand ? `Market demand: ${demand}` : ""}</div>
+                  <div className="price-display">
+                    <span className="currency">₹</span>
+                    <strong className="huge-text">
+                      {purpose === "repair" ? (repairCost || "-") : purpose === "recycle" ? (recyclingValue || "-") : (price || "-")}
+                    </strong>
+                  </div>
+                  <div className="demand-tag">
+                    {purpose === "repair" ? "Estimated repair cost" : purpose === "recycle" ? "Estimated recycling value" : price ? "Resale price" : ""}
+                  </div>
                   <button onClick={handleCalculatePrice} className="btn-secondary full-width">Calculate</button>
                   <div className={`loader ${priceLoading ? "active" : ""}`} />
                 </div>
