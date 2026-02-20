@@ -423,6 +423,17 @@ function clamp(value, min, max) {
   return Math.min(Math.max(value, min), max);
 }
 
+function triggerRecycleBounce() {
+  const recycleIcons = document.querySelectorAll('iconify-icon[icon="ph:recycle-bold"], .recycle-bounce');
+  recycleIcons.forEach((icon) => {
+    icon.classList.remove("is-triggered");
+    requestAnimationFrame(() => {
+      icon.classList.add("is-triggered");
+      setTimeout(() => icon.classList.remove("is-triggered"), 650);
+    });
+  });
+}
+
 function calculateCondition(age, usage) {
   let score = 80;
 
@@ -634,6 +645,7 @@ analyzeBtn.addEventListener("click", () => {
     hideLoader(uploadLoader);
     refreshDashboard();
     updateDigitalTwin();
+    triggerRecycleBounce();
   }, 1200);
 });
 
@@ -752,6 +764,7 @@ modalWhatsappBtn.addEventListener("click", () => {
   window.open(whatsappLink, "_blank", "noopener,noreferrer");
   const payload = buildCertificatePayload();
   openCertificateModal(payload);
+  triggerRecycleBounce();
 
   addNotification({
     id: `${Date.now()}_${activeFacility.name.length}`,
