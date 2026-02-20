@@ -57,6 +57,13 @@ const modalWhatsapp = document.getElementById("modalWhatsapp");
 const modalMessage = document.getElementById("modalMessage");
 const modalWhatsappBtn = document.getElementById("modalWhatsappBtn");
 
+const digitalTwinSection = document.getElementById("digitalTwin");
+const twinImage = document.getElementById("twinImage");
+const twinName = document.getElementById("twinName");
+const twinCondition = document.getElementById("twinCondition");
+const twinUsage = document.getElementById("twinUsage");
+const twinPaths = document.getElementById("twinPaths");
+
 const certificateModal = document.getElementById("certificateModal");
 const certificateClose = document.getElementById("certificateClose");
 const certificateMessage = document.getElementById("certificateMessage");
@@ -91,9 +98,45 @@ let latestCertificate = null;
 
 const PROFILE_STORAGE_KEY = "tscemProfile";
 const LANG_STORAGE_KEY = "tscemLanguage";
+const TWIN_TEXTS = {
+  en: {
+    heading: "Digital Twin of Your Product",
+    subtext: "See the future of your product before you decide",
+    condition: "Condition",
+    usage: "Usage",
+    sell: "Sell Path",
+    repair: "Repair Path",
+    recycle: "Recycle Path",
+    best: "Best Choice 🌱",
+    impact: "Impact",
+    life: "Life Extension",
+    waste: "Waste saved",
+    co2: "CO₂ reduced",
+    water: "Water saved",
+  },
+  hi: {
+    heading: "आपके उत्पाद का डिजिटल ट्विन",
+    subtext: "निर्णय से पहले अपने उत्पाद का भविष्य देखें",
+    condition: "स्थिति",
+    usage: "उपयोग",
+    sell: "बेचें पथ",
+    repair: "मरम्मत पथ",
+    recycle: "रीसायकल पथ",
+    best: "सर्वश्रेष्ठ विकल्प 🌱",
+    impact: "प्रभाव",
+    life: "लाइफ एक्सटेंशन",
+    waste: "कचरा बचत",
+    co2: "CO₂ कमी",
+    water: "जल बचत",
+  },
+};
 
 function getLanguage() {
   return localStorage.getItem(LANG_STORAGE_KEY) === "hi" ? "hi" : "en";
+}
+
+function getTwinTexts() {
+  return TWIN_TEXTS[getLanguage()] || TWIN_TEXTS.en;
 }
 
 function getSuccessMessage() {
@@ -492,6 +535,7 @@ analyzeBtn.addEventListener("click", () => {
 
     hideLoader(uploadLoader);
     refreshDashboard();
+    updateDigitalTwin();
   }, 1200);
 });
 
