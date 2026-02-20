@@ -63,6 +63,7 @@ const twinName = document.getElementById("twinName");
 const twinCondition = document.getElementById("twinCondition");
 const twinUsage = document.getElementById("twinUsage");
 const twinPaths = document.getElementById("twinPaths");
+const aiTypingText = document.getElementById("aiTypingText");
 const twinTimeline = document.getElementById("twinTimeline");
 const timelineProductLabel = document.getElementById("timelineProductLabel");
 const timelineTwinLabel = document.getElementById("timelineTwinLabel");
@@ -81,6 +82,10 @@ const afterLabel = document.getElementById("afterLabel");
 const ecoMeter = document.getElementById("ecoMeter");
 const ecoMeterNeedle = document.getElementById("ecoMeterNeedle");
 const ecoMeterValue = document.getElementById("ecoMeterValue");
+
+const successFx = document.getElementById("successFx");
+const successFxText = document.getElementById("successFxText");
+const ecoParticles = document.getElementById("ecoParticles");
 
 const certificateModal = document.getElementById("certificateModal");
 const certificateClose = document.getElementById("certificateClose");
@@ -144,6 +149,7 @@ const TWIN_TEXTS = {
     beforeAfter: "Before vs After",
     before: "Pollution / Waste",
     after: "Clean Earth",
+    aiLine: "AI is simulating the best circular path for your product...",
   },
   hi: {
     heading: "आपके उत्पाद का डिजिटल ट्विन",
@@ -165,11 +171,13 @@ const TWIN_TEXTS = {
     beforeAfter: "पहले बनाम बाद में",
     before: "प्रदूषण / कचरा",
     after: "स्वच्छ पृथ्वी",
+    aiLine: "AI आपके उत्पाद के लिए सर्वश्रेष्ठ सर्कुलर पथ का सिमुलेशन कर रहा है...",
   },
 };
 
 const CLEAN_EARTH_IMAGE = "https://images.unsplash.com/photo-1446776811953-b23d57bd21aa?auto=format&fit=crop&w=1200&q=60";
 let currentEcoValue = 0;
+let successFxTimer = null;
 
 function getLanguage() {
   return localStorage.getItem(LANG_STORAGE_KEY) === "hi" ? "hi" : "en";
@@ -276,6 +284,45 @@ function updateProfileUI(profile) {
   userEmail.textContent = profile.email || "-";
   userStatus.textContent = isProfileComplete(profile) ? "✅ Verified User" : "Profile Incomplete";
   userStatus.classList.toggle("verified", isProfileComplete(profile));
+}
+
+function showSuccessFx(message) {
+  if (!successFx || !successFxText) return;
+  successFxText.textContent = message;
+  successFx.classList.remove("hidden");
+  successFx.setAttribute("aria-hidden", "false");
+  if (successFxTimer) clearTimeout(successFxTimer);
+  successFxTimer = setTimeout(() => {
+    successFx.classList.add("hidden");
+    successFx.setAttribute("aria-hidden", "true");
+  }, 2200);
+}
+
+function typeText(el, text, speed = 22) {
+  if (!el) return;
+  el.textContent = "";
+  let index = 0;
+  function step() {
+    if (index > text.length) return;
+    el.textContent = text.slice(0, index);
+    index += 1;
+    setTimeout(step, speed);
+  }
+  step();
+}
+
+function initParticles() {
+  if (!ecoParticles) return;
+  ecoParticles.innerHTML = "";
+  for (let i = 0; i < 16; i += 1) {
+    const particle = document.createElement("span");
+    particle.className = "leaf-particle";
+    particle.style.left = `${Math.random() * 100}%`;
+    particle.style.animationDelay = `${Math.random() * 6}s`;
+    particle.style.animationDuration = `${6 + Math.random() * 6}s`;
+    particle.style.opacity = `${0.2 + Math.random() * 0.5}`;
+    ecoParticles.appendChild(particle);
+  }
 }
 
 function openProfileModal() {
@@ -423,6 +470,7 @@ if (profileForm) {
     updateProfileUI(nextProfile);
     closeProfileModal();
     openProfileSuccess();
+    showSuccessFx("✅ Profile saved successfully!");
   });
 }
 
@@ -444,6 +492,21 @@ imageInput.addEventListener("change", () => {
 
 updateProfileUI(getProfileData());
 renderNotifications();
+initParticles();
+
+const revealObserver = new IntersectionObserver((entries) => {
+  entries.forEach((entry) => {
+    if (!entry.isIntersecting) return;
+    entry.target.classList.add("is-visible");
+    revealObserver.unobserve(entry.target);
+  });
+}, { threshold: 0.15, rootMargin: "0px 0px -6% 0px" });
+
+document.querySelectorAll("section.section, .card-panel, .stat-card, .facility-item").forEach((el, index) => {
+  el.classList.add("reveal-on-scroll");
+  el.style.transitionDelay = `${Math.min(index * 30, 220)}ms`;
+  revealObserver.observe(el);
+});
 
 function showLoader(loaderEl) {
   loaderEl.classList.add("active");
@@ -627,6 +690,7 @@ function updateDigitalTwin() {
   if (beforeAfterTitle) beforeAfterTitle.textContent = texts.beforeAfter;
   if (beforeLabel) beforeLabel.textContent = texts.before;
   if (afterLabel) afterLabel.textContent = texts.after;
+  typeText(aiTypingText, texts.aiLine, 18);
   updateBeforeAfterSlider();
 
   const twinData = buildTwinPaths({
@@ -913,7 +977,7 @@ geoBtn.addEventListener("click", () => {
     geoResults.innerHTML = facilities
       .map((item, index) => {
         return `
-      <div class="facility-item">
+      <div class="facility-item reveal-on-scroll is-visible" style="transition-delay:${Math.min(index * 60, 220)}ms;">
         <div class="f-header">
             <span class="f-name">${item.name}</span>
             <span class="f-dist">${item.distance} km</span>
@@ -959,6 +1023,7 @@ modalWhatsappBtn.addEventListener("click", () => {
   const payload = buildCertificatePayload();
   openCertificateModal(payload);
   triggerRecycleBounce();
+  showSuccessFx("🎉 Eco action completed!");
 
   addNotification({
     id: `${Date.now()}_${activeFacility.name.length}`,
@@ -986,6 +1051,7 @@ if (downloadCertificateBtn) {
   downloadCertificateBtn.addEventListener("click", () => {
     if (!latestCertificate) return;
     generateCertificatePdf(latestCertificate);
+    showSuccessFx("🎉 Certificate downloaded!");
   });
 }
 

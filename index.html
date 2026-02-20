@@ -11,6 +11,7 @@
   <link rel="stylesheet" href="style.css" />
 </head>
 <body class="dashboard-body">
+  <div class="eco-particles" id="ecoParticles" aria-hidden="true"></div>
   
   <!-- Sidebar Navigation -->
   <aside class="sidebar">
@@ -275,6 +276,7 @@
               </div>
             </div>
           </div>
+          <p class="ai-typing" id="aiTypingText" aria-live="polite"></p>
           <div id="twinPaths" class="twin-paths"></div>
 
           <div class="twin-advanced-grid">
@@ -469,6 +471,19 @@
       <p class="verified-message" id="profileSuccessMessage">
         🎉 Congratulations! Your profile has been successfully verified.
       </p>
+      <div class="mini-confetti" aria-hidden="true">
+        <span></span><span></span><span></span><span></span><span></span>
+      </div>
+    </div>
+  </div>
+
+  <div class="success-fx hidden" id="successFx" aria-hidden="true">
+    <div class="success-fx-card">
+      <div class="success-tick">✓</div>
+      <div class="success-text" id="successFxText">Action completed successfully!</div>
+      <div class="fx-confetti" aria-hidden="true">
+        <span></span><span></span><span></span><span></span><span></span><span></span>
+      </div>
     </div>
   </div>
 
