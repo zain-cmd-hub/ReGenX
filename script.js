@@ -57,6 +57,16 @@ const modalWhatsapp = document.getElementById("modalWhatsapp");
 const modalMessage = document.getElementById("modalMessage");
 const modalWhatsappBtn = document.getElementById("modalWhatsappBtn");
 
+const certificateModal = document.getElementById("certificateModal");
+const certificateClose = document.getElementById("certificateClose");
+const certificateMessage = document.getElementById("certificateMessage");
+const certUserName = document.getElementById("certUserName");
+const certProduct = document.getElementById("certProduct");
+const certWaste = document.getElementById("certWaste");
+const certDate = document.getElementById("certDate");
+const downloadCertificateBtn = document.getElementById("downloadCertificateBtn");
+const shareCertificateBtn = document.getElementById("shareCertificateBtn");
+
 const profileBtn = document.getElementById("profileBtn");
 const profileModal = document.getElementById("profileModal");
 const profileModalClose = document.getElementById("profileModalClose");
@@ -77,6 +87,7 @@ const userEmail = document.getElementById("userEmail");
 const userStatus = document.getElementById("userStatus");
 
 let activeFacility = null;
+let latestCertificate = null;
 
 const PROFILE_STORAGE_KEY = "tscemProfile";
 const LANG_STORAGE_KEY = "tscemLanguage";
@@ -382,6 +393,73 @@ function closeModal() {
   activeFacility = null;
 }
 
+function openCertificateModal(payload) {
+  latestCertificate = payload;
+  certificateMessage.textContent = "🎉 Your Eco Certificate is ready!";
+  certUserName.textContent = payload.userName;
+  certProduct.textContent = `Product: ${payload.productName}`;
+  certWaste.textContent = `Waste saved: ${payload.wasteSavedKg} kg`;
+  certDate.textContent = `Date: ${payload.date}`;
+  certificateModal.classList.remove("hidden");
+  certificateModal.setAttribute("aria-hidden", "false");
+}
+
+function closeCertificateModal() {
+  certificateModal.classList.add("hidden");
+  certificateModal.setAttribute("aria-hidden", "true");
+}
+
+function buildCertificatePayload() {
+  const profile = getProfileData();
+  const userName = profile.name || "User";
+  const productName = state.productType || "Product";
+  const ageValue = Number(productAgeInput.value || 0);
+  const wasteSavedKg = clamp(Number((ageValue * 0.8).toFixed(1)), 0.5, 40);
+  const date = new Date().toLocaleDateString();
+  return { userName, productName, wasteSavedKg, date };
+}
+
+function generateCertificatePdf(payload) {
+  const jspdf = window.jspdf;
+  if (!jspdf?.jsPDF) return;
+  const doc = new jspdf.jsPDF({ unit: "pt", format: "a4" });
+  doc.setFillColor(232, 248, 240);
+  doc.rect(0, 0, 595, 842, "F");
+
+  doc.setFillColor(16, 163, 74);
+  doc.roundedRect(40, 40, 515, 60, 12, 12, "F");
+  doc.setTextColor(255, 255, 255);
+  doc.setFontSize(24);
+  doc.text("Eco Certificate", 80, 80);
+
+  doc.setTextColor(15, 23, 42);
+  doc.setFontSize(16);
+  doc.text(`Congratulations ${payload.userName}`, 60, 160);
+  doc.text(`You saved ${payload.wasteSavedKg} kg waste`, 60, 190);
+  doc.text("You are an Eco Hero", 60, 220);
+
+  doc.setFontSize(12);
+  doc.text(`Product: ${payload.productName}`, 60, 270);
+  doc.text(`Date: ${payload.date}`, 60, 290);
+  doc.text("SCEM - Smart Circular Economy Marketplace", 60, 330);
+
+  doc.setFontSize(10);
+  doc.setTextColor(34, 197, 94);
+  doc.text("Powered by SCEM", 60, 360);
+
+  doc.save(`eco-certificate-${payload.productName.replace(/\s+/g, "-")}.pdf`);
+}
+
+function shareCertificate(payload) {
+  const text = `Eco Certificate for ${payload.userName}. Saved ${payload.wasteSavedKg} kg waste with ${payload.productName}!`;
+  if (navigator.share) {
+    navigator.share({ title: "Eco Certificate", text }).catch(() => {});
+    return;
+  }
+  const whatsappLink = `https://wa.me/?text=${encodeURIComponent(text)}`;
+  window.open(whatsappLink, "_blank", "noopener,noreferrer");
+}
+
 // Simulated AI analysis using age and usage rules.
 analyzeBtn.addEventListener("click", () => {
   const typeValue = productTypeInput.value.trim();
@@ -530,7 +608,36 @@ modalWhatsappBtn.addEventListener("click", () => {
   const encodedMessage = encodeURIComponent(message);
   const whatsappLink = `https://wa.me/${activeFacility.whatsapp}?text=${encodedMessage}`;
   window.open(whatsappLink, "_blank", "noopener,noreferrer");
+  const payload = buildCertificatePayload();
+  openCertificateModal(payload);
 });
+
+if (certificateClose) {
+  certificateClose.addEventListener("click", closeCertificateModal);
+}
+
+if (certificateModal) {
+  certificateModal.addEventListener("click", (event) => {
+    const target = event.target;
+    if (target instanceof HTMLElement && target.dataset.close === "true") {
+      closeCertificateModal();
+    }
+  });
+}
+
+if (downloadCertificateBtn) {
+  downloadCertificateBtn.addEventListener("click", () => {
+    if (!latestCertificate) return;
+    generateCertificatePdf(latestCertificate);
+  });
+}
+
+if (shareCertificateBtn) {
+  shareCertificateBtn.addEventListener("click", () => {
+    if (!latestCertificate) return;
+    shareCertificate(latestCertificate);
+  });
+}
 
 function generateFacilities(location) {
   const baseNames = [

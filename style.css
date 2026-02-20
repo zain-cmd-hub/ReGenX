@@ -719,6 +719,58 @@ input:focus, select:focus {
 .modal-message-box { text-align: left; margin-bottom: 20px; }
 .modal-message-box label { font-size: 12px; margin-bottom: 8px; font-weight: 600; display: block;}
 
+.certificate-modal {
+  max-width: 520px;
+  text-align: center;
+}
+
+.certificate-card {
+  background: linear-gradient(135deg, #ecfdf3, #e0f7ef);
+  border: 1px solid rgba(34, 197, 94, 0.3);
+  border-radius: 16px;
+  padding: 20px;
+  margin-bottom: 16px;
+}
+
+.certificate-badge {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: #22c55e;
+  color: white;
+  display: grid;
+  place-items: center;
+  font-size: 28px;
+  margin: 0 auto 12px;
+}
+
+.certificate-message {
+  color: var(--text-muted);
+  font-size: 13px;
+  margin-bottom: 12px;
+}
+
+.certificate-details {
+  display: grid;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--text-main);
+}
+
+.certificate-brand {
+  margin-top: 8px;
+  font-weight: 700;
+  color: #16a34a;
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+}
+
+.certificate-actions {
+  display: grid;
+  gap: 10px;
+}
+
 .profile-pic {
   border: none;
   background: transparent;

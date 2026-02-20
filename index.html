@@ -315,6 +315,33 @@
     </div>
   </div>
 
+  <div class="modal hidden" id="certificateModal" aria-hidden="true">
+    <div class="modal-overlay" data-close="true"></div>
+    <div class="modal-card certificate-modal" role="dialog" aria-modal="true">
+      <button class="modal-close" id="certificateClose" aria-label="Close">&times;</button>
+      <div class="certificate-card">
+        <div class="certificate-badge">🌱</div>
+        <h3>Eco Certificate</h3>
+        <p class="certificate-message" id="certificateMessage">
+          🎉 Your Eco Certificate is ready!
+        </p>
+        <div class="certificate-details">
+          <div><strong id="certUserName">User</strong></div>
+          <div id="certProduct">Product: -</div>
+          <div id="certWaste">Waste saved: - kg</div>
+          <div id="certDate">Date: -</div>
+          <div class="certificate-brand">
+            <span>SCEM</span> <span>♻️</span> <span>🌍</span>
+          </div>
+        </div>
+      </div>
+      <div class="certificate-actions">
+        <button class="btn-primary" id="downloadCertificateBtn">Download Certificate (PDF)</button>
+        <button class="btn-secondary" id="shareCertificateBtn">Share Certificate</button>
+      </div>
+    </div>
+  </div>
+
   <div class="modal hidden" id="profileModal" aria-hidden="true">
     <div class="modal-overlay" data-close="true"></div>
     <div class="modal-card profile-modal" role="dialog" aria-modal="true">
@@ -366,6 +393,7 @@
     </div>
   </div>
 
+  <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
   <script src="script.js"></script>
 </body>
 </html>
