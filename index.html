@@ -79,10 +79,19 @@
           <iconify-icon icon="ph:magnifying-glass-bold"></iconify-icon>
           <input type="text" placeholder="Search..." />
         </div>
-        <button class="icon-btn notification-btn">
-          <iconify-icon icon="ph:bell-bold"></iconify-icon>
-          <span class="badge"></span>
-        </button>
+        <div class="notification-wrapper">
+          <button class="icon-btn notification-btn" id="notificationBtn" type="button" aria-label="Notifications">
+            <iconify-icon icon="ph:bell-bold"></iconify-icon>
+            <span class="badge-count" id="notificationCount">0</span>
+          </button>
+          <div class="notification-panel hidden" id="notificationPanel">
+            <div class="notification-header">
+              <span>Notifications</span>
+              <button class="mark-read" id="markAllReadBtn" type="button">Mark all read</button>
+            </div>
+            <div class="notification-list" id="notificationList"></div>
+          </div>
+        </div>
         <button class="profile-pic" id="profileBtn" type="button" aria-label="Edit Profile">
           <img src="https://ui-avatars.com/api/?name=Dev+Kulshrestha&background=0D8ABC&color=fff" alt="Profile">
         </button>

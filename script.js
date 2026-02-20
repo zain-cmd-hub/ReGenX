@@ -93,11 +93,18 @@ const userName = document.getElementById("userName");
 const userEmail = document.getElementById("userEmail");
 const userStatus = document.getElementById("userStatus");
 
+const notificationBtn = document.getElementById("notificationBtn");
+const notificationPanel = document.getElementById("notificationPanel");
+const notificationList = document.getElementById("notificationList");
+const notificationCount = document.getElementById("notificationCount");
+const markAllReadBtn = document.getElementById("markAllReadBtn");
+
 let activeFacility = null;
 let latestCertificate = null;
 
 const PROFILE_STORAGE_KEY = "tscemProfile";
 const LANG_STORAGE_KEY = "tscemLanguage";
+const NOTIFICATION_STORAGE_KEY = "tscemNotifications";
 const TWIN_TEXTS = {
   en: {
     heading: "Digital Twin of Your Product",
@@ -169,6 +176,55 @@ function getProfileData() {
   }
 }
 
+function getNotifications() {
+  const stored = localStorage.getItem(NOTIFICATION_STORAGE_KEY);
+  if (!stored) return [];
+  try {
+    return JSON.parse(stored);
+  } catch (error) {
+    return [];
+  }
+}
+
+function setNotifications(next) {
+  localStorage.setItem(NOTIFICATION_STORAGE_KEY, JSON.stringify(next));
+}
+
+function renderNotifications() {
+  if (!notificationList || !notificationCount) return;
+  const notifications = getNotifications();
+  const unread = notifications.filter((item) => !item.read).length;
+  notificationCount.textContent = String(unread || 0);
+  notificationCount.style.display = unread > 0 ? "grid" : "none";
+
+  if (notifications.length === 0) {
+    notificationList.innerHTML = "<div class=\"notification-empty\">No notifications yet.</div>";
+    return;
+  }
+
+  notificationList.innerHTML = notifications
+    .map((item) => {
+      return `
+        <div class="notification-item ${item.read ? "read" : ""}" data-id="${item.id}">
+          <div>
+            <div class="notification-title">${item.title}</div>
+            <div class="notification-text">${item.message}</div>
+            <div class="notification-meta">${item.time}</div>
+          </div>
+          ${item.read ? "" : "<button class=\"mark-read\" data-read=\"true\">Mark read</button>"}
+        </div>
+      `;
+    })
+    .join("");
+}
+
+function addNotification(payload) {
+  const notifications = getNotifications();
+  notifications.unshift(payload);
+  setNotifications(notifications.slice(0, 20));
+  renderNotifications();
+}
+
 function isProfileComplete(profile) {
   return [profile.name, profile.email, profile.phone, profile.address, profile.about]
     .every((value) => String(value || "").trim().length > 0);
@@ -230,6 +286,47 @@ navButtons.forEach((btn) => {
     }
   });
 });
+
+if (notificationBtn && notificationPanel) {
+  notificationBtn.addEventListener("click", () => {
+    notificationPanel.classList.toggle("hidden");
+  });
+}
+
+document.addEventListener("click", (event) => {
+  if (!notificationPanel || !notificationBtn) return;
+  const target = event.target;
+  if (!(target instanceof HTMLElement)) return;
+  const isInside = notificationPanel.contains(target) || notificationBtn.contains(target);
+  if (!isInside) {
+    notificationPanel.classList.add("hidden");
+  }
+});
+
+if (markAllReadBtn) {
+  markAllReadBtn.addEventListener("click", () => {
+    const notifications = getNotifications().map((item) => ({ ...item, read: true }));
+    setNotifications(notifications);
+    renderNotifications();
+  });
+}
+
+if (notificationList) {
+  notificationList.addEventListener("click", (event) => {
+    const target = event.target;
+    if (!(target instanceof HTMLElement)) return;
+    if (target.dataset.read === "true") {
+      const item = target.closest(".notification-item");
+      if (!item) return;
+      const id = item.getAttribute("data-id");
+      const notifications = getNotifications().map((note) => (
+        note.id === id ? { ...note, read: true } : note
+      ));
+      setNotifications(notifications);
+      renderNotifications();
+    }
+  });
+}
 
 if (profileBtn) {
   profileBtn.addEventListener("click", openProfileModal);
@@ -308,6 +405,7 @@ imageInput.addEventListener("change", () => {
 });
 
 updateProfileUI(getProfileData());
+renderNotifications();
 
 function showLoader(loaderEl) {
   loaderEl.classList.add("active");
@@ -654,6 +752,14 @@ modalWhatsappBtn.addEventListener("click", () => {
   window.open(whatsappLink, "_blank", "noopener,noreferrer");
   const payload = buildCertificatePayload();
   openCertificateModal(payload);
+
+  addNotification({
+    id: `${Date.now()}_${activeFacility.name.length}`,
+    title: "Eco action completed",
+    message: `Connected with ${activeFacility.name} for ${state.productType || "your product"}.`,
+    time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+    read: false,
+  });
 });
 
 if (certificateClose) {
