@@ -245,6 +245,24 @@
             <h3>Digital Twin of Your Product</h3>
           </div>
           <p class="twin-sub">See the future of your product before you decide</p>
+
+          <div class="twin-timeline" id="twinTimeline">
+            <div class="timeline-step active" data-step="1">
+              <span class="timeline-icon">📦</span>
+              <span class="timeline-label" id="timelineProductLabel">Product</span>
+            </div>
+            <div class="timeline-line" />
+            <div class="timeline-step" data-step="2">
+              <span class="timeline-icon">🧬</span>
+              <span class="timeline-label" id="timelineTwinLabel">Digital Twin</span>
+            </div>
+            <div class="timeline-line" />
+            <div class="timeline-step" data-step="3">
+              <span class="timeline-icon" id="timelineFutureIcon">♻️</span>
+              <span class="timeline-label" id="timelineFutureLabel">Future Path</span>
+            </div>
+          </div>
+
           <div class="twin-card">
             <div class="twin-visual">
               <img id="twinImage" alt="Digital twin" />
@@ -258,6 +276,38 @@
             </div>
           </div>
           <div id="twinPaths" class="twin-paths"></div>
+
+          <div class="twin-advanced-grid">
+            <div class="before-after-card">
+              <div class="before-after-head">
+                <h4 id="beforeAfterTitle">Before vs After</h4>
+                <div class="before-after-labels">
+                  <span id="beforeLabel">Pollution / Waste</span>
+                  <span id="afterLabel">Clean Earth</span>
+                </div>
+              </div>
+              <div class="before-after" id="beforeAfterContainer">
+                <img id="afterImage" class="after-image" alt="Clean Earth" />
+                <div class="before-overlay" id="beforeOverlay">
+                  <img id="beforeImage" class="before-image" alt="Pollution" />
+                </div>
+                <div class="slider-handle" id="beforeAfterHandle"></div>
+                <input type="range" min="0" max="100" value="50" id="beforeAfterRange" aria-label="Before after slider" />
+              </div>
+            </div>
+
+            <div class="eco-meter-card">
+              <h4>Eco Score</h4>
+              <div class="eco-meter" id="ecoMeter">
+                <div class="eco-meter-zones"></div>
+                <div class="eco-meter-needle" id="ecoMeterNeedle"></div>
+                <div class="eco-meter-center">
+                  <span class="eco-meter-title">Eco Score</span>
+                  <strong id="ecoMeterValue">0</strong>
+                </div>
+              </div>
+            </div>
+          </div>
         </section>
 
         <div class="vertical-stack">

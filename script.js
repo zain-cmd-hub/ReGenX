@@ -63,6 +63,24 @@ const twinName = document.getElementById("twinName");
 const twinCondition = document.getElementById("twinCondition");
 const twinUsage = document.getElementById("twinUsage");
 const twinPaths = document.getElementById("twinPaths");
+const twinTimeline = document.getElementById("twinTimeline");
+const timelineProductLabel = document.getElementById("timelineProductLabel");
+const timelineTwinLabel = document.getElementById("timelineTwinLabel");
+const timelineFutureLabel = document.getElementById("timelineFutureLabel");
+const timelineFutureIcon = document.getElementById("timelineFutureIcon");
+
+const beforeAfterRange = document.getElementById("beforeAfterRange");
+const beforeOverlay = document.getElementById("beforeOverlay");
+const beforeAfterHandle = document.getElementById("beforeAfterHandle");
+const beforeImage = document.getElementById("beforeImage");
+const afterImage = document.getElementById("afterImage");
+const beforeAfterTitle = document.getElementById("beforeAfterTitle");
+const beforeLabel = document.getElementById("beforeLabel");
+const afterLabel = document.getElementById("afterLabel");
+
+const ecoMeter = document.getElementById("ecoMeter");
+const ecoMeterNeedle = document.getElementById("ecoMeterNeedle");
+const ecoMeterValue = document.getElementById("ecoMeterValue");
 
 const certificateModal = document.getElementById("certificateModal");
 const certificateClose = document.getElementById("certificateClose");
@@ -120,6 +138,12 @@ const TWIN_TEXTS = {
     waste: "Waste saved",
     co2: "CO₂ reduced",
     water: "Water saved",
+    timelineProduct: "Product",
+    timelineTwin: "Digital Twin",
+    timelineFuture: "Future Path",
+    beforeAfter: "Before vs After",
+    before: "Pollution / Waste",
+    after: "Clean Earth",
   },
   hi: {
     heading: "आपके उत्पाद का डिजिटल ट्विन",
@@ -135,8 +159,17 @@ const TWIN_TEXTS = {
     waste: "कचरा बचत",
     co2: "CO₂ कमी",
     water: "जल बचत",
+    timelineProduct: "उत्पाद",
+    timelineTwin: "डिजिटल ट्विन",
+    timelineFuture: "भविष्य पथ",
+    beforeAfter: "पहले बनाम बाद में",
+    before: "प्रदूषण / कचरा",
+    after: "स्वच्छ पृथ्वी",
   },
 };
+
+const CLEAN_EARTH_IMAGE = "https://images.unsplash.com/photo-1446776811953-b23d57bd21aa?auto=format&fit=crop&w=1200&q=60";
+let currentEcoValue = 0;
 
 function getLanguage() {
   return localStorage.getItem(LANG_STORAGE_KEY) === "hi" ? "hi" : "en";
@@ -358,6 +391,11 @@ if (profileSuccessModal) {
   });
 }
 
+if (beforeAfterRange) {
+  beforeAfterRange.addEventListener("input", updateBeforeAfterSlider);
+  beforeAfterRange.addEventListener("change", updateBeforeAfterSlider);
+}
+
 if (profileForm) {
   profileForm.addEventListener("submit", (event) => {
     event.preventDefault();
@@ -469,6 +507,162 @@ function calculateRemainingLife(condition, age) {
   const base = condition === "Good" ? 85 : condition === "Medium" ? 60 : 35;
   const adjusted = base - age * 2.2;
   return clamp(Math.round(adjusted), 5, 95);
+}
+
+function buildTwinPaths({ condition, usageLevel, age }) {
+  const usageFactor = usageLevel === "heavy" ? 1.08 : usageLevel === "moderate" ? 1 : 0.92;
+  const conditionFactor = condition === "Good" ? 1.12 : condition === "Medium" ? 1 : 0.86;
+
+  const sell = {
+    key: "sell",
+    icon: "♻️",
+    eco: clamp(Math.round(68 * conditionFactor * usageFactor), 35, 95),
+    waste: clamp(Number((1.5 * conditionFactor).toFixed(1)), 0.6, 4.2),
+    co2: clamp(Number((1.1 * conditionFactor).toFixed(1)), 0.4, 3.1),
+    water: clamp(Math.round(380 * conditionFactor), 120, 950),
+    life: `${clamp(Math.round(10 * conditionFactor), 5, 16)} months`,
+  };
+
+  const repair = {
+    key: "repair",
+    icon: "🔧",
+    eco: clamp(Math.round(82 * conditionFactor * usageFactor), 40, 99),
+    waste: clamp(Number((2.2 * conditionFactor).toFixed(1)), 0.8, 5.5),
+    co2: clamp(Number((1.7 * conditionFactor).toFixed(1)), 0.5, 3.8),
+    water: clamp(Math.round(520 * conditionFactor), 170, 1200),
+    life: `${clamp(Math.round(17 * conditionFactor), 8, 28)} months`,
+  };
+
+  const recycle = {
+    key: "recycle",
+    icon: "🌱",
+    eco: clamp(Math.round(74 * usageFactor * (1.08 - age * 0.015)), 35, 97),
+    waste: clamp(Number((2.0 * usageFactor).toFixed(1)), 0.8, 5.2),
+    co2: clamp(Number((1.3 * usageFactor).toFixed(1)), 0.5, 3.4),
+    water: clamp(Math.round(460 * usageFactor), 150, 1000),
+    life: `${clamp(Math.round(8 * conditionFactor), 4, 14)} months`,
+  };
+
+  const paths = [sell, repair, recycle];
+  const best = paths.reduce((prev, current) => (current.eco > prev.eco ? current : prev), sell);
+  return { paths, bestKey: best.key };
+}
+
+function updateTimeline(bestKey, texts) {
+  if (!twinTimeline) return;
+  timelineProductLabel.textContent = texts.timelineProduct;
+  timelineTwinLabel.textContent = texts.timelineTwin;
+
+  const bestLabel = bestKey === "sell" ? texts.sell : bestKey === "repair" ? texts.repair : texts.recycle;
+  const bestIcon = bestKey === "sell" ? "♻️" : bestKey === "repair" ? "🔧" : "🌱";
+  timelineFutureLabel.textContent = `${texts.timelineFuture} • ${bestLabel}`;
+  timelineFutureIcon.textContent = bestIcon;
+
+  const steps = twinTimeline.querySelectorAll(".timeline-step");
+  steps.forEach((step) => {
+    step.classList.remove("active", "revealed");
+  });
+
+  steps.forEach((step, index) => {
+    setTimeout(() => {
+      step.classList.add("revealed");
+      if (Number(step.dataset.step) === 3) {
+        step.classList.add("active");
+      }
+    }, index * 140);
+  });
+}
+
+function updateBeforeAfterSlider() {
+  if (!beforeAfterRange || !beforeOverlay || !beforeAfterHandle) return;
+  const value = Number(beforeAfterRange.value || 50);
+  beforeOverlay.style.width = `${value}%`;
+  beforeAfterHandle.style.left = `${value}%`;
+}
+
+function animateEcoMeter(targetScore) {
+  if (!ecoMeter || !ecoMeterNeedle || !ecoMeterValue) return;
+  const target = clamp(Math.round(targetScore), 0, 100);
+  const start = currentEcoValue;
+  const duration = 700;
+  const startTime = performance.now();
+
+  function frame(now) {
+    const progress = Math.min((now - startTime) / duration, 1);
+    const eased = 1 - Math.pow(1 - progress, 3);
+    const value = Math.round(start + (target - start) * eased);
+    ecoMeter.style.setProperty("--score", String(value));
+    ecoMeterNeedle.style.setProperty("--needle", String(value));
+    ecoMeterValue.textContent = String(value);
+    if (progress < 1) {
+      requestAnimationFrame(frame);
+    } else {
+      currentEcoValue = target;
+    }
+  }
+
+  requestAnimationFrame(frame);
+}
+
+function updateDigitalTwin() {
+  if (!digitalTwinSection || !twinPaths) return;
+  if (!state.productImage || !state.productType) {
+    digitalTwinSection.classList.add("is-hidden");
+    return;
+  }
+
+  const texts = getTwinTexts();
+  const heading = digitalTwinSection.querySelector(".panel-header h3");
+  const subtext = digitalTwinSection.querySelector(".twin-sub");
+  if (heading) heading.textContent = texts.heading;
+  if (subtext) subtext.textContent = texts.subtext;
+
+  twinImage.src = state.productImage;
+  twinName.textContent = state.productType || texts.timelineProduct;
+  twinCondition.textContent = `${texts.condition}: ${state.condition || "-"}`;
+  twinUsage.textContent = `${texts.usage}: ${state.usageLevel || "-"}`;
+
+  if (beforeImage) beforeImage.src = state.productImage;
+  if (afterImage) afterImage.src = CLEAN_EARTH_IMAGE;
+  if (beforeAfterTitle) beforeAfterTitle.textContent = texts.beforeAfter;
+  if (beforeLabel) beforeLabel.textContent = texts.before;
+  if (afterLabel) afterLabel.textContent = texts.after;
+  updateBeforeAfterSlider();
+
+  const twinData = buildTwinPaths({
+    condition: state.condition || "Medium",
+    usageLevel: state.usageLevel || "moderate",
+    age: state.productAge || 0,
+  });
+
+  twinPaths.innerHTML = twinData.paths
+    .map((item) => {
+      const bestBadge = item.key === twinData.bestKey
+        ? `<span class="twin-badge">${texts.best}</span>`
+        : "";
+      return `
+        <div class="twin-path ${item.key === twinData.bestKey ? "best" : ""}">
+          <div class="twin-path-header">
+            <span class="twin-icon">${item.icon}</span>
+            <strong>${texts[item.key]}</strong>
+            ${bestBadge}
+          </div>
+          <div class="twin-metric"><span>${texts.impact}</span><strong>${item.eco}/100</strong></div>
+          <div class="twin-metric">${texts.waste}: <strong>${item.waste} kg</strong></div>
+          <div class="twin-metric">${texts.water}: <strong>${item.water} L</strong></div>
+          <div class="twin-metric">${texts.co2}: <strong>${item.co2} kg</strong></div>
+          <div class="twin-metric">${texts.life}: <strong>${item.life}</strong></div>
+        </div>
+      `;
+    })
+    .join("");
+
+  updateTimeline(twinData.bestKey, texts);
+  animateEcoMeter(state.score || twinData.paths.find((item) => item.key === twinData.bestKey)?.eco || 0);
+
+  digitalTwinSection.classList.remove("is-hidden");
+  digitalTwinSection.classList.add("twin-show");
+  setTimeout(() => digitalTwinSection.classList.remove("twin-show"), 520);
 }
 
 function animateCounter(element, target, options = {}) {
