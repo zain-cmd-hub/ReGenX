@@ -647,7 +647,6 @@ export default function DashboardPage() {
 
   const [activeNav, setActiveNav] = useState("dashboard");
   const [productTypeInput, setProductTypeInput] = useState("");
-  const [productAgeInput, setProductAgeInput] = useState("");
   const [productImage, setProductImage] = useState("");
   const [imageHash, setImageHash] = useState("");
   const [purpose, setPurpose] = useState("");
@@ -1015,12 +1014,7 @@ export default function DashboardPage() {
     if (imageHash) {
       resetAnalysis();
     }
-  }, [productAgeInput, usageYears, usageMonths, usageDays, purpose, materialType, materialWeight, imageHash]);
-
-  const dashboardAge = useMemo(() => {
-    if (!productAgeInput) return "-";
-    return `Age: ${productAgeInput} year(s)`;
-  }, [productAgeInput]);
+  }, [usageYears, usageMonths, usageDays, purpose, materialType, materialWeight, imageHash]);
 
   const totalUsageDays = useMemo(() => {
     const years = Number(usageYears) || 0;
@@ -1030,7 +1024,16 @@ export default function DashboardPage() {
   }, [usageYears, usageMonths, usageDays]);
 
   const usageSummary = useMemo(() => {
-    return `Total Usage: ${totalUsageDays} days`;
+    const years = Number(usageYears) || 0;
+    const months = Number(usageMonths) || 0;
+    const days = Number(usageDays) || 0;
+    const breakdown = formatUsageBreakdown(years, months, days);
+    return `Usage Duration: ${breakdown} (${totalUsageDays} days)`;
+  }, [usageYears, usageMonths, usageDays, totalUsageDays]);
+
+  const dashboardUsage = useMemo(() => {
+    if (totalUsageDays <= 0) return "-";
+    return `Usage: ${totalUsageDays} days`;
   }, [totalUsageDays]);
 
   const usageTier = useMemo(() => {
@@ -1199,8 +1202,23 @@ export default function DashboardPage() {
     handleFileSelection(file);
   }
 
+  function sanitizeUsageInput(value) {
+    if (value === "") return "";
+    const numeric = Number(value);
+    if (Number.isNaN(numeric)) return "";
+    return String(Math.max(0, Math.floor(numeric)));
+  }
+
+  function formatUsageBreakdown(years, months, days) {
+    const parts = [];
+    if (years > 0) parts.push(`${years}y`);
+    if (months > 0) parts.push(`${months}m`);
+    if (days > 0) parts.push(`${days}d`);
+    return parts.length ? parts.join(" ") : "0d";
+  }
+
   async function handleAnalyze() {
-    const ageValue = Number(productAgeInput);
+    const ageValue = Math.max(0, Math.round(totalUsageDays / 365));
     if (!productImage) {
       alert("Please upload a product image before analyzing.");
       return;
@@ -1211,8 +1229,8 @@ export default function DashboardPage() {
       return;
     }
 
-    if (!productTypeInput.trim() || Number.isNaN(ageValue)) {
-      alert("Please fill product type and age before analyzing.");
+    if (!productTypeInput.trim()) {
+      alert("Please fill product type before analyzing.");
       return;
     }
 
@@ -1232,7 +1250,7 @@ export default function DashboardPage() {
     setIsAnalyzing(true);
 
     const hash = imageHash || hashString(productImage);
-    const cacheKey = `${hash}|purpose:${purpose}|age:${ageValue}|usageDays:${totalUsageDays}|type:${productTypeInput.trim()}|material:${materialType}|weight:${materialWeight}`;
+    const cacheKey = `${hash}|purpose:${purpose}|usageDays:${totalUsageDays}|type:${productTypeInput.trim()}|material:${materialType}|weight:${materialWeight}`;
     const cache = readImageCache();
     const cachedResult = cache[cacheKey];
 
@@ -1547,7 +1565,14 @@ export default function DashboardPage() {
 
   function buildWhatsappMessage() {
     const name = productTypeInput || "Unknown product";
-    const age = productAgeInput ? `${productAgeInput} year(s)` : "Pending";
+    const usageBreakdown = formatUsageBreakdown(
+      Number(usageYears) || 0,
+      Number(usageMonths) || 0,
+      Number(usageDays) || 0
+    );
+    const usageLine = totalUsageDays > 0
+      ? `${usageBreakdown} (${totalUsageDays} days)`
+      : "Pending";
     const life = remainingLife ? `${remainingLife}%` : "Pending";
     const localScore = score ? `${score}/100` : "Pending";
     const localPrice = price ? `₹${price}` : "Pending";
@@ -1555,7 +1580,7 @@ export default function DashboardPage() {
     const buyerEmail = profileData.email || "Pending";
     const buyerPhone = profileData.phone || "Pending";
 
-    return `Hello, I want to connect regarding my product.\n\nProduct: ${name}\nAge: ${age}\nCondition: ${condition}\nRemaining Life: ${life}\nSustainability Score: ${localScore}\nEstimated Price: ${localPrice}\n\nContact Details\nName: ${buyerName}\nEmail: ${buyerEmail}\nPhone: ${buyerPhone}\n\nPlease contact me for reuse/repair/recycling.`;
+    return `Hello, I want to connect regarding my product.\n\nProduct: ${name}\nUsage Duration: ${usageLine}\nCondition: ${condition}\nRemaining Life: ${life}\nSustainability Score: ${localScore}\nEstimated Price: ${localPrice}\n\nContact Details\nName: ${buyerName}\nEmail: ${buyerEmail}\nPhone: ${buyerPhone}\n\nPlease contact me for reuse/repair/recycling.`;
   }
 
   function openWhatsApp() {
@@ -1802,7 +1827,6 @@ export default function DashboardPage() {
     setProductImage("");
     setImageHash("");
     setProductTypeInput("");
-    setProductAgeInput("");
     setUsageYears("");
     setUsageMonths("");
     setUsageDays("");
@@ -2115,7 +2139,7 @@ export default function DashboardPage() {
                 <div className="stat-info">
                   <span className="stat-label">Uploaded Product</span>
                   <strong className="stat-value">{productTypeInput || "-"}</strong>
-                  <span className="stat-meta">{dashboardAge}</span>
+                  <span className="stat-meta">{dashboardUsage}</span>
                 </div>
               </div>
 
@@ -2355,20 +2379,6 @@ export default function DashboardPage() {
                     </div>
                   </div>
 
-                  <div className="row">
-                    <div className="col">
-                      <label>{t.upload.ageYears}</label>
-                      <input
-                        type="number"
-                        min="0"
-                        max="30"
-                        placeholder="0"
-                        value={productAgeInput}
-                        onChange={(event) => setProductAgeInput(event.target.value)}
-                      />
-                    </div>
-                  </div>
-
                   {productImage ? (
                     <div className="usage-block">
                       <label>{t.upload.usageDuration}</label>
@@ -2379,7 +2389,7 @@ export default function DashboardPage() {
                             min="0"
                             placeholder={t.upload.years}
                             value={usageYears}
-                            onChange={(event) => setUsageYears(event.target.value)}
+                            onChange={(event) => setUsageYears(sanitizeUsageInput(event.target.value))}
                           />
                         </div>
                         <div className="col">
@@ -2388,7 +2398,7 @@ export default function DashboardPage() {
                             min="0"
                             placeholder={t.upload.months}
                             value={usageMonths}
-                            onChange={(event) => setUsageMonths(event.target.value)}
+                            onChange={(event) => setUsageMonths(sanitizeUsageInput(event.target.value))}
                           />
                         </div>
                         <div className="col">
@@ -2397,7 +2407,7 @@ export default function DashboardPage() {
                             min="0"
                             placeholder={t.upload.days}
                             value={usageDays}
-                            onChange={(event) => setUsageDays(event.target.value)}
+                            onChange={(event) => setUsageDays(sanitizeUsageInput(event.target.value))}
                           />
                         </div>
                       </div>
