@@ -82,7 +82,9 @@ const translations = {
       material: "Material",
       weight: "Weight",
       recyclingValue: "Recycling Value",
-      selectPurpose: "Select above",
+      save: "Save",
+      saveDetails: "Save Details",
+      requiredFields: "Please fill required fields:",
     },
     eco: {
       label: "Eco Score",
@@ -158,7 +160,9 @@ const translations = {
       calculate: "Calculate",
     },
     notifications: {
-      title: "Notifications",
+      save: "सेव करें",
+      saveDetails: "विवरण सेव करें",
+      requiredFields: "कृपया आवश्यक फ़ील्ड भरें:",
       markAll: "Mark all read",
       empty: "No responses yet.",
       markRead: "Mark read",
@@ -701,6 +705,7 @@ export default function DashboardPage() {
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
   const [isProfileEditing, setIsProfileEditing] = useState(true);
   const [profileStatus, setProfileStatus] = useState("");
+  const [profileError, setProfileError] = useState("");
   const [dataClearStatus, setDataClearStatus] = useState("");
   const [isPasswordOpen, setIsPasswordOpen] = useState(false);
   const [passwordData, setPasswordData] = useState({
@@ -769,6 +774,7 @@ export default function DashboardPage() {
 
   const profileMenuRef = useRef(null);
   const profileButtonRef = useRef(null);
+  const profileBaselineRef = useRef(null);
 
   useEffect(() => {
     if (!navigator.geolocation) {
@@ -935,6 +941,13 @@ export default function DashboardPage() {
       document.removeEventListener("keydown", handleEscape);
     };
   }, [isProfileMenuOpen]);
+
+  useEffect(() => {
+    if (!isProfileModalOpen) return;
+    profileBaselineRef.current = { ...profileData };
+    setProfileError("");
+    setProfileStatus("");
+  }, [isProfileModalOpen]);
 
   useEffect(() => {
     const stored = localStorage.getItem("tscemNotifications");
@@ -1801,8 +1814,13 @@ export default function DashboardPage() {
 
   function handleProfileSave(event) {
     event.preventDefault();
+    if (missingProfileFields.length > 0) {
+      setProfileError(`${t.profile.requiredFields} ${missingProfileFields.join(", ")}`);
+      return;
+    }
     localStorage.setItem("tscemProfile", JSON.stringify(profileData));
     setProfileStatus("Profile updated successfully");
+    setProfileError("");
     setIsProfileEditing(false);
     setTimeout(() => setProfileStatus(""), 2500);
   }
@@ -1858,6 +1876,22 @@ export default function DashboardPage() {
     : 0;
   const profileDisplayName = resolvedProfile.name || "Your Name";
   const profileDisplayEmail = resolvedProfile.email || "Add your email";
+  const requiredProfileFields = useMemo(() => ({
+    name: t.profile.fullName,
+    email: t.profile.email,
+    phone: t.profile.phone,
+  }), [t.profile.fullName, t.profile.email, t.profile.phone]);
+  const missingProfileFields = useMemo(() => {
+    return Object.entries(requiredProfileFields)
+      .filter(([key]) => !String(profileData[key] || "").trim())
+      .map(([, label]) => label);
+  }, [profileData, requiredProfileFields]);
+  const isProfileDirty = useMemo(() => {
+    const baseline = profileBaselineRef.current;
+    if (!baseline) return false;
+    const keys = ["name", "email", "phone", "address", "about"];
+    return keys.some((key) => String(baseline[key] || "") !== String(profileData[key] || ""));
+  }, [profileData]);
 
   return (
     <div className="dashboard-body">
@@ -2826,7 +2860,10 @@ export default function DashboardPage() {
               <input
                 type="text"
                 value={profileData.name}
-                onChange={(event) => setProfileData((prev) => ({ ...prev, name: event.target.value }))}
+                onChange={(event) => {
+                  setProfileError("");
+                  setProfileData((prev) => ({ ...prev, name: event.target.value }));
+                }}
                 readOnly={!isProfileEditing}
               />
             </label>
@@ -2840,7 +2877,10 @@ export default function DashboardPage() {
                 type="tel"
                 placeholder="+91 98765 43210"
                 value={profileData.phone}
-                onChange={(event) => setProfileData((prev) => ({ ...prev, phone: event.target.value }))}
+                onChange={(event) => {
+                  setProfileError("");
+                  setProfileData((prev) => ({ ...prev, phone: event.target.value }));
+                }}
                 readOnly={!isProfileEditing}
               />
             </label>
@@ -2850,7 +2890,10 @@ export default function DashboardPage() {
                 type="text"
                 placeholder="City, State"
                 value={profileData.address}
-                onChange={(event) => setProfileData((prev) => ({ ...prev, address: event.target.value }))}
+                onChange={(event) => {
+                  setProfileError("");
+                  setProfileData((prev) => ({ ...prev, address: event.target.value }));
+                }}
                 readOnly={!isProfileEditing}
               />
             </label>
@@ -2860,12 +2903,16 @@ export default function DashboardPage() {
                 rows="3"
                 placeholder={t.profile.aboutPlaceholder}
                 value={profileData.about}
-                onChange={(event) => setProfileData((prev) => ({ ...prev, about: event.target.value }))}
+                onChange={(event) => {
+                  setProfileError("");
+                  setProfileData((prev) => ({ ...prev, about: event.target.value }));
+                }}
                 readOnly={!isProfileEditing}
               />
             </label>
 
             {profileStatus ? <div className="profile-success status-fade">{profileStatus}</div> : null}
+            {profileError ? <div className="profile-warning status-fade">{profileError}</div> : null}
             {dataClearStatus ? <div className="profile-warning status-fade">{dataClearStatus}</div> : null}
 
             <div className="safety-panel">
@@ -2891,9 +2938,11 @@ export default function DashboardPage() {
               >
                 {t.profile.edit}
               </button>
-              <button type="submit" className="btn-primary">
-                {t.profile.save}
-              </button>
+              {isProfileEditing && (isProfileDirty || missingProfileFields.length > 0) ? (
+                <button type="submit" className="btn-primary">
+                  {t.profile.saveDetails}
+                </button>
+              ) : null}
             </div>
           </form>
         </div>
