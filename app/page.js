@@ -724,15 +724,13 @@ export default function DashboardPage() {
   });
 
   const profileCompletion = useMemo(() => {
-    const fields = [
+    const requiredFields = [
       profileData.name,
       profileData.email,
       profileData.phone,
-      profileData.address,
-      profileData.about,
     ];
-    const filled = fields.filter((item) => String(item || "").trim().length > 0).length;
-    return Math.round((filled / 5) * 100);
+    const filled = requiredFields.filter((item) => String(item || "").trim().length > 0).length;
+    return Math.round((filled / requiredFields.length) * 100);
   }, [profileData]);
 
   const resolvedProfile = useMemo(() => {
@@ -2938,8 +2936,12 @@ export default function DashboardPage() {
               >
                 {t.profile.edit}
               </button>
-              {isProfileEditing && (isProfileDirty || missingProfileFields.length > 0) ? (
-                <button type="submit" className="btn-primary">
+              {isProfileEditing ? (
+                <button
+                  type="submit"
+                  className="btn-primary"
+                  disabled={missingProfileFields.length > 0}
+                >
                   {t.profile.saveDetails}
                 </button>
               ) : null}
