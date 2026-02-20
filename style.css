@@ -719,6 +719,79 @@ input:focus, select:focus {
 .modal-message-box { text-align: left; margin-bottom: 20px; }
 .modal-message-box label { font-size: 12px; margin-bottom: 8px; font-weight: 600; display: block;}
 
+.profile-pic {
+  border: none;
+  background: transparent;
+  padding: 0;
+  cursor: pointer;
+}
+
+.profile-modal {
+  max-width: 520px;
+  text-align: left;
+}
+
+.profile-form {
+  display: grid;
+  gap: 14px;
+  margin-top: 16px;
+}
+
+.profile-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-main);
+}
+
+.profile-form input,
+.profile-form textarea {
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid var(--border-color);
+  font-family: inherit;
+  font-size: 14px;
+}
+
+.profile-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.profile-alert {
+  font-size: 12px;
+  font-weight: 700;
+  color: #ef4444;
+}
+
+.user-status {
+  font-size: 11px;
+  font-weight: 700;
+  color: #ef4444;
+}
+
+.user-status.verified {
+  color: #16a34a;
+}
+
+.profile-verified-modal {
+  max-width: 420px;
+  text-align: center;
+}
+
+.verified-icon {
+  font-size: 44px;
+  margin-bottom: 12px;
+}
+
+.verified-message {
+  font-size: 14px;
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+
 /* Search Inline */
 .search-inline {
     display: flex;

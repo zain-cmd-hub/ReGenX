@@ -51,10 +51,11 @@
     <div class="sidebar-footer">
       <div class="user-section">
         <div class="user-profile">
-          <div class="avatar">DK</div>
+          <div class="avatar" id="userAvatar">DK</div>
           <div class="user-info">
-            <span class="user-name">Dev Kulshrestha</span>
-            <span class="user-role">Admin</span>
+            <span class="user-name" id="userName">Dev Kulshrestha</span>
+            <span class="user-role" id="userEmail">Admin</span>
+            <span class="user-status" id="userStatus">Profile Incomplete</span>
           </div>
         </div>
         <button class="logout-btn" onclick="window.location.href='login.html'" title="Logout">
@@ -82,9 +83,9 @@
           <iconify-icon icon="ph:bell-bold"></iconify-icon>
           <span class="badge"></span>
         </button>
-        <div class="profile-pic">
+        <button class="profile-pic" id="profileBtn" type="button" aria-label="Edit Profile">
           <img src="https://ui-avatars.com/api/?name=Dev+Kulshrestha&background=0D8ABC&color=fff" alt="Profile">
-        </div>
+        </button>
       </div>
     </header>
 
@@ -311,6 +312,57 @@
         <div id="modalMessage" class="message-preview"></div>
       </div>
       <button id="modalWhatsappBtn" class="btn-primary full-width">Send Message</button>
+    </div>
+  </div>
+
+  <div class="modal hidden" id="profileModal" aria-hidden="true">
+    <div class="modal-overlay" data-close="true"></div>
+    <div class="modal-card profile-modal" role="dialog" aria-modal="true">
+      <button class="modal-close" id="profileModalClose" aria-label="Close">&times;</button>
+      <div class="modal-header-icon">👤</div>
+      <h3>Edit Profile</h3>
+      <p class="modal-sub">Update your profile details.</p>
+
+      <form id="profileForm" class="profile-form">
+        <label>
+          Full Name
+          <input type="text" id="profileName" placeholder="Your name" required />
+        </label>
+        <label>
+          Email
+          <input type="email" id="profileEmail" placeholder="you@example.com" required />
+        </label>
+        <label>
+          Phone Number
+          <input type="tel" id="profilePhone" placeholder="+91 98765 43210" required />
+        </label>
+        <label>
+          Address
+          <input type="text" id="profileAddress" placeholder="City, State" required />
+        </label>
+        <label>
+          About Me
+          <textarea id="profileAbout" rows="3" placeholder="Tell us about your business or products." required></textarea>
+        </label>
+
+        <div class="profile-alert" id="profileError"></div>
+
+        <div class="profile-actions">
+          <button type="submit" class="btn-primary" id="profileSaveBtn">Save Details</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="modal hidden" id="profileSuccessModal" aria-hidden="true">
+    <div class="modal-overlay" data-close="true"></div>
+    <div class="modal-card profile-verified-modal" role="dialog" aria-modal="true">
+      <button class="modal-close" id="profileSuccessClose" aria-label="Close">&times;</button>
+      <div class="verified-icon">✅</div>
+      <h3>Profile Verified</h3>
+      <p class="verified-message" id="profileSuccessMessage">
+        🎉 Congratulations! Your profile has been successfully verified.
+      </p>
     </div>
   </div>
 

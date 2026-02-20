@@ -57,7 +57,115 @@ const modalWhatsapp = document.getElementById("modalWhatsapp");
 const modalMessage = document.getElementById("modalMessage");
 const modalWhatsappBtn = document.getElementById("modalWhatsappBtn");
 
+const profileBtn = document.getElementById("profileBtn");
+const profileModal = document.getElementById("profileModal");
+const profileModalClose = document.getElementById("profileModalClose");
+const profileForm = document.getElementById("profileForm");
+const profileName = document.getElementById("profileName");
+const profileEmail = document.getElementById("profileEmail");
+const profilePhone = document.getElementById("profilePhone");
+const profileAddress = document.getElementById("profileAddress");
+const profileAbout = document.getElementById("profileAbout");
+const profileError = document.getElementById("profileError");
+const profileSuccessModal = document.getElementById("profileSuccessModal");
+const profileSuccessClose = document.getElementById("profileSuccessClose");
+const profileSuccessMessage = document.getElementById("profileSuccessMessage");
+
+const userAvatar = document.getElementById("userAvatar");
+const userName = document.getElementById("userName");
+const userEmail = document.getElementById("userEmail");
+const userStatus = document.getElementById("userStatus");
+
 let activeFacility = null;
+
+const PROFILE_STORAGE_KEY = "tscemProfile";
+const LANG_STORAGE_KEY = "tscemLanguage";
+
+function getLanguage() {
+  return localStorage.getItem(LANG_STORAGE_KEY) === "hi" ? "hi" : "en";
+}
+
+function getSuccessMessage() {
+  return getLanguage() === "hi"
+    ? "🎉 बधाई हो! आपकी प्रोफ़ाइल सफलतापूर्वक सत्यापित हो गई है।"
+    : "🎉 Congratulations! Your profile has been successfully verified.";
+}
+
+function getProfileData() {
+  const stored = localStorage.getItem(PROFILE_STORAGE_KEY);
+  if (!stored) {
+    return {
+      name: "Dev Kulshrestha",
+      email: "Admin",
+      phone: "",
+      address: "",
+      about: "",
+    };
+  }
+  try {
+    return JSON.parse(stored);
+  } catch (error) {
+    return {
+      name: "Dev Kulshrestha",
+      email: "Admin",
+      phone: "",
+      address: "",
+      about: "",
+    };
+  }
+}
+
+function isProfileComplete(profile) {
+  return [profile.name, profile.email, profile.phone, profile.address, profile.about]
+    .every((value) => String(value || "").trim().length > 0);
+}
+
+function updateProfileUI(profile) {
+  const initials = (profile.name || "User")
+    .split(" ")
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0])
+    .join("")
+    .toUpperCase();
+  userAvatar.textContent = initials || "U";
+  userName.textContent = profile.name || "User";
+  userEmail.textContent = profile.email || "-";
+  userStatus.textContent = isProfileComplete(profile) ? "✅ Verified User" : "Profile Incomplete";
+  userStatus.classList.toggle("verified", isProfileComplete(profile));
+}
+
+function openProfileModal() {
+  const profile = getProfileData();
+  profileName.value = profile.name || "";
+  profileEmail.value = profile.email || "";
+  profilePhone.value = profile.phone || "";
+  profileAddress.value = profile.address || "";
+  profileAbout.value = profile.about || "";
+  profileError.textContent = "";
+  profileModal.classList.remove("hidden");
+  profileModal.setAttribute("aria-hidden", "false");
+}
+
+function closeProfileModal() {
+  profileModal.classList.add("hidden");
+  profileModal.setAttribute("aria-hidden", "true");
+}
+
+function openProfileSuccess() {
+  profileSuccessMessage.textContent = getSuccessMessage();
+  profileSuccessModal.classList.remove("hidden");
+  profileSuccessModal.setAttribute("aria-hidden", "false");
+  setTimeout(() => {
+    profileSuccessModal.classList.add("hidden");
+    profileSuccessModal.setAttribute("aria-hidden", "true");
+  }, 3000);
+}
+
+function closeProfileSuccess() {
+  profileSuccessModal.classList.add("hidden");
+  profileSuccessModal.setAttribute("aria-hidden", "true");
+}
 
 navButtons.forEach((btn) => {
   btn.addEventListener("click", () => {
@@ -68,6 +176,66 @@ navButtons.forEach((btn) => {
     }
   });
 });
+
+if (profileBtn) {
+  profileBtn.addEventListener("click", openProfileModal);
+}
+
+if (profileModalClose) {
+  profileModalClose.addEventListener("click", closeProfileModal);
+}
+
+if (profileModal) {
+  profileModal.addEventListener("click", (event) => {
+    const target = event.target;
+    if (target instanceof HTMLElement && target.dataset.close === "true") {
+      closeProfileModal();
+    }
+  });
+}
+
+if (profileSuccessClose) {
+  profileSuccessClose.addEventListener("click", closeProfileSuccess);
+}
+
+if (profileSuccessModal) {
+  profileSuccessModal.addEventListener("click", (event) => {
+    const target = event.target;
+    if (target instanceof HTMLElement && target.dataset.close === "true") {
+      closeProfileSuccess();
+    }
+  });
+}
+
+if (profileForm) {
+  profileForm.addEventListener("submit", (event) => {
+    event.preventDefault();
+    const nextProfile = {
+      name: profileName.value.trim(),
+      email: profileEmail.value.trim(),
+      phone: profilePhone.value.trim(),
+      address: profileAddress.value.trim(),
+      about: profileAbout.value.trim(),
+    };
+
+    const missing = [];
+    if (!nextProfile.name) missing.push("Name");
+    if (!nextProfile.email) missing.push("Email");
+    if (!nextProfile.phone) missing.push("Phone");
+    if (!nextProfile.address) missing.push("Address");
+    if (!nextProfile.about) missing.push("About");
+
+    if (missing.length > 0) {
+      profileError.textContent = `Please fill required fields: ${missing.join(", ")}`;
+      return;
+    }
+
+    localStorage.setItem(PROFILE_STORAGE_KEY, JSON.stringify(nextProfile));
+    updateProfileUI(nextProfile);
+    closeProfileModal();
+    openProfileSuccess();
+  });
+}
 
 imageInput.addEventListener("change", () => {
   const file = imageInput.files[0];
@@ -84,6 +252,8 @@ imageInput.addEventListener("change", () => {
   };
   reader.readAsDataURL(file);
 });
+
+updateProfileUI(getProfileData());
 
 function showLoader(loaderEl) {
   loaderEl.classList.add("active");
