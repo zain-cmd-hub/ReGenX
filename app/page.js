@@ -59,6 +59,7 @@ const translations = {
       purpose: "Purpose",
       ageYears: "Age (years)",
       usageDuration: "Usage Duration",
+      verifiedPopup: "🎉 Congratulations! Your profile has been successfully verified.",
       years: "Years",
       months: "Months",
       days: "Days",
@@ -90,6 +91,7 @@ const translations = {
       label: "Eco Score",
       best: "Best for environment 🌍",
       moderate: "Moderate impact",
+      verifiedPopup: "🎉 बधाई हो! आपकी प्रोफ़ाइल सफलतापूर्वक सत्यापित हो गई है।",
       low: "Low eco benefit",
     },
     comparison: {
@@ -707,6 +709,7 @@ export default function DashboardPage() {
   const [profileStatus, setProfileStatus] = useState("");
   const [profileError, setProfileError] = useState("");
   const [dataClearStatus, setDataClearStatus] = useState("");
+  const [isProfileVerifiedOpen, setIsProfileVerifiedOpen] = useState(false);
   const [isPasswordOpen, setIsPasswordOpen] = useState(false);
   const [passwordData, setPasswordData] = useState({
     current: "",
@@ -1817,10 +1820,12 @@ export default function DashboardPage() {
       return;
     }
     localStorage.setItem("tscemProfile", JSON.stringify(profileData));
-    setProfileStatus("Profile updated successfully");
+    profileBaselineRef.current = { ...profileData };
+    setProfileStatus("");
     setProfileError("");
     setIsProfileEditing(false);
-    setTimeout(() => setProfileStatus(""), 2500);
+    setIsProfileVerifiedOpen(true);
+    setTimeout(() => setIsProfileVerifiedOpen(false), 3000);
   }
 
   function handleClearData() {
@@ -1878,7 +1883,9 @@ export default function DashboardPage() {
     name: t.profile.fullName,
     email: t.profile.email,
     phone: t.profile.phone,
-  }), [t.profile.fullName, t.profile.email, t.profile.phone]);
+    address: t.profile.address,
+    about: t.profile.about,
+  }), [t.profile.fullName, t.profile.email, t.profile.phone, t.profile.address, t.profile.about]);
   const missingProfileFields = useMemo(() => {
     return Object.entries(requiredProfileFields)
       .filter(([key]) => !String(profileData[key] || "").trim())
@@ -2947,6 +2954,22 @@ export default function DashboardPage() {
               ) : null}
             </div>
           </form>
+        </div>
+      </div>
+
+      <div className={`modal ${isProfileVerifiedOpen ? "" : "hidden"}`} aria-hidden={!isProfileVerifiedOpen}>
+        <div className="modal-overlay" onClick={() => setIsProfileVerifiedOpen(false)} />
+        <div className="modal-card profile-verified-modal" role="dialog" aria-modal="true">
+          <button
+            className="modal-close"
+            aria-label="Close"
+            onClick={() => setIsProfileVerifiedOpen(false)}
+          >
+            ×
+          </button>
+          <div className="verified-icon">✅</div>
+          <h3>{t.profile.title}</h3>
+          <p className="verified-message">{t.profile.verifiedPopup}</p>
         </div>
       </div>
 

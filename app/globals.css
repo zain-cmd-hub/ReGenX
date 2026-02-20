@@ -901,6 +901,22 @@ body.dark .comparison-value {
   text-align: left;
 }
 
+.profile-verified-modal {
+  max-width: 420px;
+  text-align: center;
+}
+
+.verified-icon {
+  font-size: 44px;
+  margin-bottom: 12px;
+}
+
+.verified-message {
+  font-size: 14px;
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+
 .rating-form {
   display: grid;
   gap: 12px;
