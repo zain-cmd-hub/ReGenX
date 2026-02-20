@@ -182,6 +182,14 @@ const translations = {
       badgeIncomplete: "Incomplete",
       edit: "Edit Profile",
       save: "Save",
+      changePassword: "Change Password",
+      currentPassword: "Current Password",
+      newPassword: "New Password",
+      confirmPassword: "Confirm Password",
+      updatePassword: "Update Password",
+      passwordUpdated: "Password updated successfully.",
+      passwordMismatch: "New password and confirm password do not match.",
+      passwordRequired: "Please fill all password fields.",
     },
     safety: {
       title: "Safety & Trust",
@@ -374,6 +382,14 @@ const translations = {
       badgeIncomplete: "अधूरी",
       edit: "प्रोफ़ाइल संपादित करें",
       save: "सेव करें",
+      changePassword: "पासवर्ड बदलें",
+      currentPassword: "वर्तमान पासवर्ड",
+      newPassword: "नया पासवर्ड",
+      confirmPassword: "पासवर्ड की पुष्टि करें",
+      updatePassword: "पासवर्ड अपडेट करें",
+      passwordUpdated: "पासवर्ड सफलतापूर्वक अपडेट हुआ।",
+      passwordMismatch: "नया पासवर्ड और पुष्टि मेल नहीं खाते।",
+      passwordRequired: "कृपया सभी पासवर्ड फ़ील्ड भरें।",
     },
     safety: {
       title: "सेफ्टी और ट्रस्ट",
@@ -682,10 +698,18 @@ export default function DashboardPage() {
   const [showSuccess, setShowSuccess] = useState(false);
   const successTimerRef = useRef(null);
 
-  const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
+  const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
   const [isProfileEditing, setIsProfileEditing] = useState(true);
   const [profileStatus, setProfileStatus] = useState("");
   const [dataClearStatus, setDataClearStatus] = useState("");
+  const [isPasswordOpen, setIsPasswordOpen] = useState(false);
+  const [passwordData, setPasswordData] = useState({
+    current: "",
+    next: "",
+    confirm: "",
+  });
+  const [passwordStatus, setPasswordStatus] = useState(null);
   const [flowStep, setFlowStep] = useState(0);
   const [profileData, setProfileData] = useState({
     name: "",
@@ -707,6 +731,23 @@ export default function DashboardPage() {
     return Math.round((filled / 5) * 100);
   }, [profileData]);
 
+  const resolvedProfile = useMemo(() => {
+    const name = profileData.name || userProfile.name || "";
+    const email = profileData.email || userProfile.email || "";
+    const avatarName = encodeURIComponent(name || "User");
+    const photo =
+      userProfile.photo ||
+      `https://ui-avatars.com/api/?name=${avatarName}&background=0D8ABC&color=fff`;
+    return { name, email, photo };
+  }, [profileData.name, profileData.email, userProfile.name, userProfile.email, userProfile.photo]);
+
+  const profileInitials = useMemo(() => {
+    const base = (resolvedProfile.name || "User").trim();
+    const parts = base.split(" ").filter(Boolean);
+    const initials = parts.slice(0, 2).map((item) => item[0]).join("");
+    return (initials || "U").toUpperCase();
+  }, [resolvedProfile.name]);
+
   const [reviews, setReviews] = useState([]);
   const [isRatingOpen, setIsRatingOpen] = useState(false);
   const [ratingValue, setRatingValue] = useState(0);
@@ -726,6 +767,9 @@ export default function DashboardPage() {
   const [liveScore, setLiveScore] = useState(82);
   const [liveReuse, setLiveReuse] = useState(64);
   const [liveDemand] = useState("High");
+
+  const profileMenuRef = useRef(null);
+  const profileButtonRef = useRef(null);
 
   useEffect(() => {
     if (!navigator.geolocation) {
@@ -846,6 +890,52 @@ export default function DashboardPage() {
       unsubscribe();
     };
   }, [router]);
+
+  useEffect(() => {
+    if (!userProfile.name && !userProfile.email) return;
+    setProfileData((prev) => {
+      let updated = false;
+      const next = { ...prev };
+      if (!next.name && userProfile.name) {
+        next.name = userProfile.name;
+        updated = true;
+      }
+      if (!next.email && userProfile.email) {
+        next.email = userProfile.email;
+        updated = true;
+      }
+      if (updated) {
+        localStorage.setItem("tscemProfile", JSON.stringify(next));
+        return next;
+      }
+      return prev;
+    });
+  }, [userProfile]);
+
+  useEffect(() => {
+    function handleDocumentClick(event) {
+      if (!isProfileMenuOpen) return;
+      const target = event.target;
+      if (profileMenuRef.current?.contains(target) || profileButtonRef.current?.contains(target)) {
+        return;
+      }
+      setIsProfileMenuOpen(false);
+      setIsPasswordOpen(false);
+    }
+
+    function handleEscape(event) {
+      if (event.key !== "Escape") return;
+      setIsProfileMenuOpen(false);
+      setIsPasswordOpen(false);
+    }
+
+    document.addEventListener("mousedown", handleDocumentClick);
+    document.addEventListener("keydown", handleEscape);
+    return () => {
+      document.removeEventListener("mousedown", handleDocumentClick);
+      document.removeEventListener("keydown", handleEscape);
+    };
+  }, [isProfileMenuOpen]);
 
   useEffect(() => {
     const stored = localStorage.getItem("tscemNotifications");
@@ -1639,6 +1729,51 @@ export default function DashboardPage() {
     router.push("/login");
   }
 
+  function toggleProfileMenu() {
+    setIsNotifOpen(false);
+    setIsProfileMenuOpen((prev) => {
+      if (prev) {
+        setIsPasswordOpen(false);
+      }
+      return !prev;
+    });
+  }
+
+  function openProfileModal() {
+    setIsProfileModalOpen(true);
+    setIsProfileMenuOpen(false);
+    setIsPasswordOpen(false);
+    if (profileCompletion < 100) {
+      setIsProfileEditing(true);
+    }
+  }
+
+  function closeProfileModal() {
+    setIsProfileModalOpen(false);
+  }
+
+  function handlePasswordSubmit(event) {
+    event.preventDefault();
+    if (!passwordData.current || !passwordData.next || !passwordData.confirm) {
+      setPasswordStatus({ type: "error", message: t.profile.passwordRequired });
+      return;
+    }
+    if (passwordData.next !== passwordData.confirm) {
+      setPasswordStatus({ type: "error", message: t.profile.passwordMismatch });
+      return;
+    }
+    localStorage.setItem("tscemPassword", passwordData.next);
+    setPasswordStatus({ type: "success", message: t.profile.passwordUpdated });
+    setPasswordData({ current: "", next: "", confirm: "" });
+    setTimeout(() => setPasswordStatus(null), 2500);
+  }
+
+  async function handleProfileMenuLogout() {
+    setIsProfileMenuOpen(false);
+    setIsPasswordOpen(false);
+    await handleLogout();
+  }
+
   function handleProfileSave(event) {
     event.preventDefault();
     localStorage.setItem("tscemProfile", JSON.stringify(profileData));
@@ -1697,6 +1832,8 @@ export default function DashboardPage() {
   const shopAverage = shopReviews.length
     ? shopReviews.reduce((sum, item) => sum + item.rating, 0) / shopReviews.length
     : 0;
+  const profileDisplayName = resolvedProfile.name || "Your Name";
+  const profileDisplayEmail = resolvedProfile.email || "Add your email";
 
   return (
     <div className="dashboard-body">
@@ -1818,9 +1955,101 @@ export default function DashboardPage() {
               <span className="theme-icon">{theme === "dark" ? "☀️" : "🌙"}</span>
               <span className="theme-label">{theme === "dark" ? "Light" : "Dark"}</span>
             </button>
-            <button className="icon-btn profile-btn" onClick={() => setIsProfileOpen(true)} aria-label={t.actions.profile}>
-              <iconify-icon icon="ph:user-circle-bold" />
-            </button>
+            <div className="profile-menu-wrapper" ref={profileMenuRef}>
+              <button
+                ref={profileButtonRef}
+                type="button"
+                className="icon-btn profile-btn"
+                onClick={toggleProfileMenu}
+                aria-label={t.actions.profile}
+                aria-expanded={isProfileMenuOpen}
+                aria-haspopup="dialog"
+              >
+                <iconify-icon icon="ph:user-circle-bold" />
+              </button>
+              {isProfileMenuOpen ? (
+                <div className="profile-menu" role="dialog" aria-label={t.profile.title}>
+                  <div className="profile-menu-header">
+                    <div className="profile-menu-avatar">
+                      <img src={resolvedProfile.photo} alt="Profile" />
+                    </div>
+                    <div className="profile-menu-meta">
+                      <div className="profile-menu-name">{profileDisplayName}</div>
+                      <div className="profile-menu-email">{profileDisplayEmail}</div>
+                      <div className={`profile-menu-status ${profileCompletion === 100 ? "complete" : "incomplete"}`}>
+                        {profileCompletion === 100 ? t.profile.completed : t.profile.incomplete}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="profile-menu-actions">
+                    <button type="button" className="profile-menu-btn" onClick={openProfileModal}>
+                      {t.profile.edit}
+                    </button>
+                    <button
+                      type="button"
+                      className="profile-menu-btn"
+                      onClick={() => setIsPasswordOpen((prev) => !prev)}
+                    >
+                      {t.profile.changePassword}
+                    </button>
+                    <button type="button" className="profile-menu-btn danger" onClick={handleProfileMenuLogout}>
+                      {t.actions.logout}
+                    </button>
+                  </div>
+
+                  {isPasswordOpen ? (
+                    <form className="profile-password-form" onSubmit={handlePasswordSubmit}>
+                      <label>
+                        {t.profile.currentPassword}
+                        <input
+                          type="password"
+                          value={passwordData.current}
+                          onChange={(event) => {
+                            setPasswordStatus(null);
+                            setPasswordData((prev) => ({ ...prev, current: event.target.value }));
+                          }}
+                        />
+                      </label>
+                      <label>
+                        {t.profile.newPassword}
+                        <input
+                          type="password"
+                          value={passwordData.next}
+                          onChange={(event) => {
+                            setPasswordStatus(null);
+                            setPasswordData((prev) => ({ ...prev, next: event.target.value }));
+                          }}
+                        />
+                      </label>
+                      <label>
+                        {t.profile.confirmPassword}
+                        <input
+                          type="password"
+                          value={passwordData.confirm}
+                          onChange={(event) => {
+                            setPasswordStatus(null);
+                            setPasswordData((prev) => ({ ...prev, confirm: event.target.value }));
+                          }}
+                        />
+                      </label>
+                      <div className="profile-password-actions">
+                        <button type="submit" className="profile-menu-btn primary">
+                          {t.profile.updatePassword}
+                        </button>
+                      </div>
+                      {passwordStatus ? (
+                        <div
+                          className={`${passwordStatus.type === "success" ? "profile-success" : "profile-warning"} status-fade`}
+                        >
+                          {passwordStatus.message}
+                        </div>
+                      ) : null}
+                    </form>
+                  ) : null}
+                </div>
+              ) : null}
+            </div>
 
             <div className="notification-wrapper">
               <button
@@ -1868,10 +2097,7 @@ export default function DashboardPage() {
             </div>
             <div className="profile-pic">
               <img
-                src={
-                  userProfile.photo ||
-                  "https://ui-avatars.com/api/?name=Dev+Kulshrestha&background=0D8ABC&color=fff"
-                }
+                src={resolvedProfile.photo}
                 alt="Profile"
               />
             </div>
@@ -2544,10 +2770,10 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      <div className={`modal ${isProfileOpen ? "" : "hidden"}`} aria-hidden={!isProfileOpen}>
-        <div className="modal-overlay" onClick={() => setIsProfileOpen(false)} />
+      <div className={`modal ${isProfileModalOpen ? "" : "hidden"}`} aria-hidden={!isProfileModalOpen}>
+        <div className="modal-overlay" onClick={closeProfileModal} />
         <div className="modal-card profile-modal" role="dialog" aria-modal="true">
-          <button className="modal-close" aria-label="Close" onClick={() => setIsProfileOpen(false)}>
+          <button className="modal-close" aria-label="Close" onClick={closeProfileModal}>
             ×
           </button>
           <div className="modal-header-icon">
@@ -2559,7 +2785,11 @@ export default function DashboardPage() {
           <form className="profile-form" onSubmit={handleProfileSave}>
             <div className="profile-card">
               <div className="profile-avatar">
-                {profileData.name ? profileData.name.slice(0, 2).toUpperCase() : "U"}
+                {resolvedProfile.photo ? (
+                  <img src={resolvedProfile.photo} alt="Profile" />
+                ) : (
+                  profileInitials
+                )}
               </div>
               <div>
                 <div className="profile-title">
