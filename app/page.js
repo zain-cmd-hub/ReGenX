@@ -558,6 +558,15 @@ function generateCertificateId() {
   return `SCEM-${Date.now().toString(36).toUpperCase()}`;
 }
 
+function buildUserId(profile, user) {
+  const raw = profile?.email || user?.email || profile?.name || user?.name || "user";
+  return String(raw).trim().toLowerCase().replace(/[^a-z0-9]+/g, "-");
+}
+
+function buildUserName(profile, user) {
+  return profile?.name || user?.name || "Eco Hero";
+}
+
 function readImageCache() {
   try {
     const raw = localStorage.getItem("tscemImageCache");
@@ -1625,6 +1634,8 @@ export default function DashboardPage() {
         },
         futurePath: purpose,
         certificateId: purpose === "recycle" ? generateCertificateId() : null,
+        userId: buildUserId(profileData, userProfile),
+        userName: buildUserName(profileData, userProfile),
         wasteKg: purpose === "recycle" ? Number(materialWeight || 0) : 0,
       };
 
@@ -1824,6 +1835,8 @@ export default function DashboardPage() {
         },
         futurePath: purpose,
         certificateId: purpose === "recycle" ? generateCertificateId() : null,
+        userId: buildUserId(profileData, userProfile),
+        userName: buildUserName(profileData, userProfile),
         wasteKg: purpose === "recycle" ? Number(materialWeight || 0) : 0,
       };
 

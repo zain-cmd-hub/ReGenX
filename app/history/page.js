@@ -162,6 +162,8 @@ export default function HistoryPage() {
   const [modalType, setModalType] = useState("");
   const [certificateItem, setCertificateItem] = useState(null);
   const certificateRef = useRef(null);
+  const [qrDataUrl, setQrDataUrl] = useState("");
+  const [qrReady, setQrReady] = useState(false);
 
   useEffect(() => {
     setLanguage(getLanguage());
@@ -188,6 +190,35 @@ export default function HistoryPage() {
   useEffect(() => {
     localStorage.setItem("tscemProductHistory", JSON.stringify(history));
   }, [history]);
+
+  useEffect(() => {
+    let isMounted = true;
+    async function buildQr() {
+      if (!certificateItem) {
+        setQrDataUrl("");
+        setQrReady(false);
+        return;
+      }
+      const userId = certificateItem.userId || "user";
+      const url = `https://mywebsite.com/user/${userId}/impact`;
+      try {
+        const QRCode = (await import("qrcode")).default;
+        const dataUrl = await QRCode.toDataURL(url, { width: 140, margin: 1 });
+        if (isMounted) {
+          setQrDataUrl(dataUrl);
+          setQrReady(true);
+        }
+      } catch (error) {
+        setQrDataUrl("");
+        setQrReady(false);
+      }
+    }
+
+    buildQr();
+    return () => {
+      isMounted = false;
+    };
+  }, [certificateItem]);
 
   const t = translations[language] || translations.en;
   const locale = language === "hi" ? "hi-IN" : "en-IN";
@@ -218,6 +249,7 @@ export default function HistoryPage() {
 
   async function handleDownloadPdf() {
     if (!certificateRef.current || !certificateItem) return;
+    if (!qrReady) return;
     const html2canvas = (await import("html2canvas")).default;
     const { jsPDF } = await import("jspdf");
     const canvas = await html2canvas(certificateRef.current, {
@@ -235,7 +267,7 @@ export default function HistoryPage() {
     const x = (pageWidth - imgWidth) / 2;
     const y = (pageHeight - imgHeight) / 2;
     pdf.addImage(imgData, "PNG", x, y, imgWidth, imgHeight);
-    const safeName = (certificateItem.productName || "User").replace(/[^a-z0-9]+/gi, "_");
+    const safeName = (certificateItem.userName || certificateItem.productName || "User").replace(/[^a-z0-9]+/gi, "_");
     pdf.save(`Eco_Certificate_${safeName}.pdf`);
   }
 
@@ -345,14 +377,20 @@ export default function HistoryPage() {
               <div className="certificate-title">{t.certificateTitle}</div>
               <div className="certificate-subtitle">{t.certificateSubtitle}</div>
               <div className="certificate-name">
-                {certificateItem?.productName || "Eco Champion"}
+                {certificateItem?.userName || certificateItem?.productName || "Eco Champion"}
               </div>
               <div className="certificate-message">
                 {t.certificateMessage
-                  .replace("{name}", certificateItem?.productName || "Eco Champion")
+                  .replace("{name}", certificateItem?.userName || certificateItem?.productName || "Eco Champion")
                   .replace("{waste}", Number(certificateItem?.wasteKg || 0).toFixed(1))}
               </div>
               <div className="certificate-seal">{t.certificateAward}</div>
+              {qrDataUrl ? (
+                <div className="certificate-qr">
+                  <img src={qrDataUrl} alt="QR code" />
+                  <span>Scan to view impact</span>
+                </div>
+              ) : null}
               <div className="certificate-footer">
                 <div>{t.certificateFooter}</div>
                 <div className="certificate-meta">
@@ -362,7 +400,7 @@ export default function HistoryPage() {
               </div>
             </div>
           </div>
-          <button type="button" className="history-action primary" onClick={handleDownloadPdf}>
+          <button type="button" className="history-action primary" onClick={handleDownloadPdf} disabled={!qrReady}>
             {t.downloadCert}
           </button>
         </div>

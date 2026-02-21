@@ -1455,11 +1455,12 @@ body.dark .comparison-value {
   background: white;
   border-radius: 16px;
   border: 2px solid rgba(22, 163, 74, 0.25);
-  padding: 26px 24px;
+  padding: 26px 24px 80px;
   text-align: center;
   min-height: 320px;
   display: grid;
   gap: 12px;
+  position: relative;
 }
 
 .certificate-title {
@@ -1502,6 +1503,25 @@ body.dark .comparison-value {
   font-weight: 800;
   color: #166534;
   margin: 0 auto;
+}
+
+.certificate-qr {
+  position: absolute;
+  right: 18px;
+  bottom: 14px;
+  display: grid;
+  gap: 6px;
+  justify-items: center;
+  font-size: 10px;
+  color: #166534;
+}
+
+.certificate-qr img {
+  width: 72px;
+  height: 72px;
+  border-radius: 8px;
+  border: 1px solid rgba(22, 163, 74, 0.35);
+  background: white;
 }
 
 .certificate-footer {
