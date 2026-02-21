@@ -6,23 +6,24 @@ import dynamic from "next/dynamic";
 import { onAuthStateChanged, signOut } from "firebase/auth";
 import { auth } from "./lib/firebase";
 import ModuleCard from "./components/ModuleCard";
-
-const MapView = dynamic(() => import("./components/MapView"), { ssr: false });
-const DEFAULT_CITY = {
-  name: "New Delhi",
-  lat: 28.6139,
-  lng: 77.2090,
-};
-
+import HeroSection from "./components/sections/HeroSection";
+import HowItWorksSection from "./components/sections/HowItWorksSection";
+import CoreFeaturesSection from "./components/sections/CoreFeaturesSection";
+import UserActionSection from "./components/sections/UserActionSection";
+import CertificateSection from "./components/sections/CertificateSection";
+import HistoryPreviewSection from "./components/sections/HistoryPreviewSection";
+import FooterSection from "./components/sections/FooterSection";
 const translations = {
   en: {
     nav: {
-      dashboard: "Dashboard",
-      overview: "Overview",
-      upload: "Upload",
-      life: "Life Cycle",
-      pricing: "Pricing",
+      hero: "Overview",
+      how: "How It Works",
+      features: "Core Features",
+      impact: "Impact",
+      actions: "User Actions",
       facilities: "Facilities",
+      history: "History",
+      modules: "Modules",
     },
     stats: {
       uploadedProduct: "Uploaded Product",
@@ -243,12 +244,14 @@ const translations = {
   },
   hi: {
     nav: {
-      dashboard: "डैशबोर्ड",
-      overview: "ओवरव्यू",
-      upload: "अपलोड",
-      life: "लाइफ साइकिल",
-      pricing: "प्राइसिंग",
+      hero: "ओवरव्यू",
+      how: "कैसे काम करता है",
+      features: "मुख्य फीचर्स",
+      impact: "प्रभाव",
+      actions: "यूजर एक्शन",
       facilities: "सुविधाएं",
+      history: "इतिहास",
+      modules: "मॉड्यूल",
     },
     stats: {
       uploadedProduct: "अपलोडेड उत्पाद",
@@ -463,88 +466,6 @@ const translations = {
   },
 };
 
-function clamp(value, min, max) {
-  return Math.min(Math.max(value, min), max);
-}
-
-async function analyzeImageFeatures(imageSrc) {
-  const image = new Image();
-  image.src = imageSrc;
-
-  await new Promise((resolve, reject) => {
-    image.onload = resolve;
-    image.onerror = reject;
-  });
-
-  const canvas = document.createElement("canvas");
-  const context = canvas.getContext("2d");
-  const size = 200;
-  canvas.width = size;
-  canvas.height = size;
-
-  if (!context) {
-    return {
-      brightness: 0.5,
-      contrast: 0.5,
-      sharpness: 0.5,
-      edgeDensity: 0.5,
-      damageScore: 50,
-    };
-  }
-
-  context.drawImage(image, 0, 0, size, size);
-  const { data } = context.getImageData(0, 0, size, size);
-
-  let totalBrightness = 0;
-  let totalSquared = 0;
-  let edgeSum = 0;
-  const pixelCount = size * size;
-
-  const gray = new Array(pixelCount);
-  for (let i = 0; i < pixelCount; i += 1) {
-    const r = data[i * 4];
-    const g = data[i * 4 + 1];
-    const b = data[i * 4 + 2];
-    const value = (r + g + b) / 3;
-    gray[i] = value;
-    totalBrightness += value;
-  }
-
-  const avgBrightness = totalBrightness / pixelCount;
-  for (let i = 0; i < pixelCount; i += 1) {
-    const diff = gray[i] - avgBrightness;
-    totalSquared += diff * diff;
-  }
-
-  for (let y = 0; y < size - 1; y += 1) {
-    for (let x = 0; x < size - 1; x += 1) {
-      const index = y * size + x;
-      const right = gray[index + 1];
-      const down = gray[index + size];
-      const current = gray[index];
-      edgeSum += Math.abs(current - right) + Math.abs(current - down);
-    }
-  }
-
-  const brightness = avgBrightness / 255;
-  const contrast = clamp(Math.sqrt(totalSquared / pixelCount) / 128, 0, 1);
-  const edgeDensity = clamp(edgeSum / (pixelCount * 255 * 2), 0, 1);
-  const sharpness = edgeDensity;
-  const damageScore = clamp(
-    Math.round((1 - brightness) * 40 + (1 - sharpness) * 40 + (1 - contrast) * 20),
-    0,
-    100
-  );
-
-  return {
-    brightness,
-    contrast,
-    sharpness,
-    edgeDensity,
-    damageScore,
-  };
-}
-
 function hashString(value) {
   let hash = 0;
   for (let i = 0; i < value.length; i += 1) {
@@ -705,7 +626,7 @@ export default function DashboardPage() {
     photo: "",
   });
 
-  const [activeNav, setActiveNav] = useState("dashboard");
+  const [activeNav, setActiveNav] = useState("hero");
   const [productTypeInput, setProductTypeInput] = useState("");
   const [productImage, setProductImage] = useState("");
   const [imageHash, setImageHash] = useState("");
@@ -837,7 +758,7 @@ export default function DashboardPage() {
   const profileMenuRef = useRef(null);
   const profileButtonRef = useRef(null);
   const profileBaselineRef = useRef(null);
-  const impactModeRef = useRef(null);
+  const impactSectionRef = useRef(null);
   const modulesRef = useRef(null);
 
   useEffect(() => {
@@ -917,12 +838,7 @@ export default function DashboardPage() {
   }, []);
 
   useEffect(() => {
-    if (!analysisReady) {
-      setIsImpactVisible(false);
-      return;
-    }
-
-    const node = impactModeRef.current;
+    const node = impactSectionRef.current;
     if (!node) return;
     const observer = new IntersectionObserver(
       (entries) => {
@@ -938,7 +854,7 @@ export default function DashboardPage() {
 
     observer.observe(node);
     return () => observer.disconnect();
-  }, [analysisReady]);
+  }, []);
 
   useEffect(() => {
     const node = modulesRef.current;
@@ -2278,33 +2194,37 @@ export default function DashboardPage() {
         </div>
 
         <nav className="sidebar-nav">
-          <button className={`nav-btn ${activeNav === "dashboard" ? "active" : ""}`} onClick={() => scrollToSection("dashboard")}>
-            <iconify-icon icon="ph:squares-four-bold" />
-            <span>{t.nav.dashboard}</span>
-          </button>
-          <button className={`nav-btn ${activeNav === "landing" ? "active" : ""}`} onClick={() => scrollToSection("landing")}>
+          <button className={`nav-btn ${activeNav === "hero" ? "active" : ""}`} onClick={() => scrollToSection("hero")}>
             <iconify-icon icon="ph:house-bold" />
-            <span>{t.nav.overview}</span>
+            <span>{t.nav.hero}</span>
           </button>
-          <button className={`nav-btn ${activeNav === "upload" ? "active" : ""}`} onClick={() => scrollToSection("upload")}>
+          <button className={`nav-btn ${activeNav === "how" ? "active" : ""}`} onClick={() => scrollToSection("how")}>
+            <iconify-icon icon="ph:stack-bold" />
+            <span>{t.nav.how}</span>
+          </button>
+          <button className={`nav-btn ${activeNav === "features" ? "active" : ""}`} onClick={() => scrollToSection("features")}>
+            <iconify-icon icon="ph:magic-wand-bold" />
+            <span>{t.nav.features}</span>
+          </button>
+          <button className={`nav-btn ${activeNav === "impact" ? "active" : ""}`} onClick={() => scrollToSection("impact")}>
+            <iconify-icon icon="ph:leaf-bold" />
+            <span>{t.nav.impact}</span>
+          </button>
+          <button className={`nav-btn ${activeNav === "actions" ? "active" : ""}`} onClick={() => scrollToSection("actions")}>
             <iconify-icon icon="ph:upload-simple-bold" />
-            <span>{t.nav.upload}</span>
-          </button>
-          <button className={`nav-btn ${activeNav === "life" ? "active" : ""}`} onClick={() => scrollToSection("life")}>
-            <iconify-icon icon="ph:chart-line-up-bold" />
-            <span>{t.nav.life}</span>
-          </button>
-          <button className={`nav-btn ${activeNav === "pricing" ? "active" : ""}`} onClick={() => scrollToSection("pricing")}>
-            <iconify-icon icon="ph:currency-dollar-bold" />
-            <span>{t.nav.pricing}</span>
+            <span>{t.nav.actions}</span>
           </button>
           <button className={`nav-btn ${activeNav === "geo" ? "active" : ""}`} onClick={() => scrollToSection("geo")}>
             <iconify-icon icon="ph:map-pin-bold" />
             <span>{t.nav.facilities}</span>
           </button>
-          <button className="nav-btn" onClick={handleOpenHistory}>
+          <button className={`nav-btn ${activeNav === "history" ? "active" : ""}`} onClick={() => scrollToSection("history")}>
             <span className="nav-emoji" aria-hidden="true">📦</span>
-            <span>{t.history.title}</span>
+            <span>{t.nav.history}</span>
+          </button>
+          <button className={`nav-btn ${activeNav === "modules" ? "active" : ""}`} onClick={() => scrollToSection("modules")}>
+            <iconify-icon icon="ph:puzzle-piece-bold" />
+            <span>{t.nav.modules}</span>
           </button>
         </nav>
 
@@ -2560,142 +2480,461 @@ export default function DashboardPage() {
         </header>
 
         <main className="content-area">
-          <section id="dashboard" className="section dashboard-section">
-            <div className="section-header">
-              <h3>{t.nav.overview}</h3>
+          <HeroSection
+            title="Smart Circular Economy Marketplace"
+            tagline="AI-driven platform to reduce waste and extend product life."
+            onUpload={() => scrollToSection("actions")}
+            onAnalyze={() => scrollToSection("actions")}
+          />
+
+          <HowItWorksSection
+            steps={[
+              { title: "Upload Product", icon: "📤", text: "Add product image and usage details." },
+              { title: "AI Analysis", icon: "🧠", text: "Get condition, eco score, and life insights." },
+              { title: "Sell / Repair / Recycle", icon: "♻️", text: "Choose the best circular path." },
+              { title: "Impact & Certificate", icon: "🏅", text: "Track impact and download certificates." },
+            ]}
+          />
+
+          <CoreFeaturesSection
+            features={[
+              { title: "Digital Twin of Product", icon: "🧩", text: "Simulate future outcomes before decisions." },
+              { title: "Eco Score Meter", icon: "🌿", text: "Quantify sustainability impact instantly." },
+              { title: "AI Suggestions", icon: "🤖", text: "Actionable insights for reuse and repair." },
+              { title: "Timeline Flow", icon: "🧭", text: "Product → Digital Twin → Future Path." },
+            ]}
+          />
+
+          <section id="impact" className="section impact-section" ref={impactSectionRef}>
+            <div className="section-heading">
+              <h2>If 10,000 users use this app…</h2>
+              <p>Real-world impact at scale.</p>
             </div>
-            <div className="stats-grid">
-              <div className="stat-card blue">
-                <div className="icon-box"><iconify-icon icon="ph:package-bold" /></div>
-                <div className="stat-info">
-                  <span className="stat-label">Uploaded Product</span>
-                  <strong className="stat-value">{productTypeInput || "-"}</strong>
-                  <span className="stat-meta">{dashboardUsage}</span>
-                </div>
+            <div className={`impact-mode ${isImpactVisible ? "is-visible" : ""}`}>
+              <div className="impact-mode-header">
+                <h4>{t.impactMode.title}</h4>
+                <p>{t.impactMode.subtitle}</p>
               </div>
-
-              <div className="stat-card green">
-                <div className="icon-box"><iconify-icon icon="ph:leaf-bold" /></div>
-                <div className="stat-info">
-                  <span className="stat-label">Eco Score</span>
-                  <strong className="stat-value">{dashboardEcoScore}</strong>
-                  <span className="stat-meta">{dashboardCondition}</span>
+              <div className="impact-mode-grid">
+                <div className="impact-mode-card">
+                  <div className="impact-mode-icon">🌍</div>
+                  <div className="impact-mode-label">{t.impactMode.co2}</div>
+                  <div className="impact-mode-value">
+                    {formatImpactNumber(impactCounts.co2, impactUnits.co2Unit)}
+                    <span className="impact-mode-unit">{impactUnits.co2Unit}</span>
+                  </div>
                 </div>
-              </div>
-
-              <div className="stat-card purple">
-                <div className="icon-box"><iconify-icon icon="ph:chart-pie-slice-bold" /></div>
-                <div className="stat-info">
-                  <span className="stat-label">{t.stats.remainingLife}</span>
-                  <strong className="stat-value">{dashboardLife}</strong>
-                  <div className="progress-bar-container">
-                    <div className="progress-fill" style={{ width: `${remainingLife || 0}%` }} />
+                <div className="impact-mode-card">
+                  <div className="impact-mode-icon">♻️</div>
+                  <div className="impact-mode-label">{t.impactMode.waste}</div>
+                  <div className="impact-mode-value">
+                    {formatImpactNumber(impactCounts.waste, impactUnits.wasteUnit)}
+                    <span className="impact-mode-unit">{impactUnits.wasteUnit}</span>
+                  </div>
+                </div>
+                <div className="impact-mode-card">
+                  <div className="impact-mode-icon">🌳</div>
+                  <div className="impact-mode-label">{t.impactMode.trees}</div>
+                  <div className="impact-mode-value">
+                    {Math.round(impactCounts.trees).toLocaleString()}
+                    <span className="impact-mode-unit">{t.impactMode.treesSuffix}</span>
                   </div>
                 </div>
               </div>
-
-              <div className="stat-card orange">
-                <div className="icon-box"><iconify-icon icon="ph:tag-bold" /></div>
-                <div className="stat-info">
-                  <span className="stat-label">{t.stats.estPrice}</span>
-                  <strong className="stat-value">{dashboardPrice}</strong>
-                  <span className="stat-meta">{dashboardDemand}</span>
-                </div>
-              </div>
             </div>
+          </section>
 
-            <div className="dashboard-row">
-              <div className="card-panel full-width">
-                <h4>{t.facilities.recommended}</h4>
-                <div className="facility-list">
-                  {facilities.length === 0 ? (
-                    t.facilities.noRecent
-                  ) : (
-                    facilities.slice(0, 3).map((item) => (
-                      <div className="facility-item" key={item.name}>
-                        <div className="f-header">
-                          <strong className="f-name">{item.name}</strong>
-                          <span className="f-dist">{item.distance} km</span>
+          <UserActionSection>
+            <div className="grid-layout">
+              <section id="upload" className="section card-panel">
+                <div className="panel-header">
+                  <h3><iconify-icon icon="ph:upload-simple-bold" /> {t.upload.title}</h3>
+                  <button className="more-btn"><iconify-icon icon="ph:dots-three-bold" /></button>
+                </div>
+                <div className="upload-container">
+                  <div className="upload-area">
+                    <input
+                      ref={fileInputRef}
+                      id="productImageInput"
+                      className="upload-input"
+                      type="file"
+                      accept="image/*"
+                      onChange={handleImageChange}
+                    />
+                    <label
+                      htmlFor="productImageInput"
+                      className={`upload-card ${isDragActive ? "drag" : ""} ${productImage ? "has-image" : ""}`}
+                      onDragOver={handleDragOver}
+                      onDragLeave={handleDragLeave}
+                      onDrop={handleDrop}
+                    >
+                      {productImage ? (
+                        <img className="upload-preview" src={productImage} alt="Uploaded product" />
+                      ) : (
+                        <div className="upload-content">
+                          <iconify-icon icon="ph:cloud-arrow-up-bold" className="upload-icon" />
+                          <span className="upload-title">{t.upload.dragTitle}</span>
+                          <span className="upload-hint">{t.upload.dragHint}</span>
                         </div>
-                        <span className="f-type">{item.type}</span>
-                      </div>
-                    ))
-                  )}
-                </div>
-              </div>
-            </div>
-          </section>
-
-          <section id="history" className="section card-panel">
-            <div className="panel-header">
-              <h3><iconify-icon icon="ph:clock-counter-clockwise-bold" /> {t.history.title}</h3>
-            </div>
-            <div className="history-grid">
-              {productHistory.length === 0 ? (
-                <div className="notification-empty">{t.history.empty}</div>
-              ) : (
-                productHistory.map((item) => (
-                  <div key={item.id} className="history-card">
-                    <img src={item.image} alt={item.productName} />
-                    <div className="history-info">
-                      <h4>{item.productName}</h4>
-                      <p className="history-meta">{t.history.purpose}: {t.purpose[item.purpose] || item.purpose}</p>
-                      <p className="history-meta">{t.history.value}: ₹{item.price}</p>
-                      <p className="history-meta">{t.history.ecoScore}: {item.ecoScore ? `${item.ecoScore}/100` : "-"} 🌱</p>
-                      {item.aiSuggestion ? (
-                        <p className="history-meta">
-                          {t.history.aiTip}: {item.aiSuggestionAction && item.aiSuggestionYears && item.aiSuggestionCo2
-                            ? formatAiSuggestion({
-                              action: item.aiSuggestionAction,
-                              years: item.aiSuggestionYears,
-                              co2: item.aiSuggestionCo2,
-                            }, language)
-                            : item.aiSuggestion}
-                        </p>
+                      )}
+                      {productImage ? (
+                        <button
+                          type="button"
+                          className="change-btn"
+                          onClick={(event) => {
+                            event.preventDefault();
+                            fileInputRef.current?.click();
+                          }}
+                        >
+                          {t.upload.changeImage}
+                        </button>
                       ) : null}
-                      <p className="history-meta">{t.history.uploaded}: {new Date(item.date).toLocaleDateString()}</p>
-                      <p className="history-note">{t.history.prevAnalysis}: {item.condition} • {item.suggestion}</p>
-                    </div>
+                    </label>
+                    {fileError ? <p className="upload-error">{fileError}</p> : null}
                   </div>
-                ))
+                  <div className="form-group">
+                    <div>
+                      <label>{t.upload.productType}</label>
+                      <input
+                        type="text"
+                        placeholder={t.upload.productPlaceholder}
+                        value={productTypeInput}
+                        onChange={(event) => setProductTypeInput(event.target.value)}
+                      />
+                    </div>
+
+                    <div className="purpose-group">
+                      <label>{t.upload.purpose}</label>
+                      <div className="purpose-buttons">
+                        <button
+                          type="button"
+                          className={`purpose-btn ${purpose === "sell" ? "active" : ""}`}
+                          onClick={() => handlePurposeSelect("sell")}
+                        >
+                          <span className="purpose-icon">
+                            <iconify-icon icon="ph:repeat-bold" />
+                          </span>
+                          <span className="purpose-label">{t.purpose.sell}</span>
+                        </button>
+                        <button
+                          type="button"
+                          className={`purpose-btn ${purpose === "repair" ? "active" : ""}`}
+                          onClick={() => handlePurposeSelect("repair")}
+                        >
+                          <span className="purpose-icon">
+                            <iconify-icon icon="ph:wrench-bold" />
+                          </span>
+                          <span className="purpose-label">{t.purpose.repair}</span>
+                        </button>
+                        <button
+                          type="button"
+                          className={`purpose-btn ${purpose === "recycle" ? "active" : ""}`}
+                          onClick={() => handlePurposeSelect("recycle")}
+                        >
+                          <span className="purpose-icon">
+                            <iconify-icon icon="ph:recycle-bold" />
+                          </span>
+                          <span className="purpose-label">{t.purpose.recycle}</span>
+                        </button>
+                      </div>
+                    </div>
+
+                    {productImage ? (
+                      <div className="usage-block">
+                        <label>{t.upload.usageDuration}</label>
+                        <div className="row usage-row">
+                          <div className="col">
+                            <input
+                              type="number"
+                              min="0"
+                              placeholder={t.upload.years}
+                              value={usageYears}
+                              onChange={(event) => setUsageYears(sanitizeUsageInput(event.target.value))}
+                            />
+                          </div>
+                          <div className="col">
+                            <input
+                              type="number"
+                              min="0"
+                              placeholder={t.upload.months}
+                              value={usageMonths}
+                              onChange={(event) => setUsageMonths(sanitizeUsageInput(event.target.value))}
+                            />
+                          </div>
+                          <div className="col">
+                            <input
+                              type="number"
+                              min="0"
+                              placeholder={t.upload.days}
+                              value={usageDays}
+                              onChange={(event) => setUsageDays(sanitizeUsageInput(event.target.value))}
+                            />
+                          </div>
+                        </div>
+                        <div className="usage-summary">{usageSummary}</div>
+                        {usageMessage ? (
+                          <div className="usage-message">{usageMessage}</div>
+                        ) : null}
+                      </div>
+                    ) : null}
+
+                    {purpose === "recycle" ? (
+                      <div className="row">
+                        <div className="col">
+                          <label>{t.upload.materialType}</label>
+                          <select value={materialType} onChange={(event) => setMaterialType(event.target.value)}>
+                            <option value="plastic">Plastic</option>
+                            <option value="metal">Metal</option>
+                            <option value="glass">Glass</option>
+                            <option value="e-waste">E-Waste</option>
+                          </select>
+                        </div>
+                        <div className="col">
+                          <label>{t.upload.weight}</label>
+                          <input
+                            type="number"
+                            min="0"
+                            step="0.1"
+                            placeholder={t.upload.weightPlaceholder}
+                            value={materialWeight}
+                            onChange={(event) => setMaterialWeight(event.target.value)}
+                          />
+                        </div>
+                      </div>
+                    ) : null}
+
+                    <button
+                      onClick={handleAnalyze}
+                      className="btn-primary full-width"
+                      disabled={!productImage || !purpose || totalUsageDays <= 0}
+                    >
+                      <iconify-icon icon="ph:magic-wand-bold" /> {t.upload.analyze}
+                    </button>
+                    <div className={`loader ${uploadLoading ? "active" : ""}`} />
+
+                    <div className={`results-summary ${analysisReady ? "show" : ""}`}>
+                      {purpose === "sell" ? (
+                        <>
+                          <div className="res-item"><span>{t.results.condition}</span><strong>{condition}</strong></div>
+                          <div className="res-item"><span>{t.results.remainingLife}</span><strong>{remainingLife ? `${remainingLife}%` : "-"}</strong></div>
+                          <div className="res-item"><span>{t.results.resalePrice}</span><strong>{price ? `₹${price}` : "-"}</strong></div>
+                        </>
+                      ) : null}
+                      {purpose === "repair" ? (
+                        <>
+                          <div className="res-item"><span>{t.results.damageLevel}</span><strong>{damageLevel ? `${damageLevel}/100` : "-"}</strong></div>
+                          <div className="res-item"><span>{t.results.repairCost}</span><strong>{repairCost ? `₹${repairCost}` : "-"}</strong></div>
+                          <div className="res-item"><span>{t.results.condition}</span><strong>{condition}</strong></div>
+                        </>
+                      ) : null}
+                      {purpose === "recycle" ? (
+                        <>
+                          <div className="res-item"><span>{t.results.material}</span><strong>{materialType || "-"}</strong></div>
+                          <div className="res-item"><span>{t.results.weight}</span><strong>{materialWeight ? `${materialWeight} kg` : "-"}</strong></div>
+                          <div className="res-item"><span>{t.results.recyclingValue}</span><strong>{recyclingValue ? `₹${recyclingValue}` : "-"}</strong></div>
+                        </>
+                      ) : null}
+                      {!purpose ? (
+                        <div className="res-item"><span>{t.upload.purpose}</span><strong>{t.results.selectPurpose}</strong></div>
+                      ) : null}
+                    </div>
+
+                    {analysisReady ? (
+                      <div className={`eco-score-card ${ecoTone}`}>
+                        <div className="eco-score-ring" style={{ "--eco-score": ecoScore }}>
+                          <div className="eco-score-center">
+                            <div className="eco-score-value">{ecoScore}</div>
+                            <div className="eco-score-unit">/ 100</div>
+                            <div className="eco-score-leaf">🌱</div>
+                          </div>
+                        </div>
+                        <div className="eco-score-label">{t.eco.label}</div>
+                        <div className="eco-score-note">{ecoLabel}</div>
+                      </div>
+                    ) : null}
+
+                    {analysisReady ? (
+                      <div className="comparison-panel">
+                        <div className="comparison-header">
+                          <div>
+                            <h4>{t.comparison.title}</h4>
+                            <p>{t.comparison.subtitle}</p>
+                          </div>
+                          {ecoRecommendation ? (
+                            <div className="comparison-reco">
+                              <iconify-icon icon="ph:leaf-bold" />
+                              <span>{ecoRecommendation}</span>
+                            </div>
+                          ) : null}
+                        </div>
+                        <div className="comparison-grid">
+                          {comparisonOptions.map((option) => {
+                            const isBest = bestEcoOption?.key === option.key;
+                            return (
+                              <div key={option.key} className={`comparison-card ${isBest ? "best" : ""}`}>
+                                <div className="comparison-title">
+                                  <iconify-icon icon={option.icon} />
+                                  <span>{t.purpose[option.key]}</span>
+                                </div>
+                                <div className="comparison-value">
+                                  {option.value ? `₹${option.value}` : "-"}
+                                </div>
+                                <div className="comparison-meta">{t.eco.label}: {option.ecoScore}/100</div>
+                                {isBest ? (
+                                  <div className="comparison-badge">{t.comparison.bestBadge}</div>
+                                ) : null}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    ) : null}
+
+                    {analysisReady && aiSuggestion ? (
+                      <div className="ai-suggestion-card">
+                        <div className="ai-suggestion-header">
+                          <iconify-icon icon="ph:robot-bold" />
+                          <span>{t.ai.title}</span>
+                        </div>
+                        <p className="ai-suggestion-text">{aiSuggestion}</p>
+                      </div>
+                    ) : null}
+
+                    {analysisReady && purpose === "recycle" ? (
+                      <div className="share-cta">
+                        <div className="share-cta-text">{t.share.cta}</div>
+                        <div className="share-cta-actions">
+                          <button type="button" className="share-btn whatsapp" onClick={openShareWhatsApp}>
+                            {t.share.shareWhatsapp}
+                          </button>
+                          <button type="button" className="share-btn linkedin" onClick={openShareLinkedIn}>
+                            {t.share.shareLinkedin}
+                          </button>
+                        </div>
+                      </div>
+                    ) : null}
+                  </div>
+                </div>
+              </section>
+
+              <div className="vertical-stack">
+                <section className="section card-panel small-panel">
+                  <div className="panel-header"><h3><iconify-icon icon="ph:chart-line-up-bold" /> {t.life.title}</h3></div>
+                  <div className="panel-body">
+                    <p className="desc-text">
+                      {purpose === "repair" ? t.life.descriptionRepair : t.life.descriptionDefault}
+                    </p>
+                    <div className="progress-circle-wrap">
+                      <div className="progress-bar-container">
+                        <div className="progress-fill" style={{ width: `${purpose === "repair" ? damageLevel : remainingLife || 0}%` }} />
+                      </div>
+                      <div className="progress-text">
+                        <span>{purpose === "repair" ? damageLevel : remainingLife || 0}%</span>
+                        {purpose === "repair" ? " Damage" : " Remaining"}
+                      </div>
+                    </div>
+                    <button onClick={handlePredictLife} className="btn-secondary full-width">{t.life.predict}</button>
+                    <div className={`loader ${lifeLoading ? "active" : ""}`} />
+                  </div>
+                </section>
+
+                <section className="section card-panel small-panel">
+                  <div className="panel-header"><h3><iconify-icon icon="ph:currency-dollar-bold" /> {t.pricing.title}</h3></div>
+                  <div className="panel-body">
+                    <div className="price-display">
+                      <span className="currency">₹</span>
+                      <strong className="huge-text">
+                        {purpose === "repair" ? (repairCost || "-") : purpose === "recycle" ? (recyclingValue || "-") : (price || "-")}
+                      </strong>
+                    </div>
+                    <div className="demand-tag">
+                      {purpose === "repair" ? t.pricing.demandRepair : purpose === "recycle" ? t.pricing.demandRecycle : price ? t.pricing.demandSell : ""}
+                    </div>
+                    <button onClick={handleCalculatePrice} className="btn-secondary full-width">{t.pricing.calculate}</button>
+                    <div className={`loader ${priceLoading ? "active" : ""}`} />
+                  </div>
+                </section>
+              </div>
+            </div>
+
+            <section id="geo" className="section card-panel full-width-panel">
+              <div className="panel-header">
+                <h3><iconify-icon icon="ph:map-pin-bold" /> {t.facilities.nearby}</h3>
+                <div className="geo-header-actions">
+                  <div className="geo-toggle">
+                    <button
+                      type="button"
+                      className={`toggle-btn ${showMap ? "" : "active"}`}
+                      onClick={() => setShowMap(false)}
+                    >
+                      {t.facilities.listView}
+                    </button>
+                    <button
+                      type="button"
+                      className={`toggle-btn ${showMap ? "active" : ""}`}
+                      onClick={() => setShowMap(true)}
+                    >
+                      {t.facilities.mapView}
+                    </button>
+                  </div>
+                  <div className="search-inline">
+                    <input
+                      type="text"
+                      placeholder={t.facilities.enterCity}
+                      value={location}
+                      onChange={(event) => setLocation(event.target.value)}
+                    />
+                    <button className="icon-only-btn" onClick={handleFindFacilities}>
+                      <iconify-icon icon="ph:arrow-right-bold" />
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <div className={`loader ${geoLoading ? "active" : ""}`} />
+              {showMap ? (
+                facilities.length === 0 ? (
+                  <div className="notification-empty">{t.facilities.searchPrompt}</div>
+                ) : (
+                  <MapView
+                    facilities={facilities}
+                    center={userLocation}
+                    onConnect={handleConnectClick}
+                    labels={t.map}
+                  />
+                )
+              ) : (
+                <div className="geo-grid">
+                  {facilities.map((item) => (
+                    <div className="facility-item" key={item.name}>
+                      <div className="f-header">
+                        <span className="f-name">{item.name}</span>
+                        <span className="f-dist">{item.distance} km</span>
+                      </div>
+                      <span className="f-type">{item.type}</span>
+                      <div className="facility-actions">
+                        <button className="f-action" onClick={() => handleConnectClick(item)}>
+                          {t.facilities.connect}
+                        </button>
+                        <button className="f-link" onClick={() => openShopProfile(item)}>
+                          {t.facilities.viewProfile}
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
               )}
-            </div>
-          </section>
+            </section>
+          </UserActionSection>
 
-          <section id="impact" className="section card-panel">
-            <div className="panel-header">
-              <h3><iconify-icon icon="ph:leaf-bold" /> {t.impact.title}</h3>
-            </div>
-            <div className="impact-grid">
-              <div className="impact-card">
-                <iconify-icon icon="ph:package-bold" />
-                <div>
-                  <strong>{impactStats.totalProducts}</strong>
-                  <span>{t.impact.products}</span>
-                </div>
-              </div>
-              <div className="impact-card">
-                <iconify-icon icon="ph:leaf-bold" />
-                <div>
-                  <strong>{impactStats.wasteSaved} kg</strong>
-                  <span>{t.impact.waste}</span>
-                </div>
-              </div>
-              <div className="impact-card">
-                <iconify-icon icon="ph:cloud-bold" />
-                <div>
-                  <strong>{impactStats.co2Reduced} kg</strong>
-                  <span>{t.impact.co2}</span>
-                </div>
-              </div>
-            </div>
-          </section>
+          <CertificateSection certificate={productHistory[0]} />
 
-          <section
-            id="future-modules"
-            ref={modulesRef}
-            className={`section modules-section ${isModulesVisible ? "is-visible" : ""}`}
-          >
+          <HistoryPreviewSection
+            items={productHistory.slice(0, 3)}
+            onOpenHistory={handleOpenHistory}
+          />
+
+          <section id="modules" className={`section modules-section ${isModulesVisible ? "is-visible" : ""}`} ref={modulesRef}>
             <div className="modules-badge">Scalable Architecture</div>
             <div className="modules-header">
               <h3>Future Ready Modules</h3>
@@ -2712,459 +2951,9 @@ export default function DashboardPage() {
               ))}
             </div>
           </section>
-
-          <section id="landing" className="section hero-card">
-            <div className="hero-content">
-              <span className="tag">{t.hero.tag}</span>
-              <h2>{t.hero.title}</h2>
-              <p>{t.hero.subtitle}</p>
-              <div className="hero-stats">
-                <div className="mini-stat">
-                  <span className="val">{liveScore}</span>
-                  <span className="lbl">{t.hero.ecoScore}</span>
-                </div>
-                <div className="mini-stat">
-                  <span className="val">{liveReuse}%</span>
-                  <span className="lbl">{t.hero.reuse}</span>
-                </div>
-                <div className="mini-stat">
-                  <span className="val">{liveDemand}</span>
-                  <span className="lbl">{t.hero.demand}</span>
-                </div>
-              </div>
-            </div>
-            <div className="hero-illustration">
-              <iconify-icon icon="solar:smart-home-angle-bold-duotone" style={{ fontSize: "180px", color: "var(--primary)", opacity: 0.8 }} />
-            </div>
-          </section>
-
-          <div className="grid-layout">
-            <section id="upload" className="section card-panel">
-              <div className="panel-header">
-                <h3><iconify-icon icon="ph:upload-simple-bold" /> {t.upload.title}</h3>
-                <button className="more-btn"><iconify-icon icon="ph:dots-three-bold" /></button>
-              </div>
-              <div className="upload-container">
-                <div className="upload-area">
-                  <input
-                    ref={fileInputRef}
-                    id="productImageInput"
-                    className="upload-input"
-                    type="file"
-                    accept="image/*"
-                    onChange={handleImageChange}
-                  />
-                  <label
-                    htmlFor="productImageInput"
-                    className={`upload-card ${isDragActive ? "drag" : ""} ${productImage ? "has-image" : ""}`}
-                    onDragOver={handleDragOver}
-                    onDragLeave={handleDragLeave}
-                    onDrop={handleDrop}
-                  >
-                    {productImage ? (
-                      <img className="upload-preview" src={productImage} alt="Uploaded product" />
-                    ) : (
-                      <div className="upload-content">
-                        <iconify-icon icon="ph:cloud-arrow-up-bold" className="upload-icon" />
-                        <span className="upload-title">{t.upload.dragTitle}</span>
-                        <span className="upload-hint">{t.upload.dragHint}</span>
-                      </div>
-                    )}
-                    {productImage ? (
-                      <button
-                        type="button"
-                        className="change-btn"
-                        onClick={(event) => {
-                          event.preventDefault();
-                          fileInputRef.current?.click();
-                        }}
-                      >
-                        {t.upload.changeImage}
-                      </button>
-                    ) : null}
-                  </label>
-                  {fileError ? <p className="upload-error">{fileError}</p> : null}
-                </div>
-                <div className="form-group">
-                  <div>
-                    <label>{t.upload.productType}</label>
-                    <input
-                      type="text"
-                      placeholder={t.upload.productPlaceholder}
-                      value={productTypeInput}
-                      onChange={(event) => setProductTypeInput(event.target.value)}
-                    />
-                  </div>
-
-                  <div className="purpose-group">
-                    <label>{t.upload.purpose}</label>
-                    <div className="purpose-buttons">
-                      <button
-                        type="button"
-                        className={`purpose-btn ${purpose === "sell" ? "active" : ""}`}
-                        onClick={() => handlePurposeSelect("sell")}
-                      >
-                        <span className="purpose-icon">
-                          <iconify-icon icon="ph:repeat-bold" />
-                        </span>
-                        <span className="purpose-label">{t.purpose.sell}</span>
-                      </button>
-                      <button
-                        type="button"
-                        className={`purpose-btn ${purpose === "repair" ? "active" : ""}`}
-                        onClick={() => handlePurposeSelect("repair")}
-                      >
-                        <span className="purpose-icon">
-                          <iconify-icon icon="ph:wrench-bold" />
-                        </span>
-                        <span className="purpose-label">{t.purpose.repair}</span>
-                      </button>
-                      <button
-                        type="button"
-                        className={`purpose-btn ${purpose === "recycle" ? "active" : ""}`}
-                        onClick={() => handlePurposeSelect("recycle")}
-                      >
-                        <span className="purpose-icon">
-                          <iconify-icon icon="ph:recycle-bold" />
-                        </span>
-                        <span className="purpose-label">{t.purpose.recycle}</span>
-                      </button>
-                    </div>
-                  </div>
-
-                  {productImage ? (
-                    <div className="usage-block">
-                      <label>{t.upload.usageDuration}</label>
-                      <div className="row usage-row">
-                        <div className="col">
-                          <input
-                            type="number"
-                            min="0"
-                            placeholder={t.upload.years}
-                            value={usageYears}
-                            onChange={(event) => setUsageYears(sanitizeUsageInput(event.target.value))}
-                          />
-                        </div>
-                        <div className="col">
-                          <input
-                            type="number"
-                            min="0"
-                            placeholder={t.upload.months}
-                            value={usageMonths}
-                            onChange={(event) => setUsageMonths(sanitizeUsageInput(event.target.value))}
-                          />
-                        </div>
-                        <div className="col">
-                          <input
-                            type="number"
-                            min="0"
-                            placeholder={t.upload.days}
-                            value={usageDays}
-                            onChange={(event) => setUsageDays(sanitizeUsageInput(event.target.value))}
-                          />
-                        </div>
-                      </div>
-                      <div className="usage-summary">{usageSummary}</div>
-                      {usageMessage ? (
-                        <div className="usage-message">{usageMessage}</div>
-                      ) : null}
-                    </div>
-                  ) : null}
-
-                  {purpose === "recycle" ? (
-                    <div className="row">
-                      <div className="col">
-                        <label>{t.upload.materialType}</label>
-                        <select value={materialType} onChange={(event) => setMaterialType(event.target.value)}>
-                          <option value="plastic">Plastic</option>
-                          <option value="metal">Metal</option>
-                          <option value="glass">Glass</option>
-                          <option value="e-waste">E-Waste</option>
-                        </select>
-                      </div>
-                      <div className="col">
-                        <label>{t.upload.weight}</label>
-                        <input
-                          type="number"
-                          min="0"
-                          step="0.1"
-                          placeholder={t.upload.weightPlaceholder}
-                          value={materialWeight}
-                          onChange={(event) => setMaterialWeight(event.target.value)}
-                        />
-                      </div>
-                    </div>
-                  ) : null}
-
-                  <button
-                    onClick={handleAnalyze}
-                    className="btn-primary full-width"
-                    disabled={!productImage || !purpose || totalUsageDays <= 0}
-                  >
-                    <iconify-icon icon="ph:magic-wand-bold" /> {t.upload.analyze}
-                  </button>
-                  <div className={`loader ${uploadLoading ? "active" : ""}`} />
-
-                  <div className={`results-summary ${analysisReady ? "show" : ""}`}>
-                    {purpose === "sell" ? (
-                      <>
-                        <div className="res-item"><span>{t.results.condition}</span><strong>{condition}</strong></div>
-                        <div className="res-item"><span>{t.results.remainingLife}</span><strong>{remainingLife ? `${remainingLife}%` : "-"}</strong></div>
-                        <div className="res-item"><span>{t.results.resalePrice}</span><strong>{price ? `₹${price}` : "-"}</strong></div>
-                      </>
-                    ) : null}
-                    {purpose === "repair" ? (
-                      <>
-                        <div className="res-item"><span>{t.results.damageLevel}</span><strong>{damageLevel ? `${damageLevel}/100` : "-"}</strong></div>
-                        <div className="res-item"><span>{t.results.repairCost}</span><strong>{repairCost ? `₹${repairCost}` : "-"}</strong></div>
-                        <div className="res-item"><span>{t.results.condition}</span><strong>{condition}</strong></div>
-                      </>
-                    ) : null}
-                    {purpose === "recycle" ? (
-                      <>
-                        <div className="res-item"><span>{t.results.material}</span><strong>{materialType || "-"}</strong></div>
-                        <div className="res-item"><span>{t.results.weight}</span><strong>{materialWeight ? `${materialWeight} kg` : "-"}</strong></div>
-                        <div className="res-item"><span>{t.results.recyclingValue}</span><strong>{recyclingValue ? `₹${recyclingValue}` : "-"}</strong></div>
-                      </>
-                    ) : null}
-                    {!purpose ? (
-                      <div className="res-item"><span>{t.upload.purpose}</span><strong>{t.results.selectPurpose}</strong></div>
-                    ) : null}
-                  </div>
-
-                  {analysisReady ? (
-                    <div className={`eco-score-card ${ecoTone}`}>
-                      <div className="eco-score-ring" style={{ "--eco-score": ecoScore }}>
-                        <div className="eco-score-center">
-                          <div className="eco-score-value">{ecoScore}</div>
-                          <div className="eco-score-unit">/ 100</div>
-                          <div className="eco-score-leaf">🌱</div>
-                        </div>
-                      </div>
-                      <div className="eco-score-label">{t.eco.label}</div>
-                      <div className="eco-score-note">{ecoLabel}</div>
-                    </div>
-                  ) : null}
-
-                  {analysisReady ? (
-                    <section
-                      ref={impactModeRef}
-                      className={`impact-mode ${isImpactVisible ? "is-visible" : ""}`}
-                    >
-                      <div className="impact-mode-header">
-                        <h4>{t.impactMode.title}</h4>
-                        <p>{t.impactMode.subtitle}</p>
-                      </div>
-                      <div className="impact-mode-grid">
-                        <div className="impact-mode-card">
-                          <div className="impact-mode-icon">🌍</div>
-                          <div className="impact-mode-label">{t.impactMode.co2}</div>
-                          <div className="impact-mode-value">
-                            {formatImpactNumber(impactCounts.co2, impactUnits.co2Unit)}
-                            <span className="impact-mode-unit">{impactUnits.co2Unit}</span>
-                          </div>
-                        </div>
-                        <div className="impact-mode-card">
-                          <div className="impact-mode-icon">♻️</div>
-                          <div className="impact-mode-label">{t.impactMode.waste}</div>
-                          <div className="impact-mode-value">
-                            {formatImpactNumber(impactCounts.waste, impactUnits.wasteUnit)}
-                            <span className="impact-mode-unit">{impactUnits.wasteUnit}</span>
-                          </div>
-                        </div>
-                        <div className="impact-mode-card">
-                          <div className="impact-mode-icon">🌳</div>
-                          <div className="impact-mode-label">{t.impactMode.trees}</div>
-                          <div className="impact-mode-value">
-                            {Math.round(impactCounts.trees).toLocaleString()}
-                            <span className="impact-mode-unit">{t.impactMode.treesSuffix}</span>
-                          </div>
-                        </div>
-                      </div>
-                    </section>
-                  ) : null}
-
-                  {analysisReady ? (
-                    <div className="comparison-panel">
-                      <div className="comparison-header">
-                        <div>
-                          <h4>{t.comparison.title}</h4>
-                          <p>{t.comparison.subtitle}</p>
-                        </div>
-                        {ecoRecommendation ? (
-                          <div className="comparison-reco">
-                            <iconify-icon icon="ph:leaf-bold" />
-                            <span>{ecoRecommendation}</span>
-                          </div>
-                        ) : null}
-                      </div>
-                      <div className="comparison-grid">
-                        {comparisonOptions.map((option) => {
-                          const isBest = bestEcoOption?.key === option.key;
-                          return (
-                            <div key={option.key} className={`comparison-card ${isBest ? "best" : ""}`}>
-                              <div className="comparison-title">
-                                <iconify-icon icon={option.icon} />
-                                <span>{t.purpose[option.key]}</span>
-                              </div>
-                              <div className="comparison-value">
-                                {option.value ? `₹${option.value}` : "-"}
-                              </div>
-                              <div className="comparison-meta">{t.eco.label}: {option.ecoScore}/100</div>
-                              {isBest ? (
-                                <div className="comparison-badge">{t.comparison.bestBadge}</div>
-                              ) : null}
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  ) : null}
-
-                  {analysisReady && aiSuggestion ? (
-                    <div className="ai-suggestion-card">
-                      <div className="ai-suggestion-header">
-                        <iconify-icon icon="ph:robot-bold" />
-                        <span>{t.ai.title}</span>
-                      </div>
-                      <p className="ai-suggestion-text">{aiSuggestion}</p>
-                    </div>
-                  ) : null}
-
-                  {analysisReady && purpose === "recycle" ? (
-                    <div className="share-cta">
-                      <div className="share-cta-text">{t.share.cta}</div>
-                      <div className="share-cta-actions">
-                        <button type="button" className="share-btn whatsapp" onClick={openShareWhatsApp}>
-                          {t.share.shareWhatsapp}
-                        </button>
-                        <button type="button" className="share-btn linkedin" onClick={openShareLinkedIn}>
-                          {t.share.shareLinkedin}
-                        </button>
-                      </div>
-                    </div>
-                  ) : null}
-                </div>
-              </div>
-            </section>
-
-            <div className="vertical-stack">
-              <section id="life" className="section card-panel small-panel">
-                <div className="panel-header"><h3><iconify-icon icon="ph:chart-line-up-bold" /> {t.life.title}</h3></div>
-                <div className="panel-body">
-                  <p className="desc-text">
-                    {purpose === "repair" ? t.life.descriptionRepair : t.life.descriptionDefault}
-                  </p>
-                  <div className="progress-circle-wrap">
-                    <div className="progress-bar-container">
-                      <div className="progress-fill" style={{ width: `${purpose === "repair" ? damageLevel : remainingLife || 0}%` }} />
-                    </div>
-                    <div className="progress-text">
-                      <span>{purpose === "repair" ? damageLevel : remainingLife || 0}%</span>
-                      {purpose === "repair" ? " Damage" : " Remaining"}
-                    </div>
-                  </div>
-                  <button onClick={handlePredictLife} className="btn-secondary full-width">{t.life.predict}</button>
-                  <div className={`loader ${lifeLoading ? "active" : ""}`} />
-                </div>
-              </section>
-
-              <section id="pricing" className="section card-panel small-panel">
-                <div className="panel-header"><h3><iconify-icon icon="ph:currency-dollar-bold" /> {t.pricing.title}</h3></div>
-                <div className="panel-body">
-                  <div className="price-display">
-                    <span className="currency">₹</span>
-                    <strong className="huge-text">
-                      {purpose === "repair" ? (repairCost || "-") : purpose === "recycle" ? (recyclingValue || "-") : (price || "-")}
-                    </strong>
-                  </div>
-                  <div className="demand-tag">
-                    {purpose === "repair" ? t.pricing.demandRepair : purpose === "recycle" ? t.pricing.demandRecycle : price ? t.pricing.demandSell : ""}
-                  </div>
-                  <button onClick={handleCalculatePrice} className="btn-secondary full-width">{t.pricing.calculate}</button>
-                  <div className={`loader ${priceLoading ? "active" : ""}`} />
-                </div>
-              </section>
-            </div>
-          </div>
-
-          <section id="geo" className="section card-panel full-width-panel">
-            <div className="panel-header">
-              <h3><iconify-icon icon="ph:map-pin-bold" /> {t.facilities.nearby}</h3>
-              <div className="geo-header-actions">
-                <div className="geo-toggle">
-                  <button
-                    type="button"
-                    className={`toggle-btn ${showMap ? "" : "active"}`}
-                    onClick={() => setShowMap(false)}
-                  >
-                    {t.facilities.listView}
-                  </button>
-                  <button
-                    type="button"
-                    className={`toggle-btn ${showMap ? "active" : ""}`}
-                    onClick={() => setShowMap(true)}
-                  >
-                    {t.facilities.mapView}
-                  </button>
-                </div>
-                <div className="search-inline">
-                  <input
-                    type="text"
-                    placeholder={t.facilities.enterCity}
-                    value={location}
-                    onChange={(event) => setLocation(event.target.value)}
-                  />
-                  <button className="icon-only-btn" onClick={handleFindFacilities}>
-                    <iconify-icon icon="ph:arrow-right-bold" />
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            <div className={`loader ${geoLoading ? "active" : ""}`} />
-            {showMap ? (
-              facilities.length === 0 ? (
-                <div className="notification-empty">{t.facilities.searchPrompt}</div>
-              ) : (
-                <MapView
-                  facilities={facilities}
-                  center={userLocation}
-                  onConnect={handleConnectClick}
-                  labels={t.map}
-                />
-              )
-            ) : (
-              <div className="geo-grid">
-                {facilities.map((item) => (
-                  <div className="facility-item" key={item.name}>
-                    <div className="f-header">
-                      <span className="f-name">{item.name}</span>
-                      <span className="f-dist">{item.distance} km</span>
-                    </div>
-                    <span className="f-type">{item.type}</span>
-                    <div className="facility-actions">
-                      <button className="f-action" onClick={() => handleConnectClick(item)}>
-                        {t.facilities.connect}
-                      </button>
-                      <button className="f-link" onClick={() => openShopProfile(item)}>
-                        {t.facilities.viewProfile}
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </section>
         </main>
 
-        <footer className="main-footer">
-          <p>© 2026 Smart Circular Economy Marketplace.</p>
-          <div className="privacy-note">
-            <span className="privacy-icon">🔒</span>
-            <span>{t.footer.privacyNote}</span>
-          </div>
-        </footer>
+        <FooterSection />
       </div>
 
       <div className={`modal ${activeFacility ? "" : "hidden"}`} aria-hidden={!activeFacility}>
