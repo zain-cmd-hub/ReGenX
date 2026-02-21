@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 
 const FILTERS = ["all", "sell", "repair", "recycle"];
@@ -16,6 +16,7 @@ const translations = {
     recycle: "Recycle",
     viewTwin: "View Digital Twin",
     viewReport: "View Report",
+    generateCert: "Generate Certificate",
     downloadCert: "Download Certificate",
     shareResult: "Share Result",
     back: "Back to Dashboard",
@@ -27,6 +28,13 @@ const translations = {
     close: "Close",
     delete: "Delete",
     shareMessage: "I saved {X} kg waste today 🌱",
+    certificateTitle: "CERTIFICATE OF APPRECIATION",
+    certificateSubtitle: "This certificate is proudly presented to",
+    certificateMessage: "Congratulations {name}\nYou saved {waste} kg waste\nYou are an Eco Hero 🌱",
+    certificateAward: "Eco Award",
+    certificateFooter: "Verified by Eco Platform",
+    certificateSignature: "Signature",
+    certificateDate: "Date",
   },
   hi: {
     title: "मेरे उत्पाद / इतिहास",
@@ -38,6 +46,7 @@ const translations = {
     recycle: "रीसायकल",
     viewTwin: "डिजिटल ट्विन देखें",
     viewReport: "रिपोर्ट देखें",
+    generateCert: "सर्टिफिकेट बनाएं",
     downloadCert: "सर्टिफिकेट डाउनलोड",
     shareResult: "परिणाम साझा करें",
     back: "डैशबोर्ड पर वापस",
@@ -49,6 +58,13 @@ const translations = {
     close: "बंद करें",
     delete: "हटाएं",
     shareMessage: "आज मैंने {X} किलो कचरा बचाया 🌱",
+    certificateTitle: "प्रशंसा प्रमाणपत्र",
+    certificateSubtitle: "यह प्रमाणपत्र गर्व से प्रस्तुत किया जाता है",
+    certificateMessage: "बधाई {name}\nआपने {waste} किलो कचरा बचाया\nआप एक इको हीरो हैं 🌱",
+    certificateAward: "इको पुरस्कार",
+    certificateFooter: "ईको प्लेटफ़ॉर्म द्वारा सत्यापित",
+    certificateSignature: "हस्ताक्षर",
+    certificateDate: "तारीख",
   },
 };
 
@@ -144,6 +160,8 @@ export default function HistoryPage() {
   const [filter, setFilter] = useState("all");
   const [activeItem, setActiveItem] = useState(null);
   const [modalType, setModalType] = useState("");
+  const [certificateItem, setCertificateItem] = useState(null);
+  const certificateRef = useRef(null);
 
   useEffect(() => {
     setLanguage(getLanguage());
@@ -194,14 +212,31 @@ export default function HistoryPage() {
   }
 
   function handleDownload(item) {
-    if (!item.certificateId) return;
-    const content = `Certificate ID: ${item.certificateId}\nProduct: ${item.productName}`;
-    const blob = new Blob([content], { type: "text/plain" });
-    const link = document.createElement("a");
-    link.href = URL.createObjectURL(blob);
-    link.download = `certificate-${item.certificateId}.txt`;
-    link.click();
-    URL.revokeObjectURL(link.href);
+    if (!item?.certificateId) return;
+    setCertificateItem(item);
+  }
+
+  async function handleDownloadPdf() {
+    if (!certificateRef.current || !certificateItem) return;
+    const html2canvas = (await import("html2canvas")).default;
+    const { jsPDF } = await import("jspdf");
+    const canvas = await html2canvas(certificateRef.current, {
+      scale: 2,
+      useCORS: true,
+      backgroundColor: null,
+    });
+    const imgData = canvas.toDataURL("image/png");
+    const pdf = new jsPDF({ orientation: "landscape", unit: "pt", format: "a4" });
+    const pageWidth = pdf.internal.pageSize.getWidth();
+    const pageHeight = pdf.internal.pageSize.getHeight();
+    const ratio = Math.min(pageWidth / canvas.width, pageHeight / canvas.height);
+    const imgWidth = canvas.width * ratio;
+    const imgHeight = canvas.height * ratio;
+    const x = (pageWidth - imgWidth) / 2;
+    const y = (pageHeight - imgHeight) / 2;
+    pdf.addImage(imgData, "PNG", x, y, imgWidth, imgHeight);
+    const safeName = (certificateItem.productName || "User").replace(/[^a-z0-9]+/gi, "_");
+    pdf.save(`Eco_Certificate_${safeName}.pdf`);
   }
 
   function handleShare(item) {
@@ -243,7 +278,7 @@ export default function HistoryPage() {
           <button type="button" className="history-back" onClick={() => router.push("/")}
           >
             {t.back}
-          </button>
+                {t.generateCert}
         </div>
       </div>
 
@@ -294,6 +329,39 @@ export default function HistoryPage() {
               {t.shareResult} LinkedIn
             </button>
           </div>
+        </div>
+      </div>
+
+      <div className={`modal ${certificateItem ? "" : "hidden"}`} aria-hidden={!certificateItem}>
+        <div className="modal-overlay" onClick={() => setCertificateItem(null)} />
+        <div className="modal-card certificate-modal" role="dialog" aria-modal="true">
+          <button className="modal-close" aria-label={t.close} onClick={() => setCertificateItem(null)}>×</button>
+          <div className="certificate-preview" ref={certificateRef}>
+            <div className="certificate-leaf" aria-hidden="true">🍃</div>
+            <div className="certificate-inner">
+              <div className="certificate-title">{t.certificateTitle}</div>
+              <div className="certificate-subtitle">{t.certificateSubtitle}</div>
+              <div className="certificate-name">
+                {certificateItem?.productName || "Eco Champion"}
+              </div>
+              <div className="certificate-message">
+                {t.certificateMessage
+                  .replace("{name}", certificateItem?.productName || "Eco Champion")
+                  .replace("{waste}", Number(certificateItem?.wasteKg || 0).toFixed(1))}
+              </div>
+              <div className="certificate-seal">{t.certificateAward}</div>
+              <div className="certificate-footer">
+                <div>{t.certificateFooter}</div>
+                <div className="certificate-meta">
+                  <span>{t.certificateDate}: {formatDate(certificateItem?.date, locale)}</span>
+                  <span className="certificate-sign">{t.certificateSignature}: __________</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <button type="button" className="history-action primary" onClick={handleDownloadPdf}>
+            {t.downloadCert}
+          </button>
         </div>
       </div>
     </div>
