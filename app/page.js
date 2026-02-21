@@ -42,6 +42,14 @@ const translations = {
     success: {
       requestSent: "Request sent successfully!",
     },
+    share: {
+      heading: "🎉 Your result is ready to share!",
+      message: "I saved {X} kg waste today 🌱",
+      shareWhatsapp: "Share on WhatsApp",
+      shareLinkedin: "Share on LinkedIn",
+      dateLabel: "Date",
+      resultLabel: "Result",
+    },
     flow: {
       upload: "Upload Product",
       purpose: "Select Purpose",
@@ -255,6 +263,14 @@ const translations = {
     },
     success: {
       requestSent: "अनुरोध सफलतापूर्वक भेजा गया!",
+    },
+    share: {
+      heading: "🎉 आपका परिणाम साझा करने के लिए तैयार है!",
+      message: "आज मैंने {X} किलो कचरा बचाया 🌱",
+      shareWhatsapp: "व्हाट्सएप पर साझा करें",
+      shareLinkedin: "लिंक्डइन पर साझा करें",
+      dateLabel: "तारीख",
+      resultLabel: "परिणाम",
     },
     flow: {
       upload: "उत्पाद अपलोड करें",
@@ -719,6 +735,8 @@ export default function DashboardPage() {
   const [showSuccess, setShowSuccess] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const successTimerRef = useRef(null);
+  const [isShareOpen, setIsShareOpen] = useState(false);
+  const [sharePayload, setSharePayload] = useState(null);
   const [impactCounts, setImpactCounts] = useState({ co2: 0, waste: 0, trees: 0 });
   const [isImpactVisible, setIsImpactVisible] = useState(false);
 
@@ -838,11 +856,12 @@ export default function DashboardPage() {
   }, [theme]);
 
   useEffect(() => {
-    document.body.style.overflow = isMenuOpen ? "hidden" : "";
+    const shouldLock = isMenuOpen || isShareOpen;
+    document.body.style.overflow = shouldLock ? "hidden" : "";
     return () => {
       document.body.style.overflow = "";
     };
-  }, [isMenuOpen]);
+  }, [isMenuOpen, isShareOpen]);
 
   useEffect(() => {
     function handleResize() {
@@ -1183,6 +1202,41 @@ export default function DashboardPage() {
     return t.eco.low;
   }, [analysisReady, ecoScore, t]);
 
+  const shareMessage = useMemo(() => {
+    const wasteValue = sharePayload?.wasteKg ?? 0;
+    const formatted = Number.isFinite(wasteValue) ? wasteValue.toFixed(1) : "0.0";
+    return t.share.message.replace("{X}", formatted);
+  }, [sharePayload, t.share.message]);
+
+  const shareDate = useMemo(() => {
+    const date = sharePayload?.date ? new Date(sharePayload.date) : new Date();
+    const locale = language === "hi" ? "hi-IN" : "en-IN";
+    return date.toLocaleDateString(locale, { year: "numeric", month: "short", day: "numeric" });
+  }, [sharePayload, language]);
+
+  const shareUrl = useMemo(() => {
+    if (typeof window === "undefined") return "https://tscem.vercel.app";
+    return window.location.origin;
+  }, []);
+
+  function buildShareText() {
+    const name = sharePayload?.name ? `${sharePayload.name} - ` : "";
+    return `${name}${shareMessage}`;
+  }
+
+  function openShareWhatsApp() {
+    const message = encodeURIComponent(`${buildShareText()} ${shareUrl}`.trim());
+    window.open(`https://wa.me/?text=${message}`, "_blank", "noopener,noreferrer");
+  }
+
+  function openShareLinkedIn() {
+    const title = encodeURIComponent(buildShareText());
+    const summary = encodeURIComponent(buildShareText());
+    const url = encodeURIComponent(shareUrl);
+    const link = `https://www.linkedin.com/sharing/share-offsite/?url=${url}&title=${title}&summary=${summary}`;
+    window.open(link, "_blank", "noopener,noreferrer");
+  }
+
   const impactTargets = useMemo(() => {
     if (!analysisReady) {
       return { co2Kg: 0, wasteKg: 0, trees: 0 };
@@ -1456,6 +1510,14 @@ export default function DashboardPage() {
       setEcoScoreRecycle(cachedEcoScoreRecycle);
       setEcoScore(cachedEcoScore);
       setAnalysisReady(true);
+      if (purpose === "recycle") {
+        setSharePayload({
+          wasteKg: Number(materialWeight || 0),
+          name: profileData.name || userProfile.name || "",
+          date: new Date().toISOString(),
+        });
+        setIsShareOpen(true);
+      }
       setUploadLoading(false);
       setIsAnalyzing(false);
       return;
@@ -1643,6 +1705,14 @@ export default function DashboardPage() {
       setEcoScoreRecycle(result.ecoScoreRecycle);
       setEcoScore(result.ecoScore);
       setAnalysisReady(true);
+      if (purpose === "recycle") {
+        setSharePayload({
+          wasteKg: Number(materialWeight || 0),
+          name: profileData.name || userProfile.name || "",
+          date: new Date().toISOString(),
+        });
+        setIsShareOpen(true);
+      }
     } catch (error) {
       console.error("[AI] Image analysis failed", error);
       alert("Image analysis failed. Please try another image.");
@@ -1883,6 +1953,10 @@ export default function DashboardPage() {
     successTimerRef.current = setTimeout(() => {
       setShowSuccess(false);
     }, 3000);
+  }
+
+  function closeShareModal() {
+    setIsShareOpen(false);
   }
 
   function markAllRead() {
@@ -2920,6 +2994,46 @@ export default function DashboardPage() {
               {t.modals.rateService}
             </button>
           ) : null}
+        </div>
+      </div>
+
+      <div className={`modal ${isShareOpen ? "" : "hidden"}`} aria-hidden={!isShareOpen}>
+        <div className="modal-overlay" onClick={closeShareModal} />
+        <div className="modal-card share-modal" role="dialog" aria-modal="true">
+          <button className="modal-close" aria-label="Close" onClick={closeShareModal}>
+            ×
+          </button>
+          <div className="share-header">
+            <div className="share-badge">♻️</div>
+            <h3>{t.share.heading}</h3>
+          </div>
+
+          <div className="share-card">
+            <div className="share-card-top">
+              <div className="share-logos">
+                <span className="share-logo">SCEM</span>
+                <iconify-icon icon="ph:recycle-bold" />
+              </div>
+              <div className="share-icons">🌱 ♻️ 🌍</div>
+            </div>
+            <div className="share-message">{shareMessage}</div>
+            {sharePayload?.name ? (
+              <div className="share-name">{sharePayload.name}</div>
+            ) : null}
+            <div className="share-meta">
+              <span>{t.share.resultLabel}</span>
+              <span>{t.share.dateLabel}: {shareDate}</span>
+            </div>
+          </div>
+
+          <div className="share-actions">
+            <button type="button" className="share-btn whatsapp" onClick={openShareWhatsApp}>
+              {t.share.shareWhatsapp}
+            </button>
+            <button type="button" className="share-btn linkedin" onClick={openShareLinkedIn}>
+              {t.share.shareLinkedin}
+            </button>
+          </div>
         </div>
       </div>
 
