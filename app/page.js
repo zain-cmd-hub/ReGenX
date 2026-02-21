@@ -1553,6 +1553,38 @@ export default function DashboardPage() {
         condition: cachedResult.condition,
         remainingLife: cachedResult.remainingLife,
       });
+      const cachedHistoryEntry = {
+        id: `${hash}_${Date.now()}`,
+        image: productImage,
+        productName: productTypeInput.trim(),
+        purpose,
+        price: purpose === "repair" ? cachedResult.repairCost || 0 : purpose === "recycle" ? cachedResult.recyclingValue || 0 : cachedResult.price || 0,
+        sellPrice: cachedSellPrice,
+        repairCost: cachedResult.repairCost || 0,
+        recycleValue: cachedResult.recyclingValue || 0,
+        condition: cachedResult.condition,
+        ecoScore: cachedEcoScore,
+        ecoScoreSell: cachedEcoScoreSell,
+        ecoScoreRepair: cachedEcoScoreRepair,
+        ecoScoreRecycle: cachedEcoScoreRecycle,
+        aiSuggestion: cachedSuggestionText,
+        aiSuggestionAction: cachedSuggestion.action,
+        aiSuggestionYears: cachedSuggestion.years,
+        aiSuggestionCo2: cachedSuggestion.co2,
+        suggestion: cachedResult.usageMessage || "Analysis complete.",
+        date: new Date().toISOString(),
+        digitalTwinData: {
+          condition: cachedResult.condition,
+          remainingLife: cachedResult.remainingLife,
+          ecoScore: cachedEcoScore,
+          suggestion: cachedSuggestionText,
+        },
+        futurePath: purpose,
+        certificateId: null,
+        wasteKg: purpose === "recycle" ? Number(materialWeight || 0) : 0,
+      };
+
+      setProductHistory((prev) => [cachedHistoryEntry, ...prev]);
       setCondition(cachedResult.condition);
       setScore(cachedResult.score);
       setRemainingLife(cachedResult.remainingLife);
@@ -1740,6 +1772,15 @@ export default function DashboardPage() {
         aiSuggestionCo2: nextSuggestion.co2,
         suggestion: nextUsageMessage || "Analysis complete.",
         date: new Date().toISOString(),
+        digitalTwinData: {
+          condition: nextCondition,
+          remainingLife: remaining,
+          ecoScore: nextEcoScore,
+          suggestion: nextSuggestionText,
+        },
+        futurePath: purpose,
+        certificateId: null,
+        wasteKg: purpose === "recycle" ? Number(materialWeight || 0) : 0,
       };
 
       cache[cacheKey] = result;
@@ -2095,6 +2136,10 @@ export default function DashboardPage() {
     setTimeout(() => setIsProfileVerifiedOpen(false), 3000);
   }
 
+  function handleOpenHistory() {
+    router.push("/history");
+  }
+
   function handleClearData() {
     const confirmed = window.confirm("Are you sure you want to delete all your data?");
     if (!confirmed) return;
@@ -2200,6 +2245,10 @@ export default function DashboardPage() {
             <iconify-icon icon="ph:map-pin-bold" />
             <span>{t.nav.facilities}</span>
           </button>
+          <button className="nav-btn" onClick={handleOpenHistory}>
+            <span className="nav-emoji" aria-hidden="true">📦</span>
+            <span>{t.history.title}</span>
+          </button>
         </nav>
 
         <div className="sidebar-footer">
@@ -2271,6 +2320,10 @@ export default function DashboardPage() {
             <p>{t.header.welcome}</p>
           </div>
           <div className="header-actions">
+            <button type="button" className="history-link-btn" onClick={handleOpenHistory}>
+              <span aria-hidden="true">📦</span>
+              <span>{t.history.title}</span>
+            </button>
             <div className="search-bar">
               <iconify-icon icon="ph:magnifying-glass-bold" />
               <input type="text" placeholder={t.header.searchPlaceholder} />
