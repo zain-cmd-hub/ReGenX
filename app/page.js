@@ -477,6 +477,10 @@ const translations = {
   },
 };
 
+function clamp(value, min, max) {
+  return Math.min(max, Math.max(min, value));
+}
+
 function hashString(value) {
   let hash = 0;
   for (let i = 0; i < value.length; i += 1) {
