@@ -86,6 +86,8 @@ const ecoMeterValue = document.getElementById("ecoMeterValue");
 const successFx = document.getElementById("successFx");
 const successFxText = document.getElementById("successFxText");
 const ecoParticles = document.getElementById("ecoParticles");
+const menuToggle = document.getElementById("menuToggle");
+const sidebarOverlay = document.getElementById("sidebarOverlay");
 
 const certificateModal = document.getElementById("certificateModal");
 const certificateClose = document.getElementById("certificateClose");
@@ -311,6 +313,18 @@ function typeText(el, text, speed = 22) {
   step();
 }
 
+function setMenuOpen(isOpen) {
+  document.body.classList.toggle("menu-open", isOpen);
+  document.body.style.overflow = isOpen ? "hidden" : "";
+  if (menuToggle) menuToggle.setAttribute("aria-expanded", String(isOpen));
+  if (sidebarOverlay) sidebarOverlay.setAttribute("aria-hidden", String(!isOpen));
+}
+
+function toggleMenu() {
+  const isOpen = document.body.classList.contains("menu-open");
+  setMenuOpen(!isOpen);
+}
+
 function initParticles() {
   if (!ecoParticles) return;
   ecoParticles.innerHTML = "";
@@ -364,7 +378,22 @@ navButtons.forEach((btn) => {
     if (section) {
       section.scrollIntoView({ behavior: "smooth" });
     }
+    setMenuOpen(false);
   });
+});
+
+if (menuToggle) {
+  menuToggle.addEventListener("click", toggleMenu);
+}
+
+if (sidebarOverlay) {
+  sidebarOverlay.addEventListener("click", () => setMenuOpen(false));
+}
+
+window.addEventListener("resize", () => {
+  if (window.innerWidth > 600) {
+    setMenuOpen(false);
+  }
 });
 
 if (notificationBtn && notificationPanel) {

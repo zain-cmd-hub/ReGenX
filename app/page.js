@@ -701,6 +701,7 @@ export default function DashboardPage() {
   const [theme, setTheme] = useState("light");
   const [language, setLanguage] = useState("en");
   const [showSuccess, setShowSuccess] = useState(false);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
   const successTimerRef = useRef(null);
 
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
@@ -816,6 +817,24 @@ export default function DashboardPage() {
     document.body.classList.toggle("dark", theme === "dark");
     localStorage.setItem("tscemTheme", theme);
   }, [theme]);
+
+  useEffect(() => {
+    document.body.style.overflow = isMenuOpen ? "hidden" : "";
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [isMenuOpen]);
+
+  useEffect(() => {
+    function handleResize() {
+      if (window.innerWidth > 600) {
+        setIsMenuOpen(false);
+      }
+    }
+
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   useEffect(() => {
     localStorage.setItem("tscemLanguage", language);
@@ -1172,6 +1191,7 @@ export default function DashboardPage() {
     if (section) {
       section.scrollIntoView({ behavior: "smooth" });
     }
+    setIsMenuOpen(false);
   }
 
   function handleFileSelection(file) {
@@ -1899,7 +1919,7 @@ export default function DashboardPage() {
   }, [profileData]);
 
   return (
-    <div className="dashboard-body">
+    <div className={`dashboard-body ${isMenuOpen ? "menu-open" : ""}`}>
       <aside className="sidebar">
         <div className="sidebar-brand">
           <div className="logo-icon">
@@ -1963,6 +1983,12 @@ export default function DashboardPage() {
         </div>
       </aside>
 
+      <div
+        className="sidebar-overlay"
+        aria-hidden={!isMenuOpen}
+        onClick={() => setIsMenuOpen(false)}
+      />
+
       <div className="main-wrapper">
         <div className="flow-steps">
           {flowSteps.map((step) => {
@@ -1984,6 +2010,15 @@ export default function DashboardPage() {
         </div>
 
         <header className="top-header">
+          <button
+            type="button"
+            className="menu-toggle"
+            aria-label="Open menu"
+            aria-expanded={isMenuOpen}
+            onClick={() => setIsMenuOpen((prev) => !prev)}
+          >
+            <iconify-icon icon="ph:list-bold" />
+          </button>
           <div className="header-welcome">
             <h1>{t.header.title}</h1>
             <p>{t.header.welcome}</p>
