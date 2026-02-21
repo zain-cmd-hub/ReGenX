@@ -219,6 +219,14 @@ const translations = {
     footer: {
       privacyNote: "Your data is stored locally for demo purpose only.",
     },
+    impactMode: {
+      title: "Real World Impact",
+      subtitle: "If 10,000 users use this app…",
+      co2: "CO2 Saved",
+      waste: "Waste Reduced",
+      trees: "Equivalent to saving",
+      treesSuffix: "trees",
+    },
   },
   hi: {
     nav: {
@@ -418,6 +426,14 @@ const translations = {
     },
     footer: {
       privacyNote: "आपका डेटा केवल डेमो के लिए लोकल रूप से स्टोर होता है।",
+    },
+    impactMode: {
+      title: "वास्तविक दुनिया का प्रभाव",
+      subtitle: "अगर 10,000 लोग इस ऐप का उपयोग करें…",
+      co2: "CO2 बचत",
+      waste: "कचरा कम",
+      trees: "इतने पेड़ बचेंगे",
+      treesSuffix: "पेड़",
     },
   },
 };
@@ -703,6 +719,8 @@ export default function DashboardPage() {
   const [showSuccess, setShowSuccess] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const successTimerRef = useRef(null);
+  const [impactCounts, setImpactCounts] = useState({ co2: 0, waste: 0, trees: 0 });
+  const [isImpactVisible, setIsImpactVisible] = useState(false);
 
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
@@ -777,6 +795,7 @@ export default function DashboardPage() {
   const profileMenuRef = useRef(null);
   const profileButtonRef = useRef(null);
   const profileBaselineRef = useRef(null);
+  const impactModeRef = useRef(null);
 
   useEffect(() => {
     if (!navigator.geolocation) {
@@ -835,6 +854,30 @@ export default function DashboardPage() {
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, []);
+
+  useEffect(() => {
+    if (!analysisReady) {
+      setIsImpactVisible(false);
+      return;
+    }
+
+    const node = impactModeRef.current;
+    if (!node) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            setIsImpactVisible(true);
+            observer.disconnect();
+          }
+        });
+      },
+      { threshold: 0.2 }
+    );
+
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, [analysisReady]);
 
   useEffect(() => {
     localStorage.setItem("tscemLanguage", language);
@@ -1139,6 +1182,76 @@ export default function DashboardPage() {
     if (ecoScore >= 40) return t.eco.moderate;
     return t.eco.low;
   }, [analysisReady, ecoScore, t]);
+
+  const impactTargets = useMemo(() => {
+    if (!analysisReady) {
+      return { co2Kg: 0, wasteKg: 0, trees: 0 };
+    }
+
+    const purposeMultiplier = purpose === "sell" ? 1.15 : purpose === "repair" ? 1.0 : purpose === "recycle" ? 0.85 : 1.0;
+    const ecoMultiplier = 0.5 + (ecoScore / 100) * 0.9;
+    const baseCo2Kg = purpose === "sell" ? 1.8 : purpose === "repair" ? 1.3 : purpose === "recycle" ? 0.9 : 1.2;
+    const baseWasteKg = purpose === "sell" ? 1.2 : purpose === "repair" ? 0.9 : purpose === "recycle" ? 1.6 : 1.0;
+
+    const perUserCo2 = baseCo2Kg * ecoMultiplier * purposeMultiplier;
+    const perUserWaste = baseWasteKg * ecoMultiplier * purposeMultiplier;
+    const totalUsers = 10000;
+    const co2Kg = Math.round(perUserCo2 * totalUsers);
+    const wasteKg = Math.round(perUserWaste * totalUsers);
+    const trees = Math.max(1, Math.round(co2Kg / 21));
+
+    return { co2Kg, wasteKg, trees };
+  }, [analysisReady, ecoScore, purpose]);
+
+  const impactUnits = useMemo(() => {
+    const co2Unit = impactTargets.co2Kg >= 1000 ? "tons" : "kg";
+    const wasteUnit = impactTargets.wasteKg >= 1000 ? "tons" : "kg";
+    const co2Target = co2Unit === "tons" ? impactTargets.co2Kg / 1000 : impactTargets.co2Kg;
+    const wasteTarget = wasteUnit === "tons" ? impactTargets.wasteKg / 1000 : impactTargets.wasteKg;
+
+    return {
+      co2Target,
+      wasteTarget,
+      treesTarget: impactTargets.trees,
+      co2Unit,
+      wasteUnit,
+    };
+  }, [impactTargets]);
+
+  useEffect(() => {
+    if (!analysisReady) {
+      setImpactCounts({ co2: 0, waste: 0, trees: 0 });
+      return undefined;
+    }
+
+    const duration = 900;
+    const start = performance.now();
+    let rafId = 0;
+
+    function tick(now) {
+      const progress = Math.min(1, (now - start) / duration);
+      const eased = 1 - Math.pow(1 - progress, 3);
+      setImpactCounts({
+        co2: impactUnits.co2Target * eased,
+        waste: impactUnits.wasteTarget * eased,
+        trees: impactUnits.treesTarget * eased,
+      });
+
+      if (progress < 1) {
+        rafId = requestAnimationFrame(tick);
+      }
+    }
+
+    rafId = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(rafId);
+  }, [analysisReady, impactUnits]);
+
+  function formatImpactNumber(value, unit) {
+    if (unit === "tons") {
+      return value.toFixed(1);
+    }
+    return Math.round(value).toLocaleString();
+  }
 
   const ecoTone = useMemo(() => {
     if (ecoScore > 70) return "eco-high";
@@ -2565,6 +2678,44 @@ export default function DashboardPage() {
                       <div className="eco-score-label">{t.eco.label}</div>
                       <div className="eco-score-note">{ecoLabel}</div>
                     </div>
+                  ) : null}
+
+                  {analysisReady ? (
+                    <section
+                      ref={impactModeRef}
+                      className={`impact-mode ${isImpactVisible ? "is-visible" : ""}`}
+                    >
+                      <div className="impact-mode-header">
+                        <h4>{t.impactMode.title}</h4>
+                        <p>{t.impactMode.subtitle}</p>
+                      </div>
+                      <div className="impact-mode-grid">
+                        <div className="impact-mode-card">
+                          <div className="impact-mode-icon">🌍</div>
+                          <div className="impact-mode-label">{t.impactMode.co2}</div>
+                          <div className="impact-mode-value">
+                            {formatImpactNumber(impactCounts.co2, impactUnits.co2Unit)}
+                            <span className="impact-mode-unit">{impactUnits.co2Unit}</span>
+                          </div>
+                        </div>
+                        <div className="impact-mode-card">
+                          <div className="impact-mode-icon">♻️</div>
+                          <div className="impact-mode-label">{t.impactMode.waste}</div>
+                          <div className="impact-mode-value">
+                            {formatImpactNumber(impactCounts.waste, impactUnits.wasteUnit)}
+                            <span className="impact-mode-unit">{impactUnits.wasteUnit}</span>
+                          </div>
+                        </div>
+                        <div className="impact-mode-card">
+                          <div className="impact-mode-icon">🌳</div>
+                          <div className="impact-mode-label">{t.impactMode.trees}</div>
+                          <div className="impact-mode-value">
+                            {Math.round(impactCounts.trees).toLocaleString()}
+                            <span className="impact-mode-unit">{t.impactMode.treesSuffix}</span>
+                          </div>
+                        </div>
+                      </div>
+                    </section>
                   ) : null}
 
                   {analysisReady ? (
