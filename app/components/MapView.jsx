@@ -16,6 +16,20 @@ function Recenter({ center, zoom }) {
   return null;
 }
 
+function MapSizeUpdater({ active }) {
+  const map = useMap();
+
+  useEffect(() => {
+    if (!active) return;
+    const timer = setTimeout(() => {
+      map.invalidateSize();
+    }, 120);
+    return () => clearTimeout(timer);
+  }, [active, map]);
+
+  return null;
+}
+
 function buildMarkerIcon(category) {
   const className = category ? `map-marker map-marker--${category}` : "map-marker";
   return L.divIcon({
@@ -86,6 +100,7 @@ export default function MapView({ facilities, center, onConnect, labels }) {
   }, [showContactModal]);
 
   function openContactModal(facility) {
+    if (showContactModal) return;
     setSelectedFacility(facility);
     setShowContactModal(true);
   }
@@ -144,27 +159,64 @@ export default function MapView({ facilities, center, onConnect, labels }) {
       </MapContainer>
 
       {showContactModal ? (
-        <div className="map-contact-layer" role="dialog" aria-modal="true">
-          <div className="map-contact-overlay" onClick={closeContactModal} />
-          <div className="map-contact-card">
+        <div className="map-modal-layer" role="dialog" aria-modal="true">
+          <div className="map-modal-overlay" onClick={closeContactModal} />
+          <div className="map-modal-card">
             <button
               type="button"
-              className="map-contact-close"
+              className="map-modal-close"
               aria-label="Close"
               onClick={closeContactModal}
             >
               ×
             </button>
-            <div className="map-contact-icon">📍</div>
-            <h3>{selectedFacility?.name || safeLabels.facility}</h3>
-            <p className="map-contact-sub">
-              {selectedFacility?.type || safeLabels.facility}
-            </p>
-            <div className="map-contact-actions">
-              <button type="button" className="map-contact-btn primary" onClick={handleConnect}>
+            <div className="map-modal-header">
+              <div className="map-modal-title">
+                {selectedFacility?.name || safeLabels.facility}
+              </div>
+              <div className="map-modal-meta">
+                {selectedFacility?.distance ? `${selectedFacility.distance} km away` : selectedFacility?.type || safeLabels.facility}
+              </div>
+            </div>
+            <div className="map-modal-icon">
+              <iconify-icon icon="logos:whatsapp-icon" />
+            </div>
+            <div className="map-modal-map">
+              <MapContainer
+                center={[
+                  selectedFacility?.latitude || safeCenter.lat,
+                  selectedFacility?.longitude || safeCenter.lng,
+                ]}
+                zoom={13}
+                scrollWheelZoom
+                className="map-modal-map-inner"
+              >
+                <MapSizeUpdater active={showContactModal} />
+                <TileLayer
+                  attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+                  url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                />
+                <Marker position={[safeCenter.lat, safeCenter.lng]} icon={icons.user}>
+                  <Popup>
+                    <div className="map-popup">
+                      <strong>{safeLabels.yourLocation}</strong>
+                      <span className="map-popup-meta">{safeLabels.autoCentered}</span>
+                    </div>
+                  </Popup>
+                </Marker>
+                {selectedFacility ? (
+                  <Marker
+                    position={[selectedFacility.latitude, selectedFacility.longitude]}
+                    icon={icons[selectedFacility.category] || icons.buyer}
+                  />
+                ) : null}
+              </MapContainer>
+            </div>
+            <div className="map-modal-actions">
+              <button type="button" className="map-modal-btn primary" onClick={handleConnect}>
                 {safeLabels.connect}
               </button>
-              <button type="button" className="map-contact-btn ghost" onClick={handleWhatsApp}>
+              <button type="button" className="map-modal-btn ghost" onClick={handleWhatsApp}>
                 {safeLabels.whatsapp}
               </button>
             </div>
