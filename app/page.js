@@ -43,12 +43,16 @@ const translations = {
       requestSent: "Request sent successfully!",
     },
     share: {
-      heading: "🎉 Your result is ready to share!",
+      thanksHeading: "🎉 Thanks for sharing!",
+      cta: "Share your recycle result",
       message: "I saved {X} kg waste today 🌱",
       shareWhatsapp: "Share on WhatsApp",
       shareLinkedin: "Share on LinkedIn",
       dateLabel: "Date",
       resultLabel: "Result",
+      confirmationTitle: "Share confirmation",
+      confirmationMessage: "Mark this as read after sharing on WhatsApp.",
+      confirmationMeta: "WhatsApp share",
     },
     flow: {
       upload: "Upload Product",
@@ -265,12 +269,16 @@ const translations = {
       requestSent: "अनुरोध सफलतापूर्वक भेजा गया!",
     },
     share: {
-      heading: "🎉 आपका परिणाम साझा करने के लिए तैयार है!",
+      thanksHeading: "🎉 साझा करने के लिए धन्यवाद!",
+      cta: "अपना रीसायकल परिणाम साझा करें",
       message: "आज मैंने {X} किलो कचरा बचाया 🌱",
       shareWhatsapp: "व्हाट्सएप पर साझा करें",
       shareLinkedin: "लिंक्डइन पर साझा करें",
       dateLabel: "तारीख",
       resultLabel: "परिणाम",
+      confirmationTitle: "शेयर पुष्टि",
+      confirmationMessage: "व्हाट्सएप पर साझा करने के बाद इसे पढ़ा हुआ चिह्नित करें।",
+      confirmationMeta: "व्हाट्सएप शेयर",
     },
     flow: {
       upload: "उत्पाद अपलोड करें",
@@ -737,6 +745,7 @@ export default function DashboardPage() {
   const successTimerRef = useRef(null);
   const [isShareOpen, setIsShareOpen] = useState(false);
   const [sharePayload, setSharePayload] = useState(null);
+  const [shareReturnPending, setShareReturnPending] = useState(false);
   const [impactCounts, setImpactCounts] = useState({ co2: 0, waste: 0, trees: 0 });
   const [isImpactVisible, setIsImpactVisible] = useState(false);
 
@@ -862,6 +871,23 @@ export default function DashboardPage() {
       document.body.style.overflow = "";
     };
   }, [isMenuOpen, isShareOpen]);
+
+  useEffect(() => {
+    function handleReturn() {
+      if (typeof window === "undefined") return;
+      const shared = localStorage.getItem("sharedOnWhatsapp") === "true";
+      if (shared) {
+        setShareReturnPending(true);
+      }
+    }
+
+    document.addEventListener("visibilitychange", handleReturn);
+    window.addEventListener("focus", handleReturn);
+    return () => {
+      document.removeEventListener("visibilitychange", handleReturn);
+      window.removeEventListener("focus", handleReturn);
+    };
+  }, []);
 
   useEffect(() => {
     function handleResize() {
@@ -1219,12 +1245,48 @@ export default function DashboardPage() {
     return window.location.origin;
   }, []);
 
+  const shareRead = useMemo(() => {
+    return notifications.some((item) => item.type === "share" && item.read);
+  }, [notifications]);
+
+  useEffect(() => {
+    if (!shareReturnPending) return;
+    if (!shareRead) return;
+    setIsShareOpen(true);
+    setShareReturnPending(false);
+    if (typeof window !== "undefined") {
+      localStorage.removeItem("sharedOnWhatsapp");
+    }
+  }, [shareReturnPending, shareRead]);
+
   function buildShareText() {
     const name = sharePayload?.name ? `${sharePayload.name} - ` : "";
     return `${name}${shareMessage}`;
   }
 
+  function ensureShareNotification() {
+    setNotifications((prev) => {
+      const exists = prev.some((item) => item.type === "share" && !item.read);
+      if (exists) return prev;
+      const next = {
+        id: `share_${Date.now()}`,
+        type: "share",
+        shopName: t.share.confirmationTitle,
+        message: t.share.confirmationMessage,
+        purpose: t.share.confirmationMeta,
+        productSummary: "-",
+        timestamp: Date.now(),
+        read: false,
+      };
+      return [next, ...prev];
+    });
+  }
+
   function openShareWhatsApp() {
+    if (typeof window !== "undefined") {
+      localStorage.setItem("sharedOnWhatsapp", "true");
+    }
+    ensureShareNotification();
     const message = encodeURIComponent(`${buildShareText()} ${shareUrl}`.trim());
     window.open(`https://wa.me/?text=${message}`, "_blank", "noopener,noreferrer");
   }
@@ -1516,7 +1578,6 @@ export default function DashboardPage() {
           name: profileData.name || userProfile.name || "",
           date: new Date().toISOString(),
         });
-        setIsShareOpen(true);
       }
       setUploadLoading(false);
       setIsAnalyzing(false);
@@ -1711,7 +1772,6 @@ export default function DashboardPage() {
           name: profileData.name || userProfile.name || "",
           date: new Date().toISOString(),
         });
-        setIsShareOpen(true);
       }
     } catch (error) {
       console.error("[AI] Image analysis failed", error);
@@ -2838,6 +2898,20 @@ export default function DashboardPage() {
                       <p className="ai-suggestion-text">{aiSuggestion}</p>
                     </div>
                   ) : null}
+
+                  {analysisReady && purpose === "recycle" ? (
+                    <div className="share-cta">
+                      <div className="share-cta-text">{t.share.cta}</div>
+                      <div className="share-cta-actions">
+                        <button type="button" className="share-btn whatsapp" onClick={openShareWhatsApp}>
+                          {t.share.shareWhatsapp}
+                        </button>
+                        <button type="button" className="share-btn linkedin" onClick={openShareLinkedIn}>
+                          {t.share.shareLinkedin}
+                        </button>
+                      </div>
+                    </div>
+                  ) : null}
                 </div>
               </div>
             </section>
@@ -3005,7 +3079,7 @@ export default function DashboardPage() {
           </button>
           <div className="share-header">
             <div className="share-badge">♻️</div>
-            <h3>{t.share.heading}</h3>
+            <h3>{t.share.thanksHeading}</h3>
           </div>
 
           <div className="share-card">

@@ -2483,6 +2483,27 @@ input:focus, select:focus {
   color: white;
 }
 
+.share-cta {
+  margin-top: 16px;
+  border-radius: 16px;
+  padding: 16px;
+  background: #f0fdf4;
+  border: 1px dashed rgba(22, 163, 74, 0.35);
+  display: grid;
+  gap: 12px;
+}
+
+.share-cta-text {
+  font-size: 14px;
+  font-weight: 700;
+  color: #166534;
+}
+
+.share-cta-actions {
+  display: grid;
+  gap: 10px;
+}
+
 @keyframes shareZoom {
   from { opacity: 0; transform: translate(-50%, -48%) scale(0.96); }
   to { opacity: 1; transform: translate(-50%, -50%) scale(1); }
