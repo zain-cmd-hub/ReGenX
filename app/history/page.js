@@ -68,6 +68,10 @@ function formatDate(value, locale) {
   });
 }
 
+function generateCertificateId() {
+  return `SCEM-${Date.now().toString(36).toUpperCase()}`;
+}
+
 function EcoMeter({ score }) {
   const safeScore = Number.isFinite(score) ? Math.max(0, Math.min(100, score)) : 0;
   return (
@@ -149,7 +153,14 @@ export default function HistoryPage() {
     const stored = localStorage.getItem("tscemProductHistory");
     if (stored) {
       try {
-        setHistory(JSON.parse(stored));
+        const parsed = JSON.parse(stored);
+        const updated = parsed.map((item) => {
+          if ((item.futurePath || item.purpose) === "recycle" && !item.certificateId) {
+            return { ...item, certificateId: generateCertificateId() };
+          }
+          return item;
+        });
+        setHistory(updated);
       } catch (error) {
         setHistory([]);
       }

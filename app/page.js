@@ -554,6 +554,10 @@ function hashString(value) {
   return `img_${Math.abs(hash)}`;
 }
 
+function generateCertificateId() {
+  return `SCEM-${Date.now().toString(36).toUpperCase()}`;
+}
+
 function readImageCache() {
   try {
     const raw = localStorage.getItem("tscemImageCache");
@@ -1620,7 +1624,7 @@ export default function DashboardPage() {
           suggestion: cachedSuggestionText,
         },
         futurePath: purpose,
-        certificateId: null,
+        certificateId: purpose === "recycle" ? generateCertificateId() : null,
         wasteKg: purpose === "recycle" ? Number(materialWeight || 0) : 0,
       };
 
@@ -1819,7 +1823,7 @@ export default function DashboardPage() {
           suggestion: nextSuggestionText,
         },
         futurePath: purpose,
-        certificateId: null,
+        certificateId: purpose === "recycle" ? generateCertificateId() : null,
         wasteKg: purpose === "recycle" ? Number(materialWeight || 0) : 0,
       };
 
