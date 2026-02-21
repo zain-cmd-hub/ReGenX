@@ -275,10 +275,13 @@ export default function HistoryPage() {
               </button>
             ))}
           </div>
-          <button type="button" className="history-back" onClick={() => router.push("/")}
+          <button
+            type="button"
+            className="history-back"
+            onClick={() => router.push("/")}
           >
             {t.back}
-                {t.generateCert}
+          </button>
         </div>
       </div>
 
