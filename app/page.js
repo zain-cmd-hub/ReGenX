@@ -19,6 +19,11 @@ const DEFAULT_CITY = {
   lat: 28.6139,
   lng: 77.2090,
 };
+
+const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
+const ALLOWED_IMAGE_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
+const ALLOWED_IMAGE_EXTENSIONS = new Set(["jpg", "jpeg", "png", "webp"]);
+const IMAGE_ANALYSIS_TIMEOUT_MS = 20000;
 const translations = {
   en: {
     nav: {
@@ -72,7 +77,7 @@ const translations = {
     upload: {
       title: "Upload Product",
       dragTitle: "Click or drag an image here",
-      dragHint: "PNG, JPG, or WEBP up to 10MB",
+      dragHint: "PNG, JPG, or WEBP up to 5MB",
       changeImage: "Change Image",
       productType: "Product Type",
       productPlaceholder: "e.g., Laptop",
@@ -300,7 +305,7 @@ const translations = {
     upload: {
       title: "उत्पाद अपलोड करें",
       dragTitle: "यहां क्लिक करें या इमेज ड्रैग करें",
-      dragHint: "PNG, JPG, या WEBP 10MB तक",
+      dragHint: "PNG, JPG, या WEBP 5MB तक",
       changeImage: "इमेज बदलें",
       productType: "उत्पाद प्रकार",
       productPlaceholder: "उदा., लैपटॉप",
@@ -507,6 +512,78 @@ function writeImageCache(cache) {
   localStorage.setItem("tscemImageCache", JSON.stringify(cache));
 }
 
+function isAllowedImageFile(file) {
+  if (!file) return false;
+  const name = file.name || "";
+  const extension = name.includes(".") ? name.split(".").pop().toLowerCase() : "";
+  return ALLOWED_IMAGE_TYPES.has(file.type) || ALLOWED_IMAGE_EXTENSIONS.has(extension);
+}
+
+async function fetchWithTimeout(url, options, timeoutMs) {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const response = await fetch(url, { ...options, signal: controller.signal });
+    return response;
+  } finally {
+    clearTimeout(timeoutId);
+  }
+}
+
+async function parseJsonSafely(response) {
+  try {
+    return await response.json();
+  } catch (error) {
+    return null;
+  }
+}
+
+async function fetchWithRetry(requestFactory, retries) {
+  let lastError = null;
+  for (let attempt = 0; attempt <= retries; attempt += 1) {
+    try {
+      return await requestFactory();
+    } catch (error) {
+      lastError = error;
+    }
+  }
+  throw lastError;
+}
+
+async function analyzeImageFeatures(file) {
+  if (!file) {
+    throw new Error("Missing image file.");
+  }
+
+  const formData = new FormData();
+  formData.append("image", file);
+
+  const response = await fetchWithRetry(
+    () => fetchWithTimeout(
+      "/api/analyze-image",
+      {
+        method: "POST",
+        body: formData,
+      },
+      IMAGE_ANALYSIS_TIMEOUT_MS
+    ),
+    1
+  );
+
+  if (!response.ok) {
+    const payload = await parseJsonSafely(response);
+    const message = payload?.error || "Unable to analyze this image.";
+    throw new Error(message);
+  }
+
+  const payload = await response.json();
+  if (!payload?.features) {
+    throw new Error("Invalid analysis response.");
+  }
+
+  return payload.features;
+}
+
 function computeEcoScore({ purpose, condition, remainingLife }) {
   if (!purpose) return 0;
 
@@ -635,6 +712,7 @@ export default function DashboardPage() {
   const [activeNav, setActiveNav] = useState("hero");
   const [productTypeInput, setProductTypeInput] = useState("");
   const [productImage, setProductImage] = useState("");
+  const [productFile, setProductFile] = useState(null);
   const [imageHash, setImageHash] = useState("");
   const [purpose, setPurpose] = useState("");
   const [materialType, setMaterialType] = useState("metal");
@@ -645,6 +723,7 @@ export default function DashboardPage() {
   const [usageMessage, setUsageMessage] = useState("");
   const [fileError, setFileError] = useState("");
   const [isDragActive, setIsDragActive] = useState(false);
+  const [toast, setToast] = useState(null);
 
   const [condition, setCondition] = useState("-");
   const [score, setScore] = useState(0);
@@ -766,6 +845,7 @@ export default function DashboardPage() {
   const profileBaselineRef = useRef(null);
   const impactSectionRef = useRef(null);
   const modulesRef = useRef(null);
+  const toastTimerRef = useRef(null);
 
   useEffect(() => {
     if (!navigator.geolocation) {
@@ -1072,6 +1152,7 @@ export default function DashboardPage() {
   useEffect(() => {
     if (!productImage) {
       setImageHash("");
+      setProductFile(null);
       resetAnalysis();
       setPurpose("");
       setFlowStep(0);
@@ -1389,6 +1470,32 @@ export default function DashboardPage() {
     return t.comparison.bestRecycle;
   }, [bestEcoOption, t]);
 
+  useEffect(() => {
+    return () => {
+      if (toastTimerRef.current) {
+        clearTimeout(toastTimerRef.current);
+      }
+    };
+  }, []);
+
+  function showToast(message, type = "error") {
+    if (!message) return;
+    if (toastTimerRef.current) {
+      clearTimeout(toastTimerRef.current);
+    }
+    setToast({ message, type });
+    toastTimerRef.current = setTimeout(() => {
+      setToast(null);
+    }, 3200);
+  }
+
+  function dismissToast() {
+    if (toastTimerRef.current) {
+      clearTimeout(toastTimerRef.current);
+    }
+    setToast(null);
+  }
+
   function scrollToSection(target) {
     setActiveNav(target);
     const section = document.getElementById(target);
@@ -1401,16 +1508,40 @@ export default function DashboardPage() {
   function handleFileSelection(file) {
     if (!file) {
       setProductImage("");
+      setProductFile(null);
+      setFileError("");
       return;
     }
 
-    if (!file.type.startsWith("image/")) {
-      setFileError("Please select a valid image file (JPG, PNG, WEBP).");
+    if (!isAllowedImageFile(file)) {
+      const message = "Please select a valid image file (JPG, PNG, WEBP).";
+      setFileError(message);
       setProductImage("");
+      setProductFile(null);
+      showToast(message);
+      return;
+    }
+
+    if (!file.size) {
+      const message = "The selected image is empty. Please choose another file.";
+      setFileError(message);
+      setProductImage("");
+      setProductFile(null);
+      showToast(message);
+      return;
+    }
+
+    if (file.size > MAX_IMAGE_BYTES) {
+      const message = "Image size must be 5MB or less.";
+      setFileError(message);
+      setProductImage("");
+      setProductFile(null);
+      showToast(message);
       return;
     }
 
     setFileError("");
+    setProductFile(file);
     const reader = new FileReader();
     reader.onload = (loadEvent) => {
       setProductImage(loadEvent.target?.result || "");
@@ -1457,30 +1588,30 @@ export default function DashboardPage() {
 
   async function handleAnalyze() {
     const ageValue = Math.max(0, Math.round(totalUsageDays / 365));
-    if (!productImage) {
-      alert("Please upload a product image before analyzing.");
+    if (!productFile || !productImage) {
+      showToast("Please upload a product image before analyzing.");
       return;
     }
 
     if (!purpose) {
-      alert("Please select a purpose before analyzing.");
+      showToast("Please select a purpose before analyzing.");
       return;
     }
 
     if (!productTypeInput.trim()) {
-      alert("Please fill product type before analyzing.");
+      showToast("Please fill product type before analyzing.");
       return;
     }
 
     if (totalUsageDays <= 0) {
-      alert("Please enter product usage before analyzing.");
+      showToast("Please enter product usage before analyzing.");
       return;
     }
 
     setFlowStep((prev) => (prev < 3 ? 3 : prev));
 
     if (purpose === "recycle" && (!materialWeight || Number(materialWeight) <= 0)) {
-      alert("Please enter material weight for recycling analysis.");
+      showToast("Please enter material weight for recycling analysis.");
       return;
     }
 
@@ -1594,7 +1725,7 @@ export default function DashboardPage() {
     }
 
     try {
-      const features = await analyzeImageFeatures(productImage);
+      const features = await analyzeImageFeatures(productFile);
       const damageFactor = features.damageScore;
       const damageImpact = clamp(damageFactor * 0.6, 0, 60);
       const usageImpact = clamp((totalUsageDays / (365 * 5)) * 60, 0, 60);
@@ -1795,7 +1926,10 @@ export default function DashboardPage() {
       }
     } catch (error) {
       console.error("[AI] Image analysis failed", error);
-      alert("Image analysis failed. Please try another image.");
+      const message = error?.name === "AbortError"
+        ? "Image analysis timed out. Please try again."
+        : (error?.message || "Unable to analyze this image. Please try a clearer photo.");
+      showToast(message);
     } finally {
       setUploadLoading(false);
       setIsAnalyzing(false);
@@ -2485,6 +2619,15 @@ export default function DashboardPage() {
           </div>
         </header>
 
+        {toast ? (
+          <div className={`toast toast-${toast.type}`} role="status" aria-live="polite">
+            <span>{toast.message}</span>
+            <button type="button" className="toast-close" onClick={dismissToast} aria-label="Dismiss">
+              ×
+            </button>
+          </div>
+        ) : null}
+
         <main className="content-area">
           <HeroSection
             title="Smart Circular Economy Marketplace"
@@ -2564,7 +2707,7 @@ export default function DashboardPage() {
                       id="productImageInput"
                       className="upload-input"
                       type="file"
-                      accept="image/*"
+                      accept="image/png,image/jpeg,image/webp"
                       onChange={handleImageChange}
                     />
                     <label
@@ -2712,11 +2855,15 @@ export default function DashboardPage() {
                     <button
                       onClick={handleAnalyze}
                       className="btn-primary full-width"
-                      disabled={!productImage || !purpose || totalUsageDays <= 0}
+                      disabled={!productImage || !productFile || !purpose || totalUsageDays <= 0 || isAnalyzing}
+                      aria-busy={isAnalyzing}
                     >
                       <iconify-icon icon="ph:magic-wand-bold" /> {t.upload.analyze}
                     </button>
                     <div className={`loader ${uploadLoading ? "active" : ""}`} />
+                    {isAnalyzing ? (
+                      <div className="analysis-status">{t.upload.analyzing}</div>
+                    ) : null}
 
                     <div className={`results-summary ${analysisReady ? "show" : ""}`}>
                       {purpose === "sell" ? (
