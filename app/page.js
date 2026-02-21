@@ -14,6 +14,11 @@ import CertificateSection from "./components/sections/CertificateSection";
 import HistoryPreviewSection from "./components/sections/HistoryPreviewSection";
 import FooterSection from "./components/sections/FooterSection";
 
+const MapView = dynamic(() => import("./components/MapView"), {
+  ssr: false,
+  loading: () => <div className="notification-empty">Loading map...</div>,
+});
+
 const DEFAULT_CITY = {
   name: "New Delhi",
   lat: 28.6139,
