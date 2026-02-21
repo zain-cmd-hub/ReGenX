@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 import { onAuthStateChanged, signOut } from "firebase/auth";
 import { auth } from "./lib/firebase";
+import ModuleCard from "./components/ModuleCard";
 
 const MapView = dynamic(() => import("./components/MapView"), { ssr: false });
 const DEFAULT_CITY = {
@@ -748,6 +749,7 @@ export default function DashboardPage() {
   const [shareReturnPending, setShareReturnPending] = useState(false);
   const [impactCounts, setImpactCounts] = useState({ co2: 0, waste: 0, trees: 0 });
   const [isImpactVisible, setIsImpactVisible] = useState(false);
+  const [isModulesVisible, setIsModulesVisible] = useState(false);
 
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
@@ -823,6 +825,7 @@ export default function DashboardPage() {
   const profileButtonRef = useRef(null);
   const profileBaselineRef = useRef(null);
   const impactModeRef = useRef(null);
+  const modulesRef = useRef(null);
 
   useEffect(() => {
     if (!navigator.geolocation) {
@@ -923,6 +926,25 @@ export default function DashboardPage() {
     observer.observe(node);
     return () => observer.disconnect();
   }, [analysisReady]);
+
+  useEffect(() => {
+    const node = modulesRef.current;
+    if (!node) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            setIsModulesVisible(true);
+            observer.disconnect();
+          }
+        });
+      },
+      { threshold: 0.2 }
+    );
+
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, []);
 
   useEffect(() => {
     localStorage.setItem("tscemLanguage", language);
@@ -1227,6 +1249,24 @@ export default function DashboardPage() {
     if (ecoScore >= 40) return t.eco.moderate;
     return t.eco.low;
   }, [analysisReady, ecoScore, t]);
+
+  const moduleCards = useMemo(() => ([
+    {
+      title: "NGOs Integration",
+      icon: "🤝",
+      text: "Connect with NGOs for recycling & donation",
+    },
+    {
+      title: "Cities Dashboard",
+      icon: "🏙️",
+      text: "City-wise waste tracking & impact stats",
+    },
+    {
+      title: "Smart Bins (IoT)",
+      icon: "🗑️",
+      text: "AI connected smart bins for real-time data",
+    },
+  ]), []);
 
   const shareMessage = useMemo(() => {
     const wasteValue = sharePayload?.wasteKg ?? 0;
@@ -2631,6 +2671,28 @@ export default function DashboardPage() {
                   <span>{t.impact.co2}</span>
                 </div>
               </div>
+            </div>
+          </section>
+
+          <section
+            id="future-modules"
+            ref={modulesRef}
+            className={`section modules-section ${isModulesVisible ? "is-visible" : ""}`}
+          >
+            <div className="modules-badge">Scalable Architecture</div>
+            <div className="modules-header">
+              <h3>Future Ready Modules</h3>
+              <p>Tomorrow we can easily add new modules without changing the core system.</p>
+            </div>
+            <div className="modules-grid">
+              {moduleCards.map((module) => (
+                <ModuleCard
+                  key={module.title}
+                  icon={module.icon}
+                  title={module.title}
+                  text={module.text}
+                />
+              ))}
             </div>
           </section>
 

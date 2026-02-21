@@ -1451,6 +1451,91 @@ body.dark .comparison-value {
   gap: 10px;
 }
 
+.modules-section {
+  margin: 32px 0;
+  padding: 24px;
+  border-radius: 20px;
+  background: linear-gradient(140deg, #ecfdf3 0%, #f7fff9 100%);
+  border: 1px solid rgba(22, 163, 74, 0.25);
+  box-shadow: 0 14px 24px -18px rgba(16, 185, 129, 0.4);
+  opacity: 0;
+  transform: translateY(14px);
+  transition: opacity 0.45s ease, transform 0.45s ease;
+}
+
+.modules-section.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.modules-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: rgba(34, 197, 94, 0.15);
+  color: #166534;
+  font-size: 12px;
+  font-weight: 700;
+  margin-bottom: 12px;
+}
+
+.modules-header h3 {
+  font-size: 22px;
+  font-weight: 700;
+  margin-bottom: 6px;
+  color: #14532d;
+}
+
+.modules-header p {
+  font-size: 14px;
+  color: #166534;
+  margin-bottom: 20px;
+}
+
+.modules-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.module-card {
+  background: white;
+  border-radius: 18px;
+  padding: 18px;
+  border: 1px solid rgba(22, 163, 74, 0.2);
+  box-shadow: 0 10px 20px -18px rgba(16, 185, 129, 0.4);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.module-card:hover {
+  transform: translateY(-3px) scale(1.02);
+  box-shadow: 0 18px 30px -18px rgba(16, 185, 129, 0.55);
+}
+
+.module-icon {
+  width: 46px;
+  height: 46px;
+  border-radius: 12px;
+  background: rgba(34, 197, 94, 0.12);
+  display: grid;
+  place-items: center;
+  font-size: 24px;
+  margin-bottom: 12px;
+}
+
+.module-title {
+  font-size: 16px;
+  font-weight: 700;
+  margin-bottom: 6px;
+  color: #14532d;
+}
+
+.module-text {
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
 .history-card img {
   width: 100px;
   height: 100px;
@@ -2181,6 +2266,10 @@ input:focus, select:focus {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
+  .modules-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   .history-page {
     padding: 24px 20px 50px;
   }
@@ -2212,6 +2301,10 @@ input:focus, select:focus {
   .history-toolbar {
     flex-direction: column;
     align-items: flex-start;
+  }
+
+  .modules-grid {
+    grid-template-columns: 1fr;
   }
 }
 
