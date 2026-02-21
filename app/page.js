@@ -13,6 +13,12 @@ import UserActionSection from "./components/sections/UserActionSection";
 import CertificateSection from "./components/sections/CertificateSection";
 import HistoryPreviewSection from "./components/sections/HistoryPreviewSection";
 import FooterSection from "./components/sections/FooterSection";
+
+const DEFAULT_CITY = {
+  name: "New Delhi",
+  lat: 28.6139,
+  lng: 77.2090,
+};
 const translations = {
   en: {
     nav: {
