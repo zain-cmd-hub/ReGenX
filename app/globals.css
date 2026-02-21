@@ -839,14 +839,24 @@ body.dark .comparison-value {
 }
 
 .profile-modal {
-  max-width: 520px;
+  max-width: 500px;
+  max-height: 80vh;
   text-align: left;
+  overflow: hidden;
 }
 
 .profile-form {
   display: grid;
-  gap: 14px;
+  gap: 16px;
   margin-top: 16px;
+}
+
+.profile-form-body {
+  display: grid;
+  gap: 14px;
+  overflow-y: auto;
+  padding-right: 6px;
+  max-height: calc(80vh - 220px);
 }
 
 .profile-form label {
@@ -874,9 +884,12 @@ body.dark .comparison-value {
 }
 
 .profile-actions {
-  display: flex;
+  display: grid;
   gap: 12px;
-  justify-content: flex-end;
+}
+
+.profile-actions .btn-primary {
+  width: 100%;
 }
 
 .profile-success {

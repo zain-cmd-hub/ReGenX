@@ -807,6 +807,8 @@ export default function DashboardPage() {
       profileData.name,
       profileData.email,
       profileData.phone,
+      profileData.address,
+      profileData.about,
     ];
     const filled = requiredFields.filter((item) => String(item || "").trim().length > 0).length;
     return Math.round((filled / requiredFields.length) * 100);
@@ -897,12 +899,12 @@ export default function DashboardPage() {
   }, [theme]);
 
   useEffect(() => {
-    const shouldLock = isMenuOpen || isShareOpen;
+    const shouldLock = isMenuOpen || isShareOpen || isProfileModalOpen || isProfileVerifiedOpen;
     document.body.style.overflow = shouldLock ? "hidden" : "";
     return () => {
       document.body.style.overflow = "";
     };
-  }, [isMenuOpen, isShareOpen]);
+  }, [isMenuOpen, isShareOpen, isProfileModalOpen, isProfileVerifiedOpen]);
 
   useEffect(() => {
     function handleReturn() {
@@ -1098,7 +1100,7 @@ export default function DashboardPage() {
 
   useEffect(() => {
     if (!isProfileModalOpen) return;
-    profileBaselineRef.current = { ...profileData };
+    profileBaselineRef.current = { ...nextProfile };
     setProfileError("");
     setProfileStatus("");
   }, [isProfileModalOpen]);
@@ -2212,9 +2214,11 @@ export default function DashboardPage() {
     setIsProfileModalOpen(true);
     setIsProfileMenuOpen(false);
     setIsPasswordOpen(false);
-    if (profileCompletion < 100) {
-      setIsProfileEditing(true);
-    }
+    setIsProfileEditing(true);
+    setProfileData((prev) => ({
+      ...prev,
+      email: prev.email || userProfile.email || "",
+    }));
   }
 
   function closeProfileModal() {
@@ -2249,13 +2253,19 @@ export default function DashboardPage() {
       setProfileError(`${t.profile.requiredFields} ${missingProfileFields.join(", ")}`);
       return;
     }
-    localStorage.setItem("tscemProfile", JSON.stringify(profileData));
+    const nextProfile = {
+      ...profileData,
+      email: profileData.email || userProfile.email || "",
+    };
+    localStorage.setItem("tscemProfile", JSON.stringify(nextProfile));
+    setProfileData(nextProfile);
     profileBaselineRef.current = { ...profileData };
     setProfileStatus("");
     setProfileError("");
     setIsProfileEditing(false);
     setIsProfileVerifiedOpen(true);
     setTimeout(() => setIsProfileVerifiedOpen(false), 3000);
+    closeProfileModal();
   }
 
   function handleOpenHistory() {
@@ -3289,126 +3299,115 @@ export default function DashboardPage() {
           <p className="modal-sub">{t.profile.subtitle}</p>
 
           <form className="profile-form" onSubmit={handleProfileSave}>
-            <div className="profile-card">
-              <div className="profile-avatar">
-                {resolvedProfile.photo ? (
-                  <img src={resolvedProfile.photo} alt="Profile" />
-                ) : (
-                  profileInitials
-                )}
-              </div>
-              <div>
-                <div className="profile-title">
-                  {profileData.name || "Your Profile"}
+            <div className="profile-form-body">
+              <div className="profile-card">
+                <div className="profile-avatar">
+                  {resolvedProfile.photo ? (
+                    <img src={resolvedProfile.photo} alt="Profile" />
+                  ) : (
+                    profileInitials
+                  )}
                 </div>
-                <div className="profile-sub">
-                  {profileCompletion === 100 ? `✔ ${t.profile.completed}` : `❌ ${t.profile.incomplete}`}
+                <div>
+                  <div className="profile-title">
+                    {profileData.name || "Your Profile"}
+                  </div>
+                  <div className="profile-sub">
+                    {profileCompletion === 100 ? `✔ ${t.profile.completed}` : `❌ ${t.profile.incomplete}`}
+                  </div>
                 </div>
+                <span className={`profile-badge ${profileCompletion === 100 ? "verified" : "incomplete"}`}>
+                  {profileCompletion === 100 ? t.profile.badgeVerified : t.profile.badgeIncomplete}
+                </span>
               </div>
-              <span className={`profile-badge ${profileCompletion === 100 ? "verified" : "incomplete"}`}>
-                {profileCompletion === 100 ? t.profile.badgeVerified : t.profile.badgeIncomplete}
-              </span>
-            </div>
 
-            <div className="profile-progress">
-              <div className="progress-bar">
-                <div className="progress-fill" style={{ width: `${profileCompletion}%` }} />
+              <div className="profile-progress">
+                <div className="progress-bar">
+                  <div className="progress-fill" style={{ width: `${profileCompletion}%` }} />
+                </div>
+                <span>{profileCompletion}%</span>
               </div>
-              <span>{profileCompletion}%</span>
-            </div>
 
-            <label>
-              {t.profile.fullName}
-              <input
-                type="text"
-                value={profileData.name}
-                onChange={(event) => {
-                  setProfileError("");
-                  setProfileData((prev) => ({ ...prev, name: event.target.value }));
-                }}
-                readOnly={!isProfileEditing}
-              />
-            </label>
-            <label>
-              {t.profile.email}
-              <input type="email" value={profileData.email} readOnly />
-            </label>
-            <label>
-              {t.profile.phone}
-              <input
-                type="tel"
-                placeholder="+91 98765 43210"
-                value={profileData.phone}
-                onChange={(event) => {
-                  setProfileError("");
-                  setProfileData((prev) => ({ ...prev, phone: event.target.value }));
-                }}
-                readOnly={!isProfileEditing}
-              />
-            </label>
-            <label>
-              {t.profile.address}
-              <input
-                type="text"
-                placeholder="City, State"
-                value={profileData.address}
-                onChange={(event) => {
-                  setProfileError("");
-                  setProfileData((prev) => ({ ...prev, address: event.target.value }));
-                }}
-                readOnly={!isProfileEditing}
-              />
-            </label>
-            <label>
-              {t.profile.about}
-              <textarea
-                rows="3"
-                placeholder={t.profile.aboutPlaceholder}
-                value={profileData.about}
-                onChange={(event) => {
-                  setProfileError("");
-                  setProfileData((prev) => ({ ...prev, about: event.target.value }));
-                }}
-                readOnly={!isProfileEditing}
-              />
-            </label>
+              <label>
+                {t.profile.fullName}
+                <input
+                  type="text"
+                  value={profileData.name}
+                  onChange={(event) => {
+                    setProfileError("");
+                    setProfileData((prev) => ({ ...prev, name: event.target.value }));
+                  }}
+                />
+              </label>
+              <label>
+                {t.profile.email}
+                <input type="email" value={resolvedProfile.email || ""} readOnly />
+              </label>
+              <label>
+                {t.profile.phone}
+                <input
+                  type="tel"
+                  placeholder="+91 98765 43210"
+                  value={profileData.phone}
+                  onChange={(event) => {
+                    setProfileError("");
+                    setProfileData((prev) => ({ ...prev, phone: event.target.value }));
+                  }}
+                />
+              </label>
+              <label>
+                {t.profile.address}
+                <input
+                  type="text"
+                  placeholder="City, State"
+                  value={profileData.address}
+                  onChange={(event) => {
+                    setProfileError("");
+                    setProfileData((prev) => ({ ...prev, address: event.target.value }));
+                  }}
+                />
+              </label>
+              <label>
+                {t.profile.about}
+                <textarea
+                  rows="3"
+                  placeholder={t.profile.aboutPlaceholder}
+                  value={profileData.about}
+                  onChange={(event) => {
+                    setProfileError("");
+                    setProfileData((prev) => ({ ...prev, about: event.target.value }));
+                  }}
+                />
+              </label>
 
-            {profileStatus ? <div className="profile-success status-fade">{profileStatus}</div> : null}
-            {profileError ? <div className="profile-warning status-fade">{profileError}</div> : null}
-            {dataClearStatus ? <div className="profile-warning status-fade">{dataClearStatus}</div> : null}
+              {profileStatus ? <div className="profile-success status-fade">{profileStatus}</div> : null}
+              {profileError ? <div className="profile-warning status-fade">{profileError}</div> : null}
+              {dataClearStatus ? <div className="profile-warning status-fade">{dataClearStatus}</div> : null}
 
-            <div className="safety-panel">
-              <div className="safety-header">
-                <iconify-icon icon="ph:shield-check-bold" />
-                <span>{t.safety.title}</span>
+              <div className="safety-panel">
+                <div className="safety-header">
+                  <iconify-icon icon="ph:shield-check-bold" />
+                  <span>{t.safety.title}</span>
+                </div>
+                <p className="safety-note">{t.safety.note}</p>
+                <button
+                  type="button"
+                  className="btn-warning full-width"
+                  onClick={handleClearData}
+                >
+                  {t.safety.clear}
+                </button>
               </div>
-              <p className="safety-note">{t.safety.note}</p>
-              <button
-                type="button"
-                className="btn-warning full-width"
-                onClick={handleClearData}
-              >
-                {t.safety.clear}
-              </button>
             </div>
 
             <div className="profile-actions">
               <button
-                type="button"
-                className="btn-secondary"
-                onClick={() => setIsProfileEditing(true)}
+                type="submit"
+                className="btn-primary full-width"
+                disabled={missingProfileFields.length > 0}
               >
-                {t.profile.edit}
+                {t.profile.saveDetails}
               </button>
-              {isProfileEditing ? (
-                <button
-                  type="submit"
-                  className="btn-primary"
-                  disabled={missingProfileFields.length > 0}
-                >
-                  {t.profile.saveDetails}
-                </button>
-              ) : null}
             </div>
           </form>
         </div>
