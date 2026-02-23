@@ -562,45 +562,6 @@ async function fetchWithRetry(requestFactory, retries) {
   throw lastError;
 }
 
-async function analyzeImageFeatures(file) {
-  if (!file) {
-    throw new Error("Invalid image");
-  }
-
-  const formData = new FormData();
-  formData.append("image", file);
-
-  let response;
-  try {
-    response = await fetchWithRetry(
-      () => fetchWithTimeout(
-        "/api/analyze-image",
-        {
-          method: "POST",
-          body: formData,
-        },
-        IMAGE_ANALYSIS_TIMEOUT_MS
-      ),
-      1
-    );
-  } catch (error) {
-    throw new Error("Network error");
-  }
-
-  if (!response.ok) {
-    const payload = await parseJsonSafely(response);
-    const message = payload?.error || "Invalid image";
-    throw new Error(message);
-  }
-
-  const payload = await response.json();
-  if (!payload?.features) {
-    throw new Error("AI service unavailable");
-  }
-
-  return payload.features;
-}
-
 async function analyzeProductWithAi({ file, description }) {
   if (!file && !description) {
     throw new Error("Invalid image");
@@ -666,63 +627,6 @@ function computeEcoScore({ purpose, condition, remainingLife }) {
   const lifeBoost = clamp(Math.round(((Number(remainingLife || 0) - 50) / 5)), -10, 10);
 
   return clamp(Math.round(baseScore + conditionBoost + lifeBoost), 0, 100);
-}
-
-function computeCo2Saving(purpose, remainingLife) {
-  const life = clamp(Number(remainingLife || 0), 0, 100);
-  if (purpose === "sell") return (1.2 + (life / 100) * 1.3).toFixed(1);
-  if (purpose === "repair") return (0.8 + (life / 100) * 0.7).toFixed(1);
-  return (0.3 + (life / 100) * 0.5).toFixed(1);
-}
-
-function computeAiSuggestion({ purpose, condition, remainingLife, ecoScore }) {
-  const life = clamp(Number(remainingLife || 0), 0, 100);
-  let recommended = "recycle";
-
-  if (condition === "Good") {
-    recommended = "sell";
-  } else if (condition === "Medium" && life > 40) {
-    recommended = "repair";
-  } else if (condition === "Poor" && life < 20) {
-    recommended = "recycle";
-  } else if (ecoScore >= 70) {
-    recommended = "sell";
-  } else if (ecoScore >= 40) {
-    recommended = "repair";
-  }
-
-  const years = clamp(Math.max(1, Math.round(life / 40)), 1, 3);
-  const co2 = computeCo2Saving(recommended, life);
-
-  return {
-    action: recommended,
-    years,
-    co2,
-  };
-}
-
-function formatAiSuggestion({ action, years, co2 }, language) {
-  const lang = language === "hi" ? "hi" : "en";
-  if (!action || !years || !co2) return "";
-
-  if (lang === "hi") {
-    if (action === "sell") {
-      return `यह उत्पाद पुन: उपयोग के लिए बेचा जा सकता है और लगभग ${years} वर्ष तक चल सकता है। इससे लगभग ${co2}kg CO₂ की बचत होती है।`;
-    }
-    if (action === "repair") {
-      return `यह उत्पाद आसानी से मरम्मत किया जा सकता है और लगभग ${years} वर्ष तक चल सकता है। इससे लगभग ${co2}kg CO₂ की बचत होती है।`;
-    }
-    return `स्थिति के अनुसार इसे जिम्मेदारी से रीसायकल करें। इससे लगभग ${co2}kg CO₂ की बचत होती है।`;
-  }
-
-  const yearLabel = years === 1 ? "year" : "years";
-  if (action === "sell") {
-    return `This product can be reused via resale for about ${years} more ${yearLabel}. This saves ~${co2}kg CO₂.`;
-  }
-  if (action === "repair") {
-    return `This product can be repaired easily and reused for about ${years} more ${yearLabel}. This saves ~${co2}kg CO₂.`;
-  }
-  return `Condition suggests responsible recycling to recover materials. This saves ~${co2}kg CO₂.`;
 }
 
 function generateFacilities(location, baseCoords) {
@@ -810,9 +714,6 @@ export default function DashboardPage() {
   const [ecoScoreRecycle, setEcoScoreRecycle] = useState(0);
   const [aiSuggestion, setAiSuggestion] = useState("");
   const [aiSuggestionAction, setAiSuggestionAction] = useState("");
-  const [aiSuggestionYears, setAiSuggestionYears] = useState(0);
-  const [aiSuggestionCo2, setAiSuggestionCo2] = useState("");
-  const [aiSuggestionSource, setAiSuggestionSource] = useState("local");
   const [analysisReady, setAnalysisReady] = useState(false);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
 
@@ -1046,18 +947,6 @@ export default function DashboardPage() {
     };
   }, []);
 
-  useEffect(() => {
-    if (!aiSuggestionAction || aiSuggestionSource === "openai") return;
-    const nextText = formatAiSuggestion({
-      action: aiSuggestionAction,
-      years: aiSuggestionYears,
-      co2: aiSuggestionCo2,
-    }, language);
-    if (nextText) {
-      setAiSuggestion(nextText);
-    }
-  }, [aiSuggestionAction, aiSuggestionYears, aiSuggestionCo2, language, aiSuggestionSource]);
-
   const fileInputRef = useRef(null);
 
   useEffect(() => {
@@ -1216,9 +1105,6 @@ export default function DashboardPage() {
     setEcoScoreRecycle(0);
     setAiSuggestion("");
     setAiSuggestionAction("");
-    setAiSuggestionYears(0);
-    setAiSuggestionCo2("");
-    setAiSuggestionSource("local");
     setUsageMessage("");
     setAnalysisReady(false);
   }
@@ -1661,7 +1547,6 @@ export default function DashboardPage() {
   }
 
   async function handleAnalyze() {
-    const ageValue = Math.max(0, Math.round(totalUsageDays / 365));
     if (!productFile || !productImage) {
       showToast("Please upload a product image before analyzing.");
       return;
@@ -1745,8 +1630,6 @@ export default function DashboardPage() {
         ecoScoreRecycle: cachedEcoScoreRecycle,
         aiSuggestion: cachedSuggestionText,
         aiSuggestionAction: cachedResult.aiSuggestionAction || "",
-        aiSuggestionYears: cachedResult.aiSuggestionYears || 0,
-        aiSuggestionCo2: cachedResult.aiSuggestionCo2 || "",
         suggestion: cachedResult.usageMessage || "Analysis complete.",
         date: new Date().toISOString(),
         digitalTwinData: {
@@ -1775,9 +1658,6 @@ export default function DashboardPage() {
       setUsageMessage(cachedResult.usageMessage || "");
       setAiSuggestion(cachedSuggestionText || "");
       setAiSuggestionAction(cachedResult.aiSuggestionAction || "");
-      setAiSuggestionYears(cachedResult.aiSuggestionYears || 0);
-      setAiSuggestionCo2(cachedResult.aiSuggestionCo2 || "");
-      setAiSuggestionSource(cachedResult.aiSource || "openai");
       setEcoScoreSell(cachedEcoScoreSell);
       setEcoScoreRepair(cachedEcoScoreRepair);
       setEcoScoreRecycle(cachedEcoScoreRecycle);
@@ -1809,20 +1689,13 @@ export default function DashboardPage() {
         ? `Recommendation: ${aiAction}. ${aiReason}`
         : (aiReason || "AI recommendation ready.");
 
-      const features = await analyzeImageFeatures(productFile);
-      const damageFactor = features.damageScore;
-      const damageImpact = clamp(damageFactor * 0.6, 0, 60);
-      const usageImpact = clamp((totalUsageDays / (365 * 5)) * 60, 0, 60);
-      const remaining = clamp(Math.round(100 - (usageImpact + damageImpact)), 0, 100);
+      const usageImpact = clamp((totalUsageDays / (365 * 8)) * 100, 0, 95);
+      const remaining = clamp(Math.round(100 - usageImpact), 5, 95);
 
-      const clearImage = features.brightness >= 0.55 && features.sharpness >= 0.25;
-      const poorImage = features.brightness < 0.35 || features.sharpness < 0.15;
-      const lowAge = ageValue <= 2;
-      const highAge = ageValue >= 6;
-
-      let nextCondition = "Medium";
-      if (clearImage && lowAge) nextCondition = "Good";
-      if (poorImage && highAge) nextCondition = "Poor";
+      let nextCondition = remaining >= 70 ? "Good" : remaining >= 40 ? "Medium" : "Poor";
+      if (aiActionNormalized === "recycle") {
+        nextCondition = "Poor";
+      }
 
       const conditionWeights = {
         Good: 1.0,
@@ -1836,8 +1709,8 @@ export default function DashboardPage() {
         basePrice * (remaining / 100) * conditionWeights[nextCondition] * usageMultiplier
       );
 
-      const nextScore = clamp(Math.round(remaining - damageFactor * 0.2), 10, 98);
-      const nextDamageLevel = clamp(Math.round(damageFactor), 0, 100);
+      const nextScore = clamp(Math.round((remaining * 0.6) + (aiEcoScore * 0.4)), 10, 98);
+      const nextDamageLevel = clamp(Math.round(100 - remaining), 0, 100);
       const repairFactor = 50;
       const estimatedRepairCost = Math.round(nextDamageLevel * repairFactor + totalUsageDays * 2);
 
@@ -1874,16 +1747,10 @@ export default function DashboardPage() {
             : "Low usage detected, material value preserved.";
       }
 
-      console.log("[AI] Image metrics", {
-        brightness: features.brightness.toFixed(2),
-        sharpness: features.sharpness.toFixed(2),
-        contrast: features.contrast.toFixed(2),
-        edgeDensity: features.edgeDensity.toFixed(2),
-        damageScore: features.damageScore,
-      });
       console.log("[AI] Factors", {
         usageImpact: usageImpact.toFixed(2),
-        damageImpact: damageImpact.toFixed(2),
+        openAiAction: aiAction,
+        openAiEcoScore: aiEcoScore,
         remainingLife: remaining,
         condition: nextCondition,
         conditionWeight: conditionWeights[nextCondition],
@@ -1929,8 +1796,6 @@ export default function DashboardPage() {
         ecoScoreRecycle: nextEcoScoreRecycle,
         aiSuggestion: nextSuggestionText,
         aiSuggestionAction: aiActionNormalized,
-        aiSuggestionYears: 0,
-        aiSuggestionCo2: "",
         aiSource: "openai",
       };
 
@@ -1950,8 +1815,6 @@ export default function DashboardPage() {
         ecoScoreRecycle: nextEcoScoreRecycle,
         aiSuggestion: nextSuggestionText,
         aiSuggestionAction: aiActionNormalized,
-        aiSuggestionYears: 0,
-        aiSuggestionCo2: "",
         aiSource: "openai",
         suggestion: nextUsageMessage || "Analysis complete.",
         date: new Date().toISOString(),
@@ -1985,9 +1848,6 @@ export default function DashboardPage() {
       setUsageMessage(result.usageMessage);
       setAiSuggestion(result.aiSuggestion);
       setAiSuggestionAction(result.aiSuggestionAction);
-      setAiSuggestionYears(result.aiSuggestionYears || 0);
-      setAiSuggestionCo2(result.aiSuggestionCo2 || "");
-      setAiSuggestionSource(result.aiSource || "openai");
       setEcoScoreSell(result.ecoScoreSell);
       setEcoScoreRepair(result.ecoScoreRepair);
       setEcoScoreRecycle(result.ecoScoreRecycle);

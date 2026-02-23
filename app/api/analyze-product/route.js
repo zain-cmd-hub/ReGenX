@@ -136,10 +136,11 @@ export async function POST(request) {
     }
 
     const action = String(result?.action || "").trim();
+    const allowedActions = new Set(["Sell", "Repair", "Recycle"]);
     const ecoScore = clamp(Number(result?.ecoScore), 0, 100);
     const reason = String(result?.reason || "").trim();
 
-    if (!action || Number.isNaN(ecoScore) || !reason) {
+    if (!allowedActions.has(action) || Number.isNaN(ecoScore) || !reason) {
       return NextResponse.json({ error: "AI service unavailable" }, { status: 502 });
     }
 
