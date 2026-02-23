@@ -23,15 +23,9 @@ function extractOutputText(payload) {
   return chunks.join("\n").trim();
 }
 
-function maskKey(key) {
-  if (!key) return "missing";
-  if (key.length <= 8) return "present";
-  return `${key.slice(0, 3)}...${key.slice(-4)}`;
-}
-
 export async function POST(request) {
   const apiKey = (process.env.OPENAI_API_KEY || "").trim();
-  console.log("[API] OpenAI key detected", maskKey(apiKey));
+  console.log("[API] /api/analyze-product reached", { keyDetected: Boolean(apiKey) });
   if (!apiKey) {
     return NextResponse.json({ error: "AI not configured" }, { status: 500 });
   }

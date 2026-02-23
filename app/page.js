@@ -192,6 +192,7 @@ const translations = {
       calculate: "Calculate",
     },
     notifications: {
+      title: "Notifications",
       save: "सेव करें",
       saveDetails: "विवरण सेव करें",
       requiredFields: "कृपया आवश्यक फ़ील्ड भरें:",
@@ -226,6 +227,7 @@ const translations = {
       passwordUpdated: "Password updated successfully.",
       passwordMismatch: "New password and confirm password do not match.",
       passwordRequired: "Please fill all password fields.",
+      requiredFields: "Please fill required fields:",
     },
     safety: {
       title: "Safety & Trust",
@@ -448,6 +450,7 @@ const translations = {
       passwordUpdated: "पासवर्ड सफलतापूर्वक अपडेट हुआ।",
       passwordMismatch: "नया पासवर्ड और पुष्टि मेल नहीं खाते।",
       passwordRequired: "कृपया सभी पासवर्ड फ़ील्ड भरें।",
+      requiredFields: "कृपया आवश्यक फ़ील्ड भरें:",
     },
     safety: {
       title: "सेफ्टी और ट्रस्ट",
@@ -561,33 +564,38 @@ async function fetchWithRetry(requestFactory, retries) {
 
 async function analyzeImageFeatures(file) {
   if (!file) {
-    throw new Error("Missing image file.");
+    throw new Error("Invalid image");
   }
 
   const formData = new FormData();
   formData.append("image", file);
 
-  const response = await fetchWithRetry(
-    () => fetchWithTimeout(
-      "/api/analyze-image",
-      {
-        method: "POST",
-        body: formData,
-      },
-      IMAGE_ANALYSIS_TIMEOUT_MS
-    ),
-    1
-  );
+  let response;
+  try {
+    response = await fetchWithRetry(
+      () => fetchWithTimeout(
+        "/api/analyze-image",
+        {
+          method: "POST",
+          body: formData,
+        },
+        IMAGE_ANALYSIS_TIMEOUT_MS
+      ),
+      1
+    );
+  } catch (error) {
+    throw new Error("Network error");
+  }
 
   if (!response.ok) {
     const payload = await parseJsonSafely(response);
-    const message = payload?.error || "Unable to analyze this image.";
+    const message = payload?.error || "Invalid image";
     throw new Error(message);
   }
 
   const payload = await response.json();
   if (!payload?.features) {
-    throw new Error("Invalid analysis response.");
+    throw new Error("AI service unavailable");
   }
 
   return payload.features;
@@ -595,7 +603,7 @@ async function analyzeImageFeatures(file) {
 
 async function analyzeProductWithAi({ file, description }) {
   if (!file && !description) {
-    throw new Error("Missing product data.");
+    throw new Error("Invalid image");
   }
 
   const formData = new FormData();
@@ -606,27 +614,41 @@ async function analyzeProductWithAi({ file, description }) {
     formData.append("description", description);
   }
 
-  const response = await fetchWithRetry(
-    () => fetchWithTimeout(
-      "/api/analyze-product",
-      {
-        method: "POST",
-        body: formData,
-      },
-      IMAGE_ANALYSIS_TIMEOUT_MS
-    ),
-    1
-  );
+  let response;
+  try {
+    response = await fetchWithRetry(
+      () => fetchWithTimeout(
+        "/api/analyze-product",
+        {
+          method: "POST",
+          body: formData,
+        },
+        IMAGE_ANALYSIS_TIMEOUT_MS
+      ),
+      1
+    );
+  } catch (error) {
+    throw new Error("Network error");
+  }
 
   if (!response.ok) {
     const payload = await parseJsonSafely(response);
-    const message = payload?.error || "Analysis failed, try again";
+    const status = response.status;
+    const upstream = String(payload?.error || "");
+    const message =
+      upstream === "AI not configured"
+        ? "AI not configured"
+        : status === 400
+          ? "Invalid image"
+          : status >= 500
+            ? "AI service unavailable"
+            : "Network error";
     throw new Error(message);
   }
 
   const payload = await response.json();
   if (!payload?.action || payload?.ecoScore == null || !payload?.reason) {
-    throw new Error("Invalid AI response.");
+    throw new Error("AI service unavailable");
   }
 
   return payload;
@@ -1980,9 +2002,15 @@ export default function DashboardPage() {
       }
     } catch (error) {
       console.error("[AI] Product analysis failed", error);
-      const message = error?.message === "AI not configured"
-        ? "AI not configured"
-        : (error?.message || "Analysis failed, try again");
+      const normalized = String(error?.message || "");
+      const message =
+        normalized === "AI not configured"
+          ? "AI not configured"
+          : normalized === "AI service unavailable"
+            ? "AI service unavailable"
+            : normalized === "Invalid image"
+              ? "Invalid image"
+              : "Network error";
       showToast(message);
     } finally {
       setUploadLoading(false);
@@ -2302,7 +2330,7 @@ export default function DashboardPage() {
     };
     localStorage.setItem("tscemProfile", JSON.stringify(nextProfile));
     setProfileData(nextProfile);
-    profileBaselineRef.current = { ...profileData };
+    profileBaselineRef.current = { ...nextProfile };
     setProfileStatus("");
     setProfileError("");
     setIsProfileEditing(false);
