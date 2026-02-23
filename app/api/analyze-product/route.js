@@ -8,19 +8,7 @@ function clamp(value, min, max) {
 }
 
 function extractOutputText(payload) {
-  const outputItems = Array.isArray(payload?.output) ? payload.output : [];
-  const chunks = [];
-
-  outputItems.forEach((item) => {
-    const content = Array.isArray(item?.content) ? item.content : [];
-    content.forEach((part) => {
-      if (part?.type === "output_text" && part.text) {
-        chunks.push(part.text);
-      }
-    });
-  });
-
-  return chunks.join("\n").trim();
+  return String(payload?.choices?.[0]?.message?.content || "").trim();
 }
 
 export async function POST(request) {
@@ -53,7 +41,7 @@ export async function POST(request) {
   const content = [];
   if (hasDescription) {
     content.push({
-      type: "input_text",
+      type: "text",
       text: `Product details:\n${description}`,
     });
   }
@@ -63,13 +51,13 @@ export async function POST(request) {
     const mimeType = file.type || "image/jpeg";
     const imageUrl = `data:${mimeType};base64,${buffer.toString("base64")}`;
     content.push({
-      type: "input_image",
-      image_url: imageUrl,
+      type: "image_url",
+      image_url: { url: imageUrl },
     });
   }
 
   try {
-    const response = await fetch("https://api.openai.com/v1/responses", {
+    const response = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
       headers: {
         Authorization: `Bearer ${apiKey}`,
@@ -78,9 +66,11 @@ export async function POST(request) {
       body: JSON.stringify({
         model: OPENAI_MODEL,
         temperature: 0.2,
-        instructions:
-          "You are an expert product condition analyst. Analyze the product image and details. Return the best action and a short reason for the choice.",
-        input: [
+        messages: [
+          {
+            role: "system",
+            content: "You are an expert product condition analyst. Return strictly valid JSON only, no markdown and no extra text.",
+          },
           {
             role: "user",
             content,

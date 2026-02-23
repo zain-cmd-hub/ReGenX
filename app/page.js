@@ -259,6 +259,31 @@ const translations = {
       trees: "Equivalent to saving",
       treesSuffix: "trees",
     },
+    landing: {
+      heroTitle: "Smart Circular Economy Marketplace",
+      heroTagline: "AI-driven platform to reduce waste and extend product life.",
+      howStep1Title: "Upload Product",
+      howStep1Text: "Add product image and usage details.",
+      howStep2Title: "AI Analysis",
+      howStep2Text: "Get condition, eco score, and life insights.",
+      howStep3Title: "Sell / Repair / Recycle",
+      howStep3Text: "Choose the best circular path.",
+      howStep4Title: "Impact & Certificate",
+      howStep4Text: "Track impact and download certificates.",
+      feature1Title: "Digital Twin of Product",
+      feature1Text: "Simulate future outcomes before decisions.",
+      feature2Title: "Eco Score Meter",
+      feature2Text: "Quantify sustainability impact instantly.",
+      feature3Title: "AI Suggestions",
+      feature3Text: "Actionable insights for reuse and repair.",
+      feature4Title: "Timeline Flow",
+      feature4Text: "Product → Digital Twin → Future Path.",
+      impactHeading: "If 10,000 users use this app…",
+      impactSubheading: "Real-world impact at scale.",
+      modulesBadge: "Scalable Architecture",
+      modulesTitle: "Future Ready Modules",
+      modulesText: "Tomorrow we can easily add new modules without changing the core system.",
+    },
   },
   hi: {
     nav: {
@@ -481,6 +506,31 @@ const translations = {
       waste: "कचरा कम",
       trees: "इतने पेड़ बचेंगे",
       treesSuffix: "पेड़",
+    },
+    landing: {
+      heroTitle: "स्मार्ट सर्कुलर इकोनॉमी मार्केटप्लेस",
+      heroTagline: "कचरा कम करने और उत्पाद जीवन बढ़ाने के लिए AI-चालित प्लेटफॉर्म।",
+      howStep1Title: "उत्पाद अपलोड करें",
+      howStep1Text: "उत्पाद की छवि और उपयोग विवरण जोड़ें।",
+      howStep2Title: "AI विश्लेषण",
+      howStep2Text: "स्थिति, इको स्कोर और लाइफ इनसाइट्स प्राप्त करें।",
+      howStep3Title: "बेचें / मरम्मत / रीसायकल",
+      howStep3Text: "सबसे अच्छा सर्कुलर विकल्प चुनें।",
+      howStep4Title: "प्रभाव और प्रमाणपत्र",
+      howStep4Text: "प्रभाव ट्रैक करें और प्रमाणपत्र डाउनलोड करें।",
+      feature1Title: "उत्पाद का डिजिटल ट्विन",
+      feature1Text: "निर्णय से पहले भविष्य के परिणाम सिमुलेट करें।",
+      feature2Title: "इको स्कोर मीटर",
+      feature2Text: "सस्टेनेबिलिटी प्रभाव तुरंत मापें।",
+      feature3Title: "AI सुझाव",
+      feature3Text: "री-यूज़ और मरम्मत के लिए उपयोगी सुझाव।",
+      feature4Title: "टाइमलाइन फ्लो",
+      feature4Text: "उत्पाद → डिजिटल ट्विन → भविष्य मार्ग।",
+      impactHeading: "अगर 10,000 लोग इस ऐप का उपयोग करें…",
+      impactSubheading: "स्केल पर वास्तविक दुनिया का प्रभाव।",
+      modulesBadge: "स्केलेबल आर्किटेक्चर",
+      modulesTitle: "भविष्य के लिए तैयार मॉड्यूल",
+      modulesText: "कल हम कोर सिस्टम बदले बिना नए मॉड्यूल आसानी से जोड़ सकते हैं।",
     },
   },
 };
@@ -1051,10 +1101,10 @@ export default function DashboardPage() {
 
   useEffect(() => {
     if (!isProfileModalOpen) return;
-    profileBaselineRef.current = { ...nextProfile };
+    profileBaselineRef.current = { ...profileData };
     setProfileError("");
     setProfileStatus("");
-  }, [isProfileModalOpen]);
+  }, [isProfileModalOpen, profileData]);
 
   useEffect(() => {
     const stored = localStorage.getItem("tscemNotifications");
@@ -2580,68 +2630,29 @@ export default function DashboardPage() {
 
         <main className="content-area">
           <HeroSection
-            title="Smart Circular Economy Marketplace"
-            tagline="AI-driven platform to reduce waste and extend product life."
+            title={t.landing.heroTitle}
+            tagline={t.landing.heroTagline}
             onUpload={() => scrollToSection("actions")}
             onAnalyze={() => scrollToSection("actions")}
           />
 
           <HowItWorksSection
             steps={[
-              { title: "Upload Product", icon: "📤", text: "Add product image and usage details." },
-              { title: "AI Analysis", icon: "🧠", text: "Get condition, eco score, and life insights." },
-              { title: "Sell / Repair / Recycle", icon: "♻️", text: "Choose the best circular path." },
-              { title: "Impact & Certificate", icon: "🏅", text: "Track impact and download certificates." },
+              { title: t.landing.howStep1Title, icon: "📤", text: t.landing.howStep1Text },
+              { title: t.landing.howStep2Title, icon: "🧠", text: t.landing.howStep2Text },
+              { title: t.landing.howStep3Title, icon: "♻️", text: t.landing.howStep3Text },
+              { title: t.landing.howStep4Title, icon: "🏅", text: t.landing.howStep4Text },
             ]}
           />
 
           <CoreFeaturesSection
             features={[
-              { title: "Digital Twin of Product", icon: "🧩", text: "Simulate future outcomes before decisions." },
-              { title: "Eco Score Meter", icon: "🌿", text: "Quantify sustainability impact instantly." },
-              { title: "AI Suggestions", icon: "🤖", text: "Actionable insights for reuse and repair." },
-              { title: "Timeline Flow", icon: "🧭", text: "Product → Digital Twin → Future Path." },
+              { title: t.landing.feature1Title, icon: "🧩", text: t.landing.feature1Text },
+              { title: t.landing.feature2Title, icon: "🌿", text: t.landing.feature2Text },
+              { title: t.landing.feature3Title, icon: "🤖", text: t.landing.feature3Text },
+              { title: t.landing.feature4Title, icon: "🧭", text: t.landing.feature4Text },
             ]}
           />
-
-          <section id="impact" className="section impact-section" ref={impactSectionRef}>
-            <div className="section-heading">
-              <h2>If 10,000 users use this app…</h2>
-              <p>Real-world impact at scale.</p>
-            </div>
-            <div className={`impact-mode ${isImpactVisible ? "is-visible" : ""}`}>
-              <div className="impact-mode-header">
-                <h4>{t.impactMode.title}</h4>
-                <p>{t.impactMode.subtitle}</p>
-              </div>
-              <div className="impact-mode-grid">
-                <div className="impact-mode-card">
-                  <div className="impact-mode-icon">🌍</div>
-                  <div className="impact-mode-label">{t.impactMode.co2}</div>
-                  <div className="impact-mode-value">
-                    {formatImpactNumber(impactCounts.co2, impactUnits.co2Unit)}
-                    <span className="impact-mode-unit">{impactUnits.co2Unit}</span>
-                  </div>
-                </div>
-                <div className="impact-mode-card">
-                  <div className="impact-mode-icon">♻️</div>
-                  <div className="impact-mode-label">{t.impactMode.waste}</div>
-                  <div className="impact-mode-value">
-                    {formatImpactNumber(impactCounts.waste, impactUnits.wasteUnit)}
-                    <span className="impact-mode-unit">{impactUnits.wasteUnit}</span>
-                  </div>
-                </div>
-                <div className="impact-mode-card">
-                  <div className="impact-mode-icon">🌳</div>
-                  <div className="impact-mode-label">{t.impactMode.trees}</div>
-                  <div className="impact-mode-value">
-                    {Math.round(impactCounts.trees).toLocaleString()}
-                    <span className="impact-mode-unit">{t.impactMode.treesSuffix}</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </section>
 
           <UserActionSection>
             <div className="grid-layout">
@@ -3037,11 +3048,50 @@ export default function DashboardPage() {
             onOpenHistory={handleOpenHistory}
           />
 
+          <section id="impact" className="section impact-section" ref={impactSectionRef}>
+            <div className="section-heading">
+              <h2>{t.landing.impactHeading}</h2>
+              <p>{t.landing.impactSubheading}</p>
+            </div>
+            <div className={`impact-mode ${isImpactVisible ? "is-visible" : ""}`}>
+              <div className="impact-mode-header">
+                <h4>{t.impactMode.title}</h4>
+                <p>{t.impactMode.subtitle}</p>
+              </div>
+              <div className="impact-mode-grid">
+                <div className="impact-mode-card">
+                  <div className="impact-mode-icon">🌍</div>
+                  <div className="impact-mode-label">{t.impactMode.co2}</div>
+                  <div className="impact-mode-value">
+                    {formatImpactNumber(impactCounts.co2, impactUnits.co2Unit)}
+                    <span className="impact-mode-unit">{impactUnits.co2Unit}</span>
+                  </div>
+                </div>
+                <div className="impact-mode-card">
+                  <div className="impact-mode-icon">♻️</div>
+                  <div className="impact-mode-label">{t.impactMode.waste}</div>
+                  <div className="impact-mode-value">
+                    {formatImpactNumber(impactCounts.waste, impactUnits.wasteUnit)}
+                    <span className="impact-mode-unit">{impactUnits.wasteUnit}</span>
+                  </div>
+                </div>
+                <div className="impact-mode-card">
+                  <div className="impact-mode-icon">🌳</div>
+                  <div className="impact-mode-label">{t.impactMode.trees}</div>
+                  <div className="impact-mode-value">
+                    {Math.round(impactCounts.trees).toLocaleString()}
+                    <span className="impact-mode-unit">{t.impactMode.treesSuffix}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+
           <section id="modules" className={`section modules-section ${isModulesVisible ? "is-visible" : ""}`} ref={modulesRef}>
-            <div className="modules-badge">Scalable Architecture</div>
+            <div className="modules-badge">{t.landing.modulesBadge}</div>
             <div className="modules-header">
-              <h3>Future Ready Modules</h3>
-              <p>Tomorrow we can easily add new modules without changing the core system.</p>
+              <h3>{t.landing.modulesTitle}</h3>
+              <p>{t.landing.modulesText}</p>
             </div>
             <div className="modules-grid">
               {moduleCards.map((module) => (
