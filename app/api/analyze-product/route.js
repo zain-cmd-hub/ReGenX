@@ -93,11 +93,14 @@ export async function POST(request) {
                   minimum: 0,
                   maximum: 100,
                 },
+                priceEstimate: {
+                  type: "string",
+                },
                 reason: {
                   type: "string",
                 },
               },
-              required: ["action", "ecoScore", "reason"],
+              required: ["action", "ecoScore", "priceEstimate", "reason"],
             },
             strict: true,
           },
@@ -128,13 +131,14 @@ export async function POST(request) {
     const action = String(result?.action || "").trim();
     const allowedActions = new Set(["Sell", "Repair", "Recycle"]);
     const ecoScore = clamp(Number(result?.ecoScore), 0, 100);
+    const priceEstimate = String(result?.priceEstimate || "").trim();
     const reason = String(result?.reason || "").trim();
 
-    if (!allowedActions.has(action) || Number.isNaN(ecoScore) || !reason) {
+    if (!allowedActions.has(action) || Number.isNaN(ecoScore) || !priceEstimate || !reason) {
       return NextResponse.json({ error: "AI service unavailable" }, { status: 502 });
     }
 
-    return NextResponse.json({ action, ecoScore, reason });
+    return NextResponse.json({ action, ecoScore, priceEstimate, reason });
   } catch (error) {
     console.error("[API] OpenAI request failed", error);
     return NextResponse.json({ error: "AI service unavailable" }, { status: 502 });

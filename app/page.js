@@ -16,7 +16,7 @@ import FooterSection from "./components/sections/FooterSection";
 
 const MapView = dynamic(() => import("./components/MapView"), {
   ssr: false,
-  loading: () => <div className="notification-empty">Loading map...</div>,
+  loading: () => null,
 });
 
 const DEFAULT_CITY = {
@@ -60,6 +60,20 @@ const translations = {
     success: {
       requestSent: "Request sent successfully!",
     },
+    errors: {
+      missingImage: "Please upload a product image before analyzing.",
+      missingPurpose: "Please select a purpose before analyzing.",
+      missingProductType: "Please fill product type before analyzing.",
+      missingUsage: "Please enter product usage before analyzing.",
+      missingWeight: "Please enter material weight for recycling analysis.",
+      invalidImageFile: "Please select a valid image file (JPG, PNG, WEBP).",
+      emptyImage: "The selected image is empty. Please choose another file.",
+      imageTooLarge: "Image size must be 5MB or less.",
+      aiNotConfigured: "AI not configured",
+      aiUnavailable: "AI service unavailable",
+      invalidImage: "Invalid image",
+      networkError: "Network error",
+    },
     share: {
       thanksHeading: "🎉 Thanks for sharing!",
       cta: "Share your recycle result",
@@ -97,7 +111,7 @@ const translations = {
       weight: "Weight (kg)",
       weightPlaceholder: "e.g., 2.5",
       analyze: "Analyze",
-      analyzing: "Analyzing with AI...",
+      analyzing: "Analyzing image...",
     },
     purpose: {
       sell: "Sell",
@@ -113,6 +127,7 @@ const translations = {
       material: "Material",
       weight: "Weight",
       recyclingValue: "Recycling Value",
+      priceEstimate: "AI Price Estimate",
       save: "Save",
       saveDetails: "Save Details",
       requiredFields: "Please fill required fields:",
@@ -134,6 +149,10 @@ const translations = {
     },
     ai: {
       title: "AI Recommendation",
+      actionLabel: "Recommended Action",
+      priceLabel: "Estimated Value",
+      reasonLabel: "Reason",
+      fallbackReason: "AI recommendation ready.",
     },
     facilities: {
       recommended: "Recommended Facilities",
@@ -260,8 +279,13 @@ const translations = {
       treesSuffix: "trees",
     },
     landing: {
+      heroBadge: "AI + Circular Economy",
       heroTitle: "Smart Circular Economy Marketplace",
       heroTagline: "AI-driven platform to reduce waste and extend product life.",
+      heroUploadCta: "Upload Product",
+      heroAnalyzeCta: "Analyze Product",
+      howTitle: "How It Works",
+      howSubtitle: "Simple, guided steps for circular impact.",
       howStep1Title: "Upload Product",
       howStep1Text: "Add product image and usage details.",
       howStep2Title: "AI Analysis",
@@ -270,6 +294,8 @@ const translations = {
       howStep3Text: "Choose the best circular path.",
       howStep4Title: "Impact & Certificate",
       howStep4Text: "Track impact and download certificates.",
+      featuresTitle: "Core Features",
+      featuresSubtitle: "Powered by AI to deliver measurable circular outcomes.",
       feature1Title: "Digital Twin of Product",
       feature1Text: "Simulate future outcomes before decisions.",
       feature2Title: "Eco Score Meter",
@@ -280,6 +306,49 @@ const translations = {
       feature4Text: "Product → Digital Twin → Future Path.",
       impactHeading: "If 10,000 users use this app…",
       impactSubheading: "Real-world impact at scale.",
+      historyTitle: "My Products / History",
+      historySubtitle: "Review past analyses and download certificates.",
+      historyEmpty: "No products analyzed yet",
+      historyViewAll: "View Full History",
+      historyEcoLabel: "Eco Score",
+      historyPathLabel: "Path",
+      actionsTitle: "User Actions",
+      actionsSubtitle: "Upload, analyze, generate a certificate, and share impact.",
+      certificateTitle: "Certificate + QR Code",
+      certificateSubtitle: "Generate and share a verified eco certificate.",
+      certificateHeader: "CERTIFICATE OF APPRECIATION",
+      certificatePresentedTo: "This certificate is proudly presented to",
+      certificateCongrats: "Congratulations {NAME}",
+      certificateWasteLine: "You saved {WASTE} kg waste",
+      certificateHeroLine: "You are an Eco Hero 🌱",
+      certificateFooterVerified: "Verified by Eco Platform",
+      certificateFooterQr: "QR → Impact page",
+      ecoHeroFallback: "Eco Hero",
+      footerAboutTitle: "About Project",
+      footerAboutText: "Smart Circular Economy Marketplace helps extend product life and reduce waste using AI.",
+      footerContactTitle: "Contact",
+      footerContactEmail: "Email: hello@ecoplatform.com",
+      footerContactPhone: "Phone: +91 90000 00000",
+      footerSocialTitle: "Social",
+      footerSocialLinks: "LinkedIn • WhatsApp • GitHub",
+      footerBrand: "Hackathon 2026 • Eco Platform",
+      moduleCards: [
+        {
+          title: "NGOs Integration",
+          icon: "🤝",
+          text: "Connect with NGOs for recycling & donation",
+        },
+        {
+          title: "Cities Dashboard",
+          icon: "🏙️",
+          text: "City-wise waste tracking & impact stats",
+        },
+        {
+          title: "Smart Bins (IoT)",
+          icon: "🗑️",
+          text: "AI connected smart bins for real-time data",
+        },
+      ],
       modulesBadge: "Scalable Architecture",
       modulesTitle: "Future Ready Modules",
       modulesText: "Tomorrow we can easily add new modules without changing the core system.",
@@ -314,6 +383,20 @@ const translations = {
     },
     success: {
       requestSent: "अनुरोध सफलतापूर्वक भेजा गया!",
+    },
+    errors: {
+      missingImage: "कृपया विश्लेषण से पहले उत्पाद की छवि अपलोड करें।",
+      missingPurpose: "कृपया विश्लेषण से पहले उद्देश्य चुनें।",
+      missingProductType: "कृपया विश्लेषण से पहले उत्पाद प्रकार भरें।",
+      missingUsage: "कृपया विश्लेषण से पहले उपयोग अवधि भरें।",
+      missingWeight: "कृपया रीसायकल के लिए सामग्री वजन दर्ज करें।",
+      invalidImageFile: "कृपया वैध इमेज फ़ाइल चुनें (JPG, PNG, WEBP)।",
+      emptyImage: "चुनी गई इमेज खाली है। कृपया दूसरी फ़ाइल चुनें।",
+      imageTooLarge: "इमेज का आकार 5MB या उससे कम होना चाहिए।",
+      aiNotConfigured: "AI कॉन्फ़िगर नहीं है",
+      aiUnavailable: "AI सेवा उपलब्ध नहीं है",
+      invalidImage: "अमान्य इमेज",
+      networkError: "नेटवर्क त्रुटि",
     },
     share: {
       thanksHeading: "🎉 साझा करने के लिए धन्यवाद!",
@@ -351,7 +434,7 @@ const translations = {
       weight: "वजन (किग्रा)",
       weightPlaceholder: "उदा., 2.5",
       analyze: "विश्लेषण करें",
-      analyzing: "AI के साथ विश्लेषण हो रहा है...",
+      analyzing: "इमेज का विश्लेषण हो रहा है...",
     },
     purpose: {
       sell: "बेचें",
@@ -367,6 +450,7 @@ const translations = {
       material: "सामग्री",
       weight: "वजन",
       recyclingValue: "रीसायकल मूल्य",
+      priceEstimate: "AI मूल्य अनुमान",
       selectPurpose: "ऊपर चुनें",
     },
     eco: {
@@ -385,6 +469,10 @@ const translations = {
     },
     ai: {
       title: "AI सिफारिश",
+      actionLabel: "सुझाया गया विकल्प",
+      priceLabel: "अनुमानित मूल्य",
+      reasonLabel: "कारण",
+      fallbackReason: "AI सुझाव तैयार है।",
     },
     facilities: {
       recommended: "अनुशंसित सुविधाएं",
@@ -508,8 +596,13 @@ const translations = {
       treesSuffix: "पेड़",
     },
     landing: {
+      heroBadge: "AI + सर्कुलर इकॉनमी",
       heroTitle: "स्मार्ट सर्कुलर इकोनॉमी मार्केटप्लेस",
       heroTagline: "कचरा कम करने और उत्पाद जीवन बढ़ाने के लिए AI-चालित प्लेटफॉर्म।",
+      heroUploadCta: "उत्पाद अपलोड करें",
+      heroAnalyzeCta: "उत्पाद विश्लेषित करें",
+      howTitle: "कैसे काम करता है",
+      howSubtitle: "सर्कुलर प्रभाव के लिए सरल चरण।",
       howStep1Title: "उत्पाद अपलोड करें",
       howStep1Text: "उत्पाद की छवि और उपयोग विवरण जोड़ें।",
       howStep2Title: "AI विश्लेषण",
@@ -518,6 +611,8 @@ const translations = {
       howStep3Text: "सबसे अच्छा सर्कुलर विकल्प चुनें।",
       howStep4Title: "प्रभाव और प्रमाणपत्र",
       howStep4Text: "प्रभाव ट्रैक करें और प्रमाणपत्र डाउनलोड करें।",
+      featuresTitle: "मुख्य फीचर्स",
+      featuresSubtitle: "AI से समर्थित, मापने योग्य सर्कुलर परिणाम।",
       feature1Title: "उत्पाद का डिजिटल ट्विन",
       feature1Text: "निर्णय से पहले भविष्य के परिणाम सिमुलेट करें।",
       feature2Title: "इको स्कोर मीटर",
@@ -528,6 +623,49 @@ const translations = {
       feature4Text: "उत्पाद → डिजिटल ट्विन → भविष्य मार्ग।",
       impactHeading: "अगर 10,000 लोग इस ऐप का उपयोग करें…",
       impactSubheading: "स्केल पर वास्तविक दुनिया का प्रभाव।",
+      historyTitle: "मेरे उत्पाद / इतिहास",
+      historySubtitle: "पिछले विश्लेषण देखें और प्रमाणपत्र डाउनलोड करें।",
+      historyEmpty: "अभी तक कोई उत्पाद विश्लेषित नहीं",
+      historyViewAll: "पूरा इतिहास देखें",
+      historyEcoLabel: "इको स्कोर",
+      historyPathLabel: "पथ",
+      actionsTitle: "यूजर एक्शन",
+      actionsSubtitle: "अपलोड करें, विश्लेषण करें, प्रमाणपत्र बनाएं और प्रभाव साझा करें।",
+      certificateTitle: "प्रमाणपत्र + QR कोड",
+      certificateSubtitle: "सत्यापित इको प्रमाणपत्र बनाएं और साझा करें।",
+      certificateHeader: "प्रशंसा प्रमाणपत्र",
+      certificatePresentedTo: "यह प्रमाणपत्र सम्मानपूर्वक प्रस्तुत है",
+      certificateCongrats: "बधाई {NAME}",
+      certificateWasteLine: "आपने {WASTE} किग्रा कचरा बचाया",
+      certificateHeroLine: "आप एक इको हीरो हैं 🌱",
+      certificateFooterVerified: "Eco Platform द्वारा सत्यापित",
+      certificateFooterQr: "QR → प्रभाव पेज",
+      ecoHeroFallback: "इको हीरो",
+      footerAboutTitle: "प्रोजेक्ट के बारे में",
+      footerAboutText: "यह प्लेटफॉर्म AI की मदद से उत्पाद जीवन बढ़ाता और कचरा घटाता है।",
+      footerContactTitle: "संपर्क",
+      footerContactEmail: "ईमेल: hello@ecoplatform.com",
+      footerContactPhone: "फोन: +91 90000 00000",
+      footerSocialTitle: "सोशल",
+      footerSocialLinks: "LinkedIn • WhatsApp • GitHub",
+      footerBrand: "हैकथॉन 2026 • ईको प्लेटफॉर्म",
+      moduleCards: [
+        {
+          title: "NGO इंटीग्रेशन",
+          icon: "🤝",
+          text: "रीसायकलिंग और डोनेशन के लिए NGO से कनेक्ट करें",
+        },
+        {
+          title: "सिटीज डैशबोर्ड",
+          icon: "🏙️",
+          text: "शहरवार कचरा ट्रैकिंग और प्रभाव आंकड़े",
+        },
+        {
+          title: "स्मार्ट बिन्स (IoT)",
+          icon: "🗑️",
+          text: "रीयल-टाइम डेटा के लिए AI कनेक्टेड बिन्स",
+        },
+      ],
       modulesBadge: "स्केलेबल आर्किटेक्चर",
       modulesTitle: "भविष्य के लिए तैयार मॉड्यूल",
       modulesText: "कल हम कोर सिस्टम बदले बिना नए मॉड्यूल आसानी से जोड़ सकते हैं।",
@@ -578,7 +716,7 @@ function isAllowedImageFile(file) {
   if (!file) return false;
   const name = file.name || "";
   const extension = name.includes(".") ? name.split(".").pop().toLowerCase() : "";
-  return ALLOWED_IMAGE_TYPES.has(file.type) || ALLOWED_IMAGE_EXTENSIONS.has(extension);
+  return ALLOWED_IMAGE_TYPES.has(file.type) || ALLOWED_IMAGE_EXTENSIONS.has(extension) || extension === "gif";
 }
 
 async function fetchWithTimeout(url, options, timeoutMs) {
@@ -658,7 +796,7 @@ async function analyzeProductWithAi({ file, description }) {
   }
 
   const payload = await response.json();
-  if (!payload?.action || payload?.ecoScore == null || !payload?.reason) {
+  if (!payload?.action || payload?.ecoScore == null || !payload?.priceEstimate || !payload?.reason) {
     throw new Error("AI service unavailable");
   }
 
@@ -764,6 +902,7 @@ export default function DashboardPage() {
   const [ecoScoreRecycle, setEcoScoreRecycle] = useState(0);
   const [aiSuggestion, setAiSuggestion] = useState("");
   const [aiSuggestionAction, setAiSuggestionAction] = useState("");
+  const [aiPriceEstimate, setAiPriceEstimate] = useState("");
   const [analysisReady, setAnalysisReady] = useState(false);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
 
@@ -1155,6 +1294,7 @@ export default function DashboardPage() {
     setEcoScoreRecycle(0);
     setAiSuggestion("");
     setAiSuggestionAction("");
+    setAiPriceEstimate("");
     setUsageMessage("");
     setAnalysisReady(false);
   }
@@ -1276,23 +1416,9 @@ export default function DashboardPage() {
     return t.eco.low;
   }, [analysisReady, ecoScore, t]);
 
-  const moduleCards = useMemo(() => ([
-    {
-      title: "NGOs Integration",
-      icon: "🤝",
-      text: "Connect with NGOs for recycling & donation",
-    },
-    {
-      title: "Cities Dashboard",
-      icon: "🏙️",
-      text: "City-wise waste tracking & impact stats",
-    },
-    {
-      title: "Smart Bins (IoT)",
-      icon: "🗑️",
-      text: "AI connected smart bins for real-time data",
-    },
-  ]), []);
+  const moduleCards = useMemo(() => (
+    Array.isArray(t.landing?.moduleCards) ? t.landing.moduleCards : []
+  ), [t]);
 
   const shareMessage = useMemo(() => {
     const wasteValue = sharePayload?.wasteKg ?? 0;
@@ -1664,6 +1790,7 @@ export default function DashboardPage() {
       });
       const cachedEcoScore = cachedResult.ecoScore ?? 0;
       const cachedSuggestionText = cachedResult.aiSuggestion || "";
+      const cachedPriceEstimate = cachedResult.aiPriceEstimate || "";
       const cachedHistoryEntry = {
         id: `${hash}_${Date.now()}`,
         image: productImage,
@@ -1680,6 +1807,7 @@ export default function DashboardPage() {
         ecoScoreRecycle: cachedEcoScoreRecycle,
         aiSuggestion: cachedSuggestionText,
         aiSuggestionAction: cachedResult.aiSuggestionAction || "",
+        aiPriceEstimate: cachedPriceEstimate,
         suggestion: cachedResult.usageMessage || "Analysis complete.",
         date: new Date().toISOString(),
         digitalTwinData: {
@@ -1708,6 +1836,7 @@ export default function DashboardPage() {
       setUsageMessage(cachedResult.usageMessage || "");
       setAiSuggestion(cachedSuggestionText || "");
       setAiSuggestionAction(cachedResult.aiSuggestionAction || "");
+      setAiPriceEstimate(cachedPriceEstimate);
       setEcoScoreSell(cachedEcoScoreSell);
       setEcoScoreRepair(cachedEcoScoreRepair);
       setEcoScoreRecycle(cachedEcoScoreRecycle);
@@ -1734,10 +1863,9 @@ export default function DashboardPage() {
       const aiActionKey = aiAction.toLowerCase();
       const aiActionNormalized = ["sell", "repair", "recycle"].includes(aiActionKey) ? aiActionKey : "";
       const aiEcoScore = clamp(Math.round(Number(aiRecommendation.ecoScore)), 0, 100);
+      const aiPriceEstimate = String(aiRecommendation.priceEstimate || "").trim();
       const aiReason = String(aiRecommendation.reason || "").trim();
-      const aiSuggestionText = aiAction && aiReason
-        ? `Recommendation: ${aiAction}. ${aiReason}`
-        : (aiReason || "AI recommendation ready.");
+      const aiSuggestionText = aiReason || t.ai.fallbackReason;
 
       const usageImpact = clamp((totalUsageDays / (365 * 8)) * 100, 0, 95);
       const remaining = clamp(Math.round(100 - usageImpact), 5, 95);
@@ -1846,6 +1974,7 @@ export default function DashboardPage() {
         ecoScoreRecycle: nextEcoScoreRecycle,
         aiSuggestion: nextSuggestionText,
         aiSuggestionAction: aiActionNormalized,
+        aiPriceEstimate: aiPriceEstimate,
         aiSource: "openai",
       };
 
@@ -1865,6 +1994,7 @@ export default function DashboardPage() {
         ecoScoreRecycle: nextEcoScoreRecycle,
         aiSuggestion: nextSuggestionText,
         aiSuggestionAction: aiActionNormalized,
+        aiPriceEstimate: aiPriceEstimate,
         aiSource: "openai",
         suggestion: nextUsageMessage || "Analysis complete.",
         date: new Date().toISOString(),
@@ -1898,6 +2028,7 @@ export default function DashboardPage() {
       setUsageMessage(result.usageMessage);
       setAiSuggestion(result.aiSuggestion);
       setAiSuggestionAction(result.aiSuggestionAction);
+      setAiPriceEstimate(result.aiPriceEstimate || "");
       setEcoScoreSell(result.ecoScoreSell);
       setEcoScoreRepair(result.ecoScoreRepair);
       setEcoScoreRecycle(result.ecoScoreRecycle);
@@ -2632,11 +2763,16 @@ export default function DashboardPage() {
           <HeroSection
             title={t.landing.heroTitle}
             tagline={t.landing.heroTagline}
+            badge={t.landing.heroBadge}
+            primaryCta={t.landing.heroUploadCta}
+            secondaryCta={t.landing.heroAnalyzeCta}
             onUpload={() => scrollToSection("actions")}
             onAnalyze={() => scrollToSection("actions")}
           />
 
           <HowItWorksSection
+            title={t.landing.howTitle}
+            subtitle={t.landing.howSubtitle}
             steps={[
               { title: t.landing.howStep1Title, icon: "📤", text: t.landing.howStep1Text },
               { title: t.landing.howStep2Title, icon: "🧠", text: t.landing.howStep2Text },
@@ -2646,6 +2782,8 @@ export default function DashboardPage() {
           />
 
           <CoreFeaturesSection
+            title={t.landing.featuresTitle}
+            subtitle={t.landing.featuresSubtitle}
             features={[
               { title: t.landing.feature1Title, icon: "🧩", text: t.landing.feature1Text },
               { title: t.landing.feature2Title, icon: "🌿", text: t.landing.feature2Text },
@@ -2654,7 +2792,10 @@ export default function DashboardPage() {
             ]}
           />
 
-          <UserActionSection>
+          <UserActionSection
+            title={t.landing.actionsTitle}
+            subtitle={t.landing.actionsSubtitle}
+          >
             <div className="grid-layout">
               <section id="upload" className="section card-panel">
                 <div className="panel-header">
@@ -2848,6 +2989,9 @@ export default function DashboardPage() {
                           <div className="res-item"><span>{t.results.recyclingValue}</span><strong>{recyclingValue ? `₹${recyclingValue}` : "-"}</strong></div>
                         </>
                       ) : null}
+                      {analysisReady ? (
+                        <div className="res-item"><span>{t.results.priceEstimate}</span><strong>{aiPriceEstimate || "-"}</strong></div>
+                      ) : null}
                       {!purpose ? (
                         <div className="res-item"><span>{t.upload.purpose}</span><strong>{t.results.selectPurpose}</strong></div>
                       ) : null}
@@ -2910,7 +3054,20 @@ export default function DashboardPage() {
                           <iconify-icon icon="ph:robot-bold" />
                           <span>{t.ai.title}</span>
                         </div>
-                        <p className="ai-suggestion-text">{aiSuggestion}</p>
+                        <div className="ai-suggestion-grid">
+                          <div className="ai-suggestion-item">
+                            <span>{t.ai.actionLabel}</span>
+                            <strong>{aiSuggestionAction ? t.purpose[aiSuggestionAction] : "-"}</strong>
+                          </div>
+                          <div className="ai-suggestion-item">
+                            <span>{t.ai.priceLabel}</span>
+                            <strong>{aiPriceEstimate || "-"}</strong>
+                          </div>
+                        </div>
+                        <div className="ai-suggestion-reason">
+                          <span>{t.ai.reasonLabel}</span>
+                          <p className="ai-suggestion-text">{aiSuggestion}</p>
+                        </div>
                       </div>
                     ) : null}
 
@@ -3041,11 +3198,32 @@ export default function DashboardPage() {
             </section>
           </UserActionSection>
 
-          <CertificateSection certificate={productHistory[0]} />
+          <CertificateSection
+            certificate={productHistory[0]}
+            labels={{
+              title: t.landing.certificateTitle,
+              subtitle: t.landing.certificateSubtitle,
+              header: t.landing.certificateHeader,
+              presentedTo: t.landing.certificatePresentedTo,
+              congrats: t.landing.certificateCongrats,
+              wasteLine: t.landing.certificateWasteLine,
+              heroLine: t.landing.certificateHeroLine,
+              footerVerified: t.landing.certificateFooterVerified,
+              footerQr: t.landing.certificateFooterQr,
+              ecoHeroFallback: t.landing.ecoHeroFallback,
+            }}
+          />
 
           <HistoryPreviewSection
             items={productHistory.slice(0, 3)}
             onOpenHistory={handleOpenHistory}
+            title={t.landing.historyTitle}
+            subtitle={t.landing.historySubtitle}
+            emptyText={t.landing.historyEmpty}
+            ecoLabel={t.landing.historyEcoLabel}
+            pathLabel={t.landing.historyPathLabel}
+            viewAllLabel={t.landing.historyViewAll}
+            purposeLabels={t.purpose}
           />
 
           <section id="impact" className="section impact-section" ref={impactSectionRef}>
@@ -3106,7 +3284,18 @@ export default function DashboardPage() {
           </section>
         </main>
 
-        <FooterSection />
+        <FooterSection
+          labels={{
+            aboutTitle: t.landing.footerAboutTitle,
+            aboutText: t.landing.footerAboutText,
+            contactTitle: t.landing.footerContactTitle,
+            contactEmail: t.landing.footerContactEmail,
+            contactPhone: t.landing.footerContactPhone,
+            socialTitle: t.landing.footerSocialTitle,
+            socialLinks: t.landing.footerSocialLinks,
+            brand: t.landing.footerBrand,
+          }}
+        />
       </div>
 
       <div className={`modal ${activeFacility ? "" : "hidden"}`} aria-hidden={!activeFacility}>

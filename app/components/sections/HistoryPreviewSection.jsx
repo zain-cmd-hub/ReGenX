@@ -1,12 +1,22 @@
-export default function HistoryPreviewSection({ items, onOpenHistory }) {
+export default function HistoryPreviewSection({
+  items,
+  onOpenHistory,
+  title,
+  subtitle,
+  emptyText,
+  ecoLabel,
+  pathLabel,
+  viewAllLabel,
+  purposeLabels,
+}) {
   return (
     <section id="history" className="section history-preview-section">
       <div className="section-heading">
-        <h2>My Products / History</h2>
-        <p>Review past analyses and download certificates.</p>
+        <h2>{title}</h2>
+        <p>{subtitle}</p>
       </div>
       {items.length === 0 ? (
-        <div className="history-empty">No products analyzed yet</div>
+        <div className="history-empty">{emptyText}</div>
       ) : (
         <div className="history-preview-grid">
           {items.map((item) => (
@@ -15,8 +25,8 @@ export default function HistoryPreviewSection({ items, onOpenHistory }) {
               <div className="history-preview-body">
                 <h4>{item.productName}</h4>
                 <div className="history-preview-meta">
-                  <span>Eco Score: {item.ecoScore || 0}/100</span>
-                  <span>Path: {item.futurePath || item.purpose}</span>
+                  <span>{ecoLabel}: {item.ecoScore || 0}/100</span>
+                  <span>{pathLabel}: {purposeLabels?.[item.futurePath || item.purpose] || item.futurePath || item.purpose}</span>
                 </div>
               </div>
             </div>
@@ -25,7 +35,7 @@ export default function HistoryPreviewSection({ items, onOpenHistory }) {
       )}
       <div className="history-preview-actions">
         <button type="button" className="btn-secondary" onClick={onOpenHistory}>
-          View Full History
+          {viewAllLabel}
         </button>
       </div>
     </section>

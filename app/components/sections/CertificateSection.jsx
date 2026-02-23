@@ -1,24 +1,24 @@
-export default function CertificateSection({ certificate }) {
+export default function CertificateSection({ certificate, labels }) {
+  const name = certificate?.userName || certificate?.productName || labels.ecoHeroFallback;
+  const wasteKg = Number(certificate?.wasteKg || 0).toFixed(1);
   return (
     <section id="certificate" className="section certificate-section">
       <div className="section-heading">
-        <h2>Certificate + QR Code</h2>
-        <p>Generate and share a verified eco certificate.</p>
+        <h2>{labels.title}</h2>
+        <p>{labels.subtitle}</p>
       </div>
       <div className="certificate-preview-card">
-        <div className="certificate-preview-title">CERTIFICATE OF APPRECIATION</div>
-        <div className="certificate-preview-subtitle">This certificate is proudly presented to</div>
-        <div className="certificate-preview-name">
-          {certificate?.userName || certificate?.productName || "Eco Hero"}
-        </div>
+        <div className="certificate-preview-title">{labels.header}</div>
+        <div className="certificate-preview-subtitle">{labels.presentedTo}</div>
+        <div className="certificate-preview-name">{name}</div>
         <div className="certificate-preview-message">
-          Congratulations {certificate?.userName || certificate?.productName || "Eco Hero"}
-          {"\n"}You saved {Number(certificate?.wasteKg || 0).toFixed(1)} kg waste
-          {"\n"}You are an Eco Hero 🌱
+          {labels.congrats.replace("{NAME}", name)}
+          {"\n"}{labels.wasteLine.replace("{WASTE}", wasteKg)}
+          {"\n"}{labels.heroLine}
         </div>
         <div className="certificate-preview-footer">
-          <span>Verified by Eco Platform</span>
-          <span>QR → Impact page</span>
+          <span>{labels.footerVerified}</span>
+          <span>{labels.footerQr}</span>
         </div>
       </div>
     </section>

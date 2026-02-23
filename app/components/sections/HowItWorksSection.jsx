@@ -1,9 +1,9 @@
-export default function HowItWorksSection({ steps }) {
+export default function HowItWorksSection({ title, subtitle, steps }) {
   return (
     <section id="how" className="section how-section">
       <div className="section-heading">
-        <h2>How It Works</h2>
-        <p>Simple, guided steps for circular impact.</p>
+        <h2>{title}</h2>
+        <p>{subtitle}</p>
       </div>
       <div className="how-timeline">
         {steps.map((step, index) => (

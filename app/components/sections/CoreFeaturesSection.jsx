@@ -1,9 +1,9 @@
-export default function CoreFeaturesSection({ features }) {
+export default function CoreFeaturesSection({ title, subtitle, features }) {
   return (
     <section id="features" className="section features-section">
       <div className="section-heading">
-        <h2>Core Features</h2>
-        <p>Powered by AI to deliver measurable circular outcomes.</p>
+        <h2>{title}</h2>
+        <p>{subtitle}</p>
       </div>
       <div className="features-grid">
         {features.map((feature) => (

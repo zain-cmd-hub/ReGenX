@@ -1,22 +1,22 @@
-export default function FooterSection() {
+export default function FooterSection({ labels }) {
   return (
     <footer className="main-footer footer-section">
       <div className="footer-grid">
         <div>
-          <h4>About Project</h4>
-          <p>Smart Circular Economy Marketplace helps extend product life and reduce waste using AI.</p>
+          <h4>{labels.aboutTitle}</h4>
+          <p>{labels.aboutText}</p>
         </div>
         <div>
-          <h4>Contact</h4>
-          <p>Email: hello@ecoplatform.com</p>
-          <p>Phone: +91 90000 00000</p>
+          <h4>{labels.contactTitle}</h4>
+          <p>{labels.contactEmail}</p>
+          <p>{labels.contactPhone}</p>
         </div>
         <div>
-          <h4>Social</h4>
-          <p>LinkedIn • WhatsApp • GitHub</p>
+          <h4>{labels.socialTitle}</h4>
+          <p>{labels.socialLinks}</p>
         </div>
       </div>
-      <div className="footer-brand">Hackathon 2026 • Eco Platform</div>
+      <div className="footer-brand">{labels.brand}</div>
     </footer>
   );
 }

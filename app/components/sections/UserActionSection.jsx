@@ -1,9 +1,9 @@
-export default function UserActionSection({ children }) {
+export default function UserActionSection({ children, title, subtitle }) {
   return (
     <section id="actions" className="section action-section">
       <div className="section-heading">
-        <h2>User Actions</h2>
-        <p>Upload, analyze, generate a certificate, and share impact.</p>
+        <h2>{title}</h2>
+        <p>{subtitle}</p>
       </div>
       <div className="action-content">
         {children}

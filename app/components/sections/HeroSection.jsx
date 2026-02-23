@@ -1,16 +1,16 @@
-export default function HeroSection({ title, tagline, onUpload, onAnalyze }) {
+export default function HeroSection({ title, tagline, badge, primaryCta, secondaryCta, onUpload, onAnalyze }) {
   return (
     <section id="hero" className="section hero-section">
       <div className="hero-inner">
-        <div className="hero-badge">AI + Circular Economy</div>
+        <div className="hero-badge">{badge}</div>
         <h1>{title}</h1>
         <p>{tagline}</p>
         <div className="hero-actions">
           <button type="button" className="btn-primary" onClick={onUpload}>
-            Upload Product
+            {primaryCta}
           </button>
           <button type="button" className="btn-secondary" onClick={onAnalyze}>
-            Analyze Product
+            {secondaryCta}
           </button>
         </div>
       </div>
