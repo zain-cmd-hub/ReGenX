@@ -61,18 +61,10 @@ const translations = {
       requestSent: "Request sent successfully!",
     },
     errors: {
-      missingImage: "Please upload a product image before analyzing.",
-      missingPurpose: "Please select a purpose before analyzing.",
-      missingProductType: "Please fill product type before analyzing.",
-      missingUsage: "Please enter product usage before analyzing.",
-      missingWeight: "Please enter material weight for recycling analysis.",
+      missingImage: "Please upload an image first",
       invalidImageFile: "Please select a valid image file (JPG, PNG, WEBP).",
       emptyImage: "The selected image is empty. Please choose another file.",
       imageTooLarge: "Image size must be 5MB or less.",
-      aiNotConfigured: "AI not configured",
-      aiUnavailable: "AI service unavailable",
-      invalidImage: "Invalid image",
-      networkError: "Network error",
     },
     share: {
       thanksHeading: "🎉 Thanks for sharing!",
@@ -385,18 +377,10 @@ const translations = {
       requestSent: "अनुरोध सफलतापूर्वक भेजा गया!",
     },
     errors: {
-      missingImage: "कृपया विश्लेषण से पहले उत्पाद की छवि अपलोड करें।",
-      missingPurpose: "कृपया विश्लेषण से पहले उद्देश्य चुनें।",
-      missingProductType: "कृपया विश्लेषण से पहले उत्पाद प्रकार भरें।",
-      missingUsage: "कृपया विश्लेषण से पहले उपयोग अवधि भरें।",
-      missingWeight: "कृपया रीसायकल के लिए सामग्री वजन दर्ज करें।",
+      missingImage: "कृपया पहले एक इमेज अपलोड करें",
       invalidImageFile: "कृपया वैध इमेज फ़ाइल चुनें (JPG, PNG, WEBP)।",
       emptyImage: "चुनी गई इमेज खाली है। कृपया दूसरी फ़ाइल चुनें।",
       imageTooLarge: "इमेज का आकार 5MB या उससे कम होना चाहिए।",
-      aiNotConfigured: "AI कॉन्फ़िगर नहीं है",
-      aiUnavailable: "AI सेवा उपलब्ध नहीं है",
-      invalidImage: "अमान्य इमेज",
-      networkError: "नेटवर्क त्रुटि",
     },
     share: {
       thanksHeading: "🎉 साझा करने के लिए धन्यवाद!",
@@ -716,91 +700,30 @@ function isAllowedImageFile(file) {
   if (!file) return false;
   const name = file.name || "";
   const extension = name.includes(".") ? name.split(".").pop().toLowerCase() : "";
-  return ALLOWED_IMAGE_TYPES.has(file.type) || ALLOWED_IMAGE_EXTENSIONS.has(extension) || extension === "gif";
+  return ALLOWED_IMAGE_TYPES.has(file.type) || ALLOWED_IMAGE_EXTENSIONS.has(extension);
 }
 
-async function fetchWithTimeout(url, options, timeoutMs) {
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
-  try {
-    const response = await fetch(url, { ...options, signal: controller.signal });
-    return response;
-  } finally {
-    clearTimeout(timeoutId);
-  }
-}
+function buildLocalRecommendation({ productType, materialType, condition, fallbackReason }) {
+  const normalizedType = String(productType || "").toLowerCase();
+  const isElectronic = /(laptop|phone|tablet|electronics|electronic|computer|tv|camera|console)/.test(normalizedType);
+  let action = "repair";
+  let reason = fallbackReason;
 
-async function parseJsonSafely(response) {
-  try {
-    return await response.json();
-  } catch (error) {
-    return null;
-  }
-}
-
-async function fetchWithRetry(requestFactory, retries) {
-  let lastError = null;
-  for (let attempt = 0; attempt <= retries; attempt += 1) {
-    try {
-      return await requestFactory();
-    } catch (error) {
-      lastError = error;
-    }
-  }
-  throw lastError;
-}
-
-async function analyzeProductWithAi({ file, description }) {
-  if (!file && !description) {
-    throw new Error("Invalid image");
+  if (materialType === "plastic") {
+    action = "recycle";
+    reason = "Plastic material is best handled through responsible recycling.";
+  } else if (isElectronic) {
+    action = "repair";
+    reason = "Electronics typically retain value after repair and refurbishment.";
+  } else if (condition === "Good") {
+    action = "sell";
+    reason = "Good condition suggests strong resale potential.";
+  } else if (condition === "Poor") {
+    action = "recycle";
+    reason = "Poor condition makes recycling the safest circular option.";
   }
 
-  const formData = new FormData();
-  if (file) {
-    formData.append("image", file);
-  }
-  if (description) {
-    formData.append("description", description);
-  }
-
-  let response;
-  try {
-    response = await fetchWithRetry(
-      () => fetchWithTimeout(
-        "/api/analyze-product",
-        {
-          method: "POST",
-          body: formData,
-        },
-        IMAGE_ANALYSIS_TIMEOUT_MS
-      ),
-      1
-    );
-  } catch (error) {
-    throw new Error("Network error");
-  }
-
-  if (!response.ok) {
-    const payload = await parseJsonSafely(response);
-    const status = response.status;
-    const upstream = String(payload?.error || "");
-    const message =
-      upstream === "AI not configured"
-        ? "AI not configured"
-        : status === 400
-          ? "Invalid image"
-          : status >= 500
-            ? "AI service unavailable"
-            : "Network error";
-    throw new Error(message);
-  }
-
-  const payload = await response.json();
-  if (!payload?.action || payload?.ecoScore == null || !payload?.priceEstimate || !payload?.reason) {
-    throw new Error("AI service unavailable");
-  }
-
-  return payload;
+  return { action, reason };
 }
 
 function computeEcoScore({ purpose, condition, remainingLife }) {
@@ -1724,7 +1647,7 @@ export default function DashboardPage() {
 
   async function handleAnalyze() {
     if (!productFile || !productImage) {
-      showToast("Please upload a product image before analyzing.");
+      showToast("Please upload an image first.");
       return;
     }
 
@@ -1753,25 +1676,12 @@ export default function DashboardPage() {
     setUploadLoading(true);
     setIsAnalyzing(true);
 
-    const usageText = formatUsageBreakdown(
-      Number(usageYears || 0),
-      Number(usageMonths || 0),
-      Number(usageDays || 0)
-    );
-    const aiDescription = [
-      productTypeInput.trim() ? `Product type: ${productTypeInput.trim()}` : "",
-      purpose ? `Purpose: ${purpose}` : "",
-      totalUsageDays > 0 ? `Usage: ${usageText} (${totalUsageDays} days)` : "",
-      materialType ? `Material: ${materialType}` : "",
-      materialWeight ? `Weight: ${materialWeight} kg` : "",
-    ].filter(Boolean).join("\n");
-
     const hash = imageHash || hashString(productImage);
     const cacheKey = `${hash}|purpose:${purpose}|usageDays:${totalUsageDays}|type:${productTypeInput.trim()}|material:${materialType}|weight:${materialWeight}`;
     const cache = readImageCache();
     const cachedResult = cache[cacheKey];
 
-    if (cachedResult && cachedResult.aiSource === "openai") {
+    if (cachedResult && cachedResult.aiSource === "local") {
       const cachedSellPrice = cachedResult.sellPrice ?? cachedResult.price ?? 0;
       const cachedEcoScoreSell = cachedResult.ecoScoreSell ?? computeEcoScore({
         purpose: "sell",
@@ -1855,25 +1765,10 @@ export default function DashboardPage() {
     }
 
     try {
-      const aiRecommendation = await analyzeProductWithAi({
-        file: productFile,
-        description: aiDescription,
-      });
-      const aiAction = String(aiRecommendation.action || "").trim();
-      const aiActionKey = aiAction.toLowerCase();
-      const aiActionNormalized = ["sell", "repair", "recycle"].includes(aiActionKey) ? aiActionKey : "";
-      const aiEcoScore = clamp(Math.round(Number(aiRecommendation.ecoScore)), 0, 100);
-      const aiPriceEstimate = String(aiRecommendation.priceEstimate || "").trim();
-      const aiReason = String(aiRecommendation.reason || "").trim();
-      const aiSuggestionText = aiReason || t.ai.fallbackReason;
-
       const usageImpact = clamp((totalUsageDays / (365 * 8)) * 100, 0, 95);
       const remaining = clamp(Math.round(100 - usageImpact), 5, 95);
 
-      let nextCondition = remaining >= 70 ? "Good" : remaining >= 40 ? "Medium" : "Poor";
-      if (aiActionNormalized === "recycle") {
-        nextCondition = "Poor";
-      }
+      const nextCondition = remaining >= 70 ? "Good" : remaining >= 40 ? "Medium" : "Poor";
 
       const conditionWeights = {
         Good: 1.0,
@@ -1887,7 +1782,6 @@ export default function DashboardPage() {
         basePrice * (remaining / 100) * conditionWeights[nextCondition] * usageMultiplier
       );
 
-      const nextScore = clamp(Math.round((remaining * 0.6) + (aiEcoScore * 0.4)), 10, 98);
       const nextDamageLevel = clamp(Math.round(100 - remaining), 0, 100);
       const repairFactor = 50;
       const estimatedRepairCost = Math.round(nextDamageLevel * repairFactor + totalUsageDays * 2);
@@ -1925,10 +1819,23 @@ export default function DashboardPage() {
             : "Low usage detected, material value preserved.";
       }
 
-      console.log("[AI] Factors", {
+      const { action: aiActionNormalized, reason: aiReason } = buildLocalRecommendation({
+        productType: productTypeInput.trim(),
+        materialType,
+        condition: nextCondition,
+        fallbackReason: t?.ai?.fallbackReason || "Local analysis complete.",
+      });
+      const aiPriceEstimate = aiActionNormalized === "sell"
+        ? `₹${estimatedPrice}`
+        : aiActionNormalized === "repair"
+          ? `₹${estimatedRepairCost}`
+          : aiActionNormalized === "recycle"
+            ? `₹${recyclingEstimate}`
+            : "";
+
+      console.log("[Local] Factors", {
         usageImpact: usageImpact.toFixed(2),
-        openAiAction: aiAction,
-        openAiEcoScore: aiEcoScore,
+        localAction: aiActionNormalized,
         remainingLife: remaining,
         condition: nextCondition,
         conditionWeight: conditionWeights[nextCondition],
@@ -1938,8 +1845,13 @@ export default function DashboardPage() {
         usageMessage: nextUsageMessage,
       });
 
-      const nextEcoScore = aiEcoScore;
-      const nextSuggestionText = aiSuggestionText;
+      const nextEcoScore = computeEcoScore({
+        purpose: aiActionNormalized || purpose,
+        condition: nextCondition,
+        remainingLife: remaining,
+      });
+      const nextScore = clamp(Math.round((remaining * 0.6) + (nextEcoScore * 0.4)), 10, 98);
+      const nextSuggestionText = aiReason || t?.ai?.fallbackReason || "Local analysis complete.";
 
       const nextEcoScoreSell = computeEcoScore({
         purpose: "sell",
@@ -1975,7 +1887,7 @@ export default function DashboardPage() {
         aiSuggestion: nextSuggestionText,
         aiSuggestionAction: aiActionNormalized,
         aiPriceEstimate: aiPriceEstimate,
-        aiSource: "openai",
+        aiSource: "local",
       };
 
       const historyEntry = {
@@ -1995,7 +1907,7 @@ export default function DashboardPage() {
         aiSuggestion: nextSuggestionText,
         aiSuggestionAction: aiActionNormalized,
         aiPriceEstimate: aiPriceEstimate,
-        aiSource: "openai",
+        aiSource: "local",
         suggestion: nextUsageMessage || "Analysis complete.",
         date: new Date().toISOString(),
         digitalTwinData: {
@@ -2042,17 +1954,8 @@ export default function DashboardPage() {
         });
       }
     } catch (error) {
-      console.error("[AI] Product analysis failed", error);
-      const normalized = String(error?.message || "");
-      const message =
-        normalized === "AI not configured"
-          ? "AI not configured"
-          : normalized === "AI service unavailable"
-            ? "AI service unavailable"
-            : normalized === "Invalid image"
-              ? "Invalid image"
-              : "Network error";
-      showToast(message);
+      console.error("[Local] Product analysis failed", error);
+      showToast("Analysis failed. Please try again.");
     } finally {
       setUploadLoading(false);
       setIsAnalyzing(false);
