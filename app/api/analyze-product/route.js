@@ -23,8 +23,15 @@ function extractOutputText(payload) {
   return chunks.join("\n").trim();
 }
 
+function maskKey(key) {
+  if (!key) return "missing";
+  if (key.length <= 8) return "present";
+  return `${key.slice(0, 3)}...${key.slice(-4)}`;
+}
+
 export async function POST(request) {
-  const apiKey = process.env.OPENAI_API_KEY;
+  const apiKey = (process.env.OPENAI_API_KEY || "").trim();
+  console.log("[API] OpenAI key detected", maskKey(apiKey));
   if (!apiKey) {
     return NextResponse.json({ error: "AI not configured" }, { status: 500 });
   }
@@ -117,13 +124,13 @@ export async function POST(request) {
     if (!response.ok) {
       const errorText = await response.text();
       console.error("[API] OpenAI response error", response.status, errorText);
-      return NextResponse.json({ error: "Analysis failed, try again" }, { status: 500 });
+      return NextResponse.json({ error: "AI service unavailable" }, { status: 502 });
     }
 
     const payload = await response.json();
     const outputText = extractOutputText(payload);
     if (!outputText) {
-      return NextResponse.json({ error: "Analysis failed, try again" }, { status: 500 });
+      return NextResponse.json({ error: "AI service unavailable" }, { status: 502 });
     }
 
     let result;
@@ -131,7 +138,7 @@ export async function POST(request) {
       result = JSON.parse(outputText);
     } catch (error) {
       console.error("[API] Invalid AI JSON", outputText);
-      return NextResponse.json({ error: "Analysis failed, try again" }, { status: 500 });
+      return NextResponse.json({ error: "AI service unavailable" }, { status: 502 });
     }
 
     const action = String(result?.action || "").trim();
@@ -139,12 +146,12 @@ export async function POST(request) {
     const reason = String(result?.reason || "").trim();
 
     if (!action || Number.isNaN(ecoScore) || !reason) {
-      return NextResponse.json({ error: "Analysis failed, try again" }, { status: 500 });
+      return NextResponse.json({ error: "AI service unavailable" }, { status: 502 });
     }
 
     return NextResponse.json({ action, ecoScore, reason });
   } catch (error) {
     console.error("[API] OpenAI request failed", error);
-    return NextResponse.json({ error: "Analysis failed, try again" }, { status: 500 });
+    return NextResponse.json({ error: "AI service unavailable" }, { status: 502 });
   }
 }
