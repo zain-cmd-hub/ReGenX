@@ -97,7 +97,7 @@ const translations = {
       weight: "Weight (kg)",
       weightPlaceholder: "e.g., 2.5",
       analyze: "Analyze",
-      analyzing: "AI is analyzing product condition...",
+      analyzing: "Analyzing with AI...",
     },
     purpose: {
       sell: "Sell",
@@ -324,7 +324,7 @@ const translations = {
       weight: "वजन (किग्रा)",
       weightPlaceholder: "उदा., 2.5",
       analyze: "विश्लेषण करें",
-      analyzing: "AI उत्पाद की स्थिति का विश्लेषण कर रहा है...",
+      analyzing: "AI के साथ विश्लेषण हो रहा है...",
     },
     purpose: {
       sell: "बेचें",
@@ -593,6 +593,45 @@ async function analyzeImageFeatures(file) {
   return payload.features;
 }
 
+async function analyzeProductWithAi({ file, description }) {
+  if (!file && !description) {
+    throw new Error("Missing product data.");
+  }
+
+  const formData = new FormData();
+  if (file) {
+    formData.append("image", file);
+  }
+  if (description) {
+    formData.append("description", description);
+  }
+
+  const response = await fetchWithRetry(
+    () => fetchWithTimeout(
+      "/api/analyze-product",
+      {
+        method: "POST",
+        body: formData,
+      },
+      IMAGE_ANALYSIS_TIMEOUT_MS
+    ),
+    1
+  );
+
+  if (!response.ok) {
+    const payload = await parseJsonSafely(response);
+    const message = payload?.error || "Analysis failed, try again";
+    throw new Error(message);
+  }
+
+  const payload = await response.json();
+  if (!payload?.action || payload?.ecoScore == null || !payload?.reason) {
+    throw new Error("Invalid AI response.");
+  }
+
+  return payload;
+}
+
 function computeEcoScore({ purpose, condition, remainingLife }) {
   if (!purpose) return 0;
 
@@ -751,6 +790,7 @@ export default function DashboardPage() {
   const [aiSuggestionAction, setAiSuggestionAction] = useState("");
   const [aiSuggestionYears, setAiSuggestionYears] = useState(0);
   const [aiSuggestionCo2, setAiSuggestionCo2] = useState("");
+  const [aiSuggestionSource, setAiSuggestionSource] = useState("local");
   const [analysisReady, setAnalysisReady] = useState(false);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
 
@@ -985,7 +1025,7 @@ export default function DashboardPage() {
   }, []);
 
   useEffect(() => {
-    if (!aiSuggestionAction) return;
+    if (!aiSuggestionAction || aiSuggestionSource === "openai") return;
     const nextText = formatAiSuggestion({
       action: aiSuggestionAction,
       years: aiSuggestionYears,
@@ -994,7 +1034,7 @@ export default function DashboardPage() {
     if (nextText) {
       setAiSuggestion(nextText);
     }
-  }, [aiSuggestionAction, aiSuggestionYears, aiSuggestionCo2, language]);
+  }, [aiSuggestionAction, aiSuggestionYears, aiSuggestionCo2, language, aiSuggestionSource]);
 
   const fileInputRef = useRef(null);
 
@@ -1156,6 +1196,7 @@ export default function DashboardPage() {
     setAiSuggestionAction("");
     setAiSuggestionYears(0);
     setAiSuggestionCo2("");
+    setAiSuggestionSource("local");
     setUsageMessage("");
     setAnalysisReady(false);
   }
@@ -1629,26 +1670,25 @@ export default function DashboardPage() {
     setUploadLoading(true);
     setIsAnalyzing(true);
 
+    const usageText = formatUsageBreakdown(
+      Number(usageYears || 0),
+      Number(usageMonths || 0),
+      Number(usageDays || 0)
+    );
+    const aiDescription = [
+      productTypeInput.trim() ? `Product type: ${productTypeInput.trim()}` : "",
+      purpose ? `Purpose: ${purpose}` : "",
+      totalUsageDays > 0 ? `Usage: ${usageText} (${totalUsageDays} days)` : "",
+      materialType ? `Material: ${materialType}` : "",
+      materialWeight ? `Weight: ${materialWeight} kg` : "",
+    ].filter(Boolean).join("\n");
+
     const hash = imageHash || hashString(productImage);
     const cacheKey = `${hash}|purpose:${purpose}|usageDays:${totalUsageDays}|type:${productTypeInput.trim()}|material:${materialType}|weight:${materialWeight}`;
     const cache = readImageCache();
     const cachedResult = cache[cacheKey];
 
-    if (cachedResult) {
-      const fallbackSuggestion = computeAiSuggestion({
-        purpose,
-        condition: cachedResult.condition,
-        remainingLife: cachedResult.remainingLife,
-        ecoScore: cachedResult.ecoScore ?? 0,
-      });
-      const cachedSuggestion = cachedResult.aiSuggestionAction
-        ? {
-          action: cachedResult.aiSuggestionAction || fallbackSuggestion.action,
-          years: cachedResult.aiSuggestionYears || fallbackSuggestion.years,
-          co2: cachedResult.aiSuggestionCo2 || fallbackSuggestion.co2,
-        }
-        : fallbackSuggestion;
-      const cachedSuggestionText = formatAiSuggestion(cachedSuggestion, language);
+    if (cachedResult && cachedResult.aiSource === "openai") {
       const cachedSellPrice = cachedResult.sellPrice ?? cachedResult.price ?? 0;
       const cachedEcoScoreSell = cachedResult.ecoScoreSell ?? computeEcoScore({
         purpose: "sell",
@@ -1665,11 +1705,8 @@ export default function DashboardPage() {
         condition: cachedResult.condition,
         remainingLife: cachedResult.remainingLife,
       });
-      const cachedEcoScore = cachedResult.ecoScore ?? computeEcoScore({
-        purpose,
-        condition: cachedResult.condition,
-        remainingLife: cachedResult.remainingLife,
-      });
+      const cachedEcoScore = cachedResult.ecoScore ?? 0;
+      const cachedSuggestionText = cachedResult.aiSuggestion || "";
       const cachedHistoryEntry = {
         id: `${hash}_${Date.now()}`,
         image: productImage,
@@ -1685,9 +1722,9 @@ export default function DashboardPage() {
         ecoScoreRepair: cachedEcoScoreRepair,
         ecoScoreRecycle: cachedEcoScoreRecycle,
         aiSuggestion: cachedSuggestionText,
-        aiSuggestionAction: cachedSuggestion.action,
-        aiSuggestionYears: cachedSuggestion.years,
-        aiSuggestionCo2: cachedSuggestion.co2,
+        aiSuggestionAction: cachedResult.aiSuggestionAction || "",
+        aiSuggestionYears: cachedResult.aiSuggestionYears || 0,
+        aiSuggestionCo2: cachedResult.aiSuggestionCo2 || "",
         suggestion: cachedResult.usageMessage || "Analysis complete.",
         date: new Date().toISOString(),
         digitalTwinData: {
@@ -1715,9 +1752,10 @@ export default function DashboardPage() {
       setSellPrice(cachedSellPrice);
       setUsageMessage(cachedResult.usageMessage || "");
       setAiSuggestion(cachedSuggestionText || "");
-      setAiSuggestionAction(cachedSuggestion.action || "");
-      setAiSuggestionYears(cachedSuggestion.years || 0);
-      setAiSuggestionCo2(cachedSuggestion.co2 || "");
+      setAiSuggestionAction(cachedResult.aiSuggestionAction || "");
+      setAiSuggestionYears(cachedResult.aiSuggestionYears || 0);
+      setAiSuggestionCo2(cachedResult.aiSuggestionCo2 || "");
+      setAiSuggestionSource(cachedResult.aiSource || "openai");
       setEcoScoreSell(cachedEcoScoreSell);
       setEcoScoreRepair(cachedEcoScoreRepair);
       setEcoScoreRecycle(cachedEcoScoreRecycle);
@@ -1736,6 +1774,19 @@ export default function DashboardPage() {
     }
 
     try {
+      const aiRecommendation = await analyzeProductWithAi({
+        file: productFile,
+        description: aiDescription,
+      });
+      const aiAction = String(aiRecommendation.action || "").trim();
+      const aiActionKey = aiAction.toLowerCase();
+      const aiActionNormalized = ["sell", "repair", "recycle"].includes(aiActionKey) ? aiActionKey : "";
+      const aiEcoScore = clamp(Math.round(Number(aiRecommendation.ecoScore)), 0, 100);
+      const aiReason = String(aiRecommendation.reason || "").trim();
+      const aiSuggestionText = aiAction && aiReason
+        ? `Recommendation: ${aiAction}. ${aiReason}`
+        : (aiReason || "AI recommendation ready.");
+
       const features = await analyzeImageFeatures(productFile);
       const damageFactor = features.damageScore;
       const damageImpact = clamp(damageFactor * 0.6, 0, 60);
@@ -1820,19 +1871,8 @@ export default function DashboardPage() {
         usageMessage: nextUsageMessage,
       });
 
-      const nextEcoScore = computeEcoScore({
-        purpose,
-        condition: nextCondition,
-        remainingLife: remaining,
-      });
-
-      const nextSuggestion = computeAiSuggestion({
-        purpose,
-        condition: nextCondition,
-        remainingLife: remaining,
-        ecoScore: nextEcoScore,
-      });
-      const nextSuggestionText = formatAiSuggestion(nextSuggestion, language);
+      const nextEcoScore = aiEcoScore;
+      const nextSuggestionText = aiSuggestionText;
 
       const nextEcoScoreSell = computeEcoScore({
         purpose: "sell",
@@ -1866,9 +1906,10 @@ export default function DashboardPage() {
         ecoScoreRepair: nextEcoScoreRepair,
         ecoScoreRecycle: nextEcoScoreRecycle,
         aiSuggestion: nextSuggestionText,
-        aiSuggestionAction: nextSuggestion.action,
-        aiSuggestionYears: nextSuggestion.years,
-        aiSuggestionCo2: nextSuggestion.co2,
+        aiSuggestionAction: aiActionNormalized,
+        aiSuggestionYears: 0,
+        aiSuggestionCo2: "",
+        aiSource: "openai",
       };
 
       const historyEntry = {
@@ -1886,9 +1927,10 @@ export default function DashboardPage() {
         ecoScoreRepair: nextEcoScoreRepair,
         ecoScoreRecycle: nextEcoScoreRecycle,
         aiSuggestion: nextSuggestionText,
-        aiSuggestionAction: nextSuggestion.action,
-        aiSuggestionYears: nextSuggestion.years,
-        aiSuggestionCo2: nextSuggestion.co2,
+        aiSuggestionAction: aiActionNormalized,
+        aiSuggestionYears: 0,
+        aiSuggestionCo2: "",
+        aiSource: "openai",
         suggestion: nextUsageMessage || "Analysis complete.",
         date: new Date().toISOString(),
         digitalTwinData: {
@@ -1923,6 +1965,7 @@ export default function DashboardPage() {
       setAiSuggestionAction(result.aiSuggestionAction);
       setAiSuggestionYears(result.aiSuggestionYears || 0);
       setAiSuggestionCo2(result.aiSuggestionCo2 || "");
+      setAiSuggestionSource(result.aiSource || "openai");
       setEcoScoreSell(result.ecoScoreSell);
       setEcoScoreRepair(result.ecoScoreRepair);
       setEcoScoreRecycle(result.ecoScoreRecycle);
@@ -1936,10 +1979,10 @@ export default function DashboardPage() {
         });
       }
     } catch (error) {
-      console.error("[AI] Image analysis failed", error);
-      const message = error?.name === "AbortError"
-        ? "Image analysis timed out. Please try again."
-        : (error?.message || "Unable to analyze this image. Please try a clearer photo.");
+      console.error("[AI] Product analysis failed", error);
+      const message = error?.message === "AI not configured"
+        ? "AI not configured"
+        : (error?.message || "Analysis failed, try again");
       showToast(message);
     } finally {
       setUploadLoading(false);
