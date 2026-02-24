@@ -1156,6 +1156,7 @@ export default function DashboardPage() {
   const [language, setLanguage] = useState("en");
   const [showSuccess, setShowSuccess] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [authLoading, setAuthLoading] = useState(true);
   const successTimerRef = useRef(null);
   const [isShareOpen, setIsShareOpen] = useState(false);
   const [sharePayload, setSharePayload] = useState(null);
@@ -1386,6 +1387,7 @@ export default function DashboardPage() {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       if (!user) {
         localStorage.removeItem("tscemUser");
+        setAuthLoading(false);
         router.push("/login");
         return;
       }
@@ -1397,6 +1399,7 @@ export default function DashboardPage() {
       };
       localStorage.setItem("tscemUser", JSON.stringify(nextProfile));
       setUserProfile(nextProfile);
+      setAuthLoading(false);
 
       setProfileData((prev) => {
         const merged = {
@@ -2757,6 +2760,15 @@ export default function DashboardPage() {
     const keys = ["name", "email", "phone", "address", "about"];
     return keys.some((key) => String(baseline[key] || "") !== String(profileData[key] || ""));
   }, [profileData]);
+
+  if (authLoading) {
+    return (
+      <div className="auth-loading-screen">
+        <div className="auth-loading-spinner" />
+        <p className="auth-loading-text">Loading...</p>
+      </div>
+    );
+  }
 
   return (
     <div className={`dashboard-body ${isMenuOpen ? "menu-open" : ""}`}>

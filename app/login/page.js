@@ -21,6 +21,7 @@ export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [displayName, setDisplayName] = useState("");
+  const [authChecking, setAuthChecking] = useState(true);
 
   useEffect(() => {
     let isMounted = true;
@@ -51,6 +52,8 @@ export default function LoginPage() {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       if (user) {
         router.push("/");
+      } else {
+        setAuthChecking(false);
       }
     });
 
@@ -150,6 +153,15 @@ export default function LoginPage() {
     } finally {
       setIsLoading(false);
     }
+  }
+
+  if (authChecking) {
+    return (
+      <div className="auth-loading-screen">
+        <div className="auth-loading-spinner" />
+        <p className="auth-loading-text">Loading...</p>
+      </div>
+    );
   }
 
   return (
