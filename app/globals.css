@@ -7,8 +7,14 @@
   --bg-body: #e0faff;
   --bg-sidebar: #ffffff;
   --bg-card: #ffffff;
+  --bg-surface: #f8fafc;
+  --bg-surface-2: #f1f5f9;
+  --bg-input: #ffffff;
+  --bg-hero-section: #f0fdf4;
   --text-main: #1e293b;
   --text-muted: #64748b;
+  --text-hero-strong: #14532d;
+  --text-hero-mid: #166534;
   --border-color: #e2e8f0;
   --shadow-sm: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
   --shadow-md: 0 10px 15px -3px rgba(0, 0, 0, 0.05);
@@ -56,8 +62,14 @@ body.dark {
   --bg-body: #0f172a;
   --bg-sidebar: #111827;
   --bg-card: #1e293b;
-  --text-main: #ffffff;
+  --bg-surface: #1e293b;
+  --bg-surface-2: #162032;
+  --bg-input: #1e2d3d;
+  --bg-hero-section: #0d1f10;
+  --text-main: #f1f5f9;
   --text-muted: #9ca3af;
+  --text-hero-strong: #86efac;
+  --text-hero-mid: #4ade80;
   --border-color: #273449;
   --secondary: #22c55e;
   --shadow-sm: 0 4px 6px -1px rgba(0, 0, 0, 0.35);
@@ -4001,3 +4013,783 @@ footer {
   background: #fee2e2;
   box-shadow: 0 8px 16px -10px rgba(239, 68, 68, 0.6);
 }
+
+/* ================================================================
+   COMPREHENSIVE DARK MODE OVERRIDES
+   All hardcoded white / surface / hero colors become CSS variables
+   ================================================================ */
+
+/* ── Global text transition ── */
+body.dark * {
+  transition: background-color 0.25s ease, color 0.25s ease, border-color 0.25s ease;
+}
+
+/* ── Inputs / Select / Textarea ── */
+body.dark input,
+body.dark select,
+body.dark textarea {
+  background: var(--bg-input);
+  color: var(--text-main);
+  border-color: var(--border-color);
+  color-scheme: dark;
+}
+body.dark input::placeholder,
+body.dark textarea::placeholder {
+  color: #6b7280;
+}
+
+/* ── Login page ── */
+body.dark .login-form-wrapper {
+  background: #111827;
+  color: var(--text-main);
+}
+body.dark .login-form-card {
+  background: transparent;
+}
+body.dark .form-header h3,
+body.dark .form-header p {
+  color: var(--text-main);
+}
+body.dark .btn-google {
+  background: #1e293b;
+  border-color: var(--border-color);
+  color: var(--text-main);
+}
+body.dark .btn-google:hover {
+  background: #273449;
+  border-color: var(--primary);
+}
+body.dark .stat-pill {
+  background: rgba(255, 255, 255, 0.1);
+  color: #e2e8f0;
+}
+
+/* ── Navigation / Header buttons ── */
+body.dark .search-bar {
+  background: #1e293b;
+  border-color: var(--border-color);
+}
+body.dark .search-bar input {
+  background: transparent;
+  color: var(--text-main);
+}
+body.dark .search-bar iconify-icon {
+  color: var(--text-muted);
+}
+body.dark .icon-btn {
+  background: #1e293b;
+  color: var(--text-muted);
+}
+body.dark .icon-btn:hover {
+  color: var(--primary);
+  background: #273449;
+}
+body.dark .menu-toggle {
+  background: #1e293b;
+  border-color: var(--border-color);
+  color: var(--text-main);
+}
+body.dark .history-link-btn {
+  background: #1e293b;
+  border-color: var(--border-color);
+  color: var(--text-main);
+}
+body.dark .history-link-btn:hover {
+  background: #273449;
+}
+body.dark .badge-count {
+  border-color: #1e293b;
+}
+body.dark .theme-toggle {
+  background: #1e293b;
+  border-color: var(--border-color);
+  color: var(--text-main);
+}
+
+/* ── Logout ── */
+body.dark .logout-btn {
+  background: transparent;
+  border-color: #ef4444;
+  color: #ef4444;
+}
+body.dark .logout-btn:hover {
+  background: rgba(239, 68, 68, 0.15);
+}
+
+/* ── Stat Cards ── */
+body.dark .stat-card {
+  border-color: var(--border-color);
+}
+body.dark .stat-card.blue .icon-box { background: rgba(59, 130, 246, 0.15); }
+body.dark .stat-card.green .icon-box { background: rgba(34, 197, 94, 0.15); }
+body.dark .stat-card.purple .icon-box { background: rgba(139, 92, 246, 0.15); }
+body.dark .stat-card.orange .icon-box { background: rgba(249, 115, 22, 0.15); }
+
+/* ── Buttons ── */
+body.dark .btn-secondary {
+  background: #1e293b;
+  border-color: var(--border-color);
+  color: var(--text-main);
+}
+body.dark .btn-secondary:hover {
+  background: #273449;
+  border-color: var(--primary);
+}
+
+/* ── Notification Panel ── */
+body.dark .notification-panel {
+  background: #1e293b;
+  border-color: var(--border-color);
+}
+body.dark .notification-panel .notification-header {
+  border-bottom-color: var(--border-color);
+  color: var(--text-main);
+}
+body.dark .notification-item:hover {
+  background: #273449;
+}
+body.dark .notification-title {
+  color: var(--text-main);
+}
+
+/* ── Modals ── */
+body.dark .modal-card {
+  background: #1e293b;
+  color: var(--text-main);
+}
+body.dark .modal-close {
+  color: var(--text-muted);
+}
+body.dark .modal-close:hover {
+  color: var(--text-main);
+}
+body.dark .contact-details {
+  background: #162032;
+  border-color: var(--border-color);
+}
+body.dark .contact-row {
+  color: var(--text-main);
+}
+body.dark .message-preview {
+  background: #111827;
+  border-color: var(--border-color);
+  color: var(--text-muted);
+}
+
+/* ── Profile Menu & Modal ── */
+body.dark .profile-menu {
+  background: #1e293b;
+}
+body.dark .profile-menu-btn {
+  background: #162032;
+  border-color: var(--border-color);
+  color: var(--text-main);
+}
+body.dark .profile-menu-btn:hover {
+  background: #273449;
+}
+body.dark .profile-menu-btn.danger {
+  background: rgba(239, 68, 68, 0.12);
+  color: #f87171;
+  border-color: rgba(239, 68, 68, 0.3);
+}
+body.dark .profile-card {
+  background: #162032;
+}
+body.dark .profile-form input,
+body.dark .profile-form textarea {
+  background: var(--bg-input);
+  color: var(--text-main);
+  border-color: var(--border-color);
+}
+body.dark .profile-form input[readonly],
+body.dark .profile-form textarea[readonly] {
+  background: #111827;
+  color: #6b7280;
+}
+body.dark .profile-progress .progress-bar {
+  background: var(--border-color);
+}
+body.dark .safety-panel {
+  background: rgba(249, 115, 22, 0.08);
+  border-color: rgba(249, 115, 22, 0.3);
+}
+
+/* ── Hero Card & Hero Section ── */
+body.dark .hero-card {
+  background: linear-gradient(135deg, #111827 0%, #0f172a 100%);
+  border-color: var(--border-color);
+}
+body.dark .hero-section {
+  background: var(--bg-hero-section);
+  border-color: rgba(34, 197, 94, 0.2);
+}
+body.dark .hero-inner h1 {
+  color: var(--text-hero-strong);
+}
+body.dark .hero-inner p {
+  color: var(--text-hero-mid);
+}
+body.dark .hero-badge {
+  background: rgba(34, 197, 94, 0.15);
+  color: var(--text-hero-mid);
+}
+
+/* ── "How it Works" / Features / Info Sections ── */
+body.dark .how-section,
+body.dark .features-section,
+body.dark .action-section,
+body.dark .impact-section,
+body.dark .history-preview-section,
+body.dark .certificate-section {
+  background: #1e293b;
+  border-color: var(--border-color);
+}
+body.dark .how-step {
+  background: #162032;
+  border-color: rgba(34, 197, 94, 0.2);
+}
+body.dark .how-step-index {
+  background: rgba(34, 197, 94, 0.12);
+  color: #4ade80;
+}
+body.dark .how-step-title {
+  color: #4ade80;
+}
+body.dark .feature-card {
+  background: #162032;
+  border-color: rgba(34, 197, 94, 0.2);
+}
+body.dark .feature-card h4,
+body.dark .feature-card p {
+  color: var(--text-main);
+}
+
+/* ── Flow Steps ── */
+body.dark .flow-steps {
+  background: #162032;
+  border-color: rgba(14, 165, 164, 0.25);
+}
+body.dark .step-circle {
+  background: #1e293b;
+  border-color: rgba(14, 165, 164, 0.3);
+  color: var(--text-muted);
+}
+body.dark .flow-step.active .step-circle {
+  background: rgba(14, 165, 164, 0.15);
+  border-color: var(--primary);
+  color: var(--primary);
+}
+body.dark .flow-step.completed .step-circle {
+  background: rgba(22, 163, 74, 0.15);
+  border-color: rgba(22, 163, 74, 0.5);
+  color: #4ade80;
+}
+body.dark .flow-step {
+  color: var(--text-muted);
+}
+body.dark .flow-step.active {
+  color: var(--primary);
+}
+body.dark .flow-step.completed {
+  color: #4ade80;
+}
+
+/* ── Upload / Image Preview ── */
+body.dark .image-preview {
+  background: #162032;
+  border-color: var(--border-color);
+  color: var(--text-muted);
+}
+body.dark .image-preview:hover {
+  border-color: var(--primary);
+  background: #1a2942;
+}
+body.dark .upload-card {
+  background: var(--bg-card) !important;
+  border-color: rgba(34, 197, 94, 0.3) !important;
+}
+body.dark .upload-card.drag {
+  background: #162032 !important;
+}
+body.dark .upload-content {
+  color: var(--text-muted);
+}
+
+/* ── Results Summary ── */
+body.dark .results-summary {
+  background: #162032 !important;
+}
+body.dark .res-item span {
+  color: var(--text-muted);
+}
+body.dark .res-item strong {
+  color: var(--text-main);
+}
+
+/* ── Progress bars ── */
+body.dark .progress-bar-container {
+  background: var(--border-color);
+}
+
+/* ── Digital Twin ── */
+body.dark .timeline-step {
+  background: #1e293b;
+  border-color: var(--border-color);
+}
+body.dark .timeline-step.active {
+  border-color: #22c55e;
+}
+body.dark .timeline-label {
+  color: var(--text-main);
+}
+body.dark .twin-card {
+  background: #0d1f10;
+  border-color: rgba(34, 197, 94, 0.25);
+}
+body.dark .twin-path {
+  background: #1e293b;
+  border-color: var(--border-color);
+}
+body.dark .twin-path.best {
+  border-color: #22c55e;
+}
+body.dark .twin-path-header {
+  color: var(--text-main);
+}
+body.dark .twin-badge {
+  background: rgba(34, 197, 94, 0.12);
+  color: #4ade80;
+}
+body.dark .before-after-card,
+body.dark .eco-meter-card {
+  background: #162032;
+  border-color: var(--border-color);
+}
+body.dark .before-after-head h4,
+body.dark .eco-meter-card h4 {
+  color: var(--text-main);
+}
+body.dark .before-after {
+  background: var(--border-color);
+}
+body.dark .ai-typing {
+  color: #4ade80;
+}
+
+/* ── Demand tag ── */
+body.dark .demand-tag {
+  background: rgba(249, 115, 22, 0.12);
+  color: #fb923c;
+}
+
+/* ── Facilities ── */
+body.dark .facility-item {
+  background: #1e293b;
+  border-color: var(--border-color);
+}
+body.dark .facility-item:hover {
+  border-color: var(--primary);
+}
+body.dark .f-name {
+  color: var(--text-main);
+}
+body.dark .f-dist {
+  background: rgba(14, 165, 164, 0.15);
+  color: var(--primary);
+}
+
+/* ── Rating / Shop modals ── */
+body.dark .shop-score,
+body.dark .shop-count {
+  background: #162032;
+  border: 1px solid var(--border-color);
+}
+body.dark .score-value {
+  color: var(--text-main);
+}
+body.dark .review-item {
+  border-color: var(--border-color);
+  background: #162032;
+}
+body.dark .review-text {
+  color: var(--text-main);
+}
+
+/* ── Password / profile form inputs ── */
+body.dark .profile-password-form input {
+  background: var(--bg-input);
+  color: var(--text-main);
+  border-color: var(--border-color);
+}
+
+/* ── Toast ── */
+body.dark .toast-error {
+  background: rgba(185, 28, 28, 0.2);
+  color: #fca5a5;
+  border-color: rgba(239, 68, 68, 0.3);
+}
+body.dark .toast-success {
+  background: rgba(21, 128, 61, 0.2);
+  color: #86efac;
+  border-color: rgba(34, 197, 94, 0.3);
+}
+
+/* ── AI Suggestion Card ── */
+body.dark .ai-suggestion-card {
+  background: #0d1f10;
+  border-color: rgba(34, 197, 94, 0.35);
+}
+
+/* ── Share / Landing sections ── */
+body.dark .impact-card {
+  border-color: rgba(34, 197, 94, 0.25);
+}
+body.dark .eco-score-card {
+  background: var(--bg-card);
+  border-color: var(--border-color);
+}
+body.dark .comparison-card {
+  background: #111827;
+  border-color: var(--border-color);
+}
+body.dark .comparison-value,
+body.dark .comparison-title {
+  color: var(--text-main);
+}
+
+/* ── Profile verified modal ── */
+body.dark .verified-message {
+  color: var(--text-muted);
+}
+
+/* ── Modules section ── */
+body.dark .module-card {
+  background: var(--bg-card);
+  border-color: var(--border-color);
+  color: var(--text-main);
+}
+
+/* Emergency fallback — catch any remaining hardcoded white backgrounds */
+body.dark [style*="background: white"],
+body.dark [style*="background:#fff"],
+body.dark [style*="background-color: white"],
+body.dark [style*="background-color:#fff"] {
+  background: var(--bg-card) !important;
+  color: var(--text-main) !important;
+}
+body.dark [style*="color: black"],
+body.dark [style*="color:#000"],
+body.dark [style*="color: #000000"] {
+  color: var(--text-main) !important;
+}
+
+/* ── Smooth global transition ── */
+.sidebar, .card-panel, .stat-card, .facility-item, .comparison-panel,
+.comparison-card, .modal-card, .notification-panel, .results-summary,
+.search-bar, .search-bar input, .upload-card, .usage-block, .contact-details,
+.eco-score-card, .hero-card, .history-card, .impact-card, .profile-card,
+.icon-btn, .menu-toggle, .history-link-btn, .btn-secondary, .btn-google,
+.theme-toggle, .flow-steps, .step-circle, .how-step, .feature-card,
+.timeline-step, .twin-path, .before-after-card, .eco-meter-card,
+.image-preview, .profile-form input, .profile-form textarea,
+.history-chip, .history-back, .history-item-card, .history-preview-card,
+.footer-section, .certificate-preview-card,
+input, select, textarea {
+  transition: background-color 0.25s ease, color 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
+}
+
+/* ── History page ── */
+body.dark .history-chip {
+  background: #1e293b;
+  border-color: var(--border-color);
+  color: var(--text-main);
+}
+body.dark .history-chip.active {
+  background: var(--primary);
+  color: white;
+  border-color: transparent;
+}
+body.dark .history-back {
+  background: #1e293b;
+  border-color: var(--border-color);
+  color: var(--text-main);
+}
+body.dark .history-item-card {
+  background: #1e293b;
+  border-color: var(--border-color);
+}
+body.dark .history-preview-card {
+  background: #1e293b;
+  border-color: var(--border-color);
+}
+
+/* ── Certificate ── */
+body.dark .certificate-preview-card {
+  background: linear-gradient(135deg, #0d1f10 0%, #111827 100%);
+  border-color: rgba(34, 197, 94, 0.3);
+}
+body.dark .certificate-preview-title {
+  color: #86efac;
+}
+body.dark .certificate-preview-subtitle {
+  color: #4ade80;
+}
+body.dark .certificate-preview-name {
+  color: #5eead4;
+}
+body.dark .certificate-preview-message {
+  color: #d1fae5;
+}
+
+/* ── Footer section ── */
+body.dark .footer-section {
+  background: #111827;
+  border-top: 1px solid var(--border-color);
+  color: var(--text-main);
+}
+
+/* ── Input / form global base (ensures dark mode can override) ── */
+body.dark .profile-password-form input {
+  background: var(--bg-input);
+  color: var(--text-main);
+  border-color: var(--border-color);
+}
+
+/* ── Remaining surface cards not already covered ── */
+body.dark .section-heading h2 {
+  color: var(--text-main);
+}
+body.dark .section-heading p {
+  color: var(--text-muted);
+}
+
+/* ── Share / qr modals ── */
+body.dark .share-modal-card,
+body.dark .qr-modal-card {
+  background: #1e293b;
+  color: var(--text-main);
+  border-color: var(--border-color);
+}
+
+/* ── Usage block ── */
+body.dark .usage-block {
+  background: var(--bg-card);
+  border-color: var(--border-color);
+}
+
+/* ── Landing hero section hero-inner (colour overrides) ── */
+body.dark .hero-inner h1,
+body.dark .hero-inner p {
+  color: var(--text-main);
+}
+
+/* ── Comparison section best badge ── */
+body.dark .comparison-best-badge {
+  background: rgba(34, 197, 94, 0.15);
+  color: #4ade80;
+}
+
+/* ── Number inputs and range inputs ── */
+body.dark input[type=range]::-webkit-slider-thumb {
+  background: var(--primary);
+}
+body.dark input[type=range]::-webkit-slider-runnable-track {
+  background: var(--border-color);
+}
+
+/* ══════════════════════════════════════════════════════
+   DARK MODE SUPPLEMENT — remaining hardcoded colours
+   ══════════════════════════════════════════════════════ */
+
+/* ── btn-warning ── */
+body.dark .btn-warning {
+  background: rgba(249, 115, 22, 0.1);
+  border-color: rgba(249, 115, 22, 0.4);
+  color: #fb923c;
+}
+body.dark .btn-warning:hover {
+  background: rgba(249, 115, 22, 0.2);
+}
+
+/* ── History card (dashboard mini preview) ── */
+body.dark .history-card {
+  background: #1e293b;
+  border-color: var(--border-color);
+}
+
+/* ── Path-pill variants ── */
+body.dark .path-pill {
+  background: var(--bg-surface-2);
+  color: var(--text-main);
+}
+body.dark .path-pill.sell   { background: rgba(34, 197, 94, 0.15);  color: #4ade80; }
+body.dark .path-pill.repair { background: rgba(59, 130, 246, 0.15); color: #93c5fd; }
+body.dark .path-pill.recycle{ background: rgba(234,179,  8, 0.12);  color: #fde047; }
+
+/* ── History-action button ── */
+body.dark .history-action {
+  background: #1e293b;
+  border-color: var(--border-color);
+  color: var(--text-main);
+}
+
+/* ── History-empty placeholder ── */
+body.dark .history-empty {
+  background: #1e293b;
+  border-color: var(--border-color);
+  color: var(--text-muted);
+}
+
+/* ── Certificate inner / text (dark green → light green) ── */
+body.dark .certificate-inner {
+  background: #0d1f10;
+  border-color: rgba(34, 197, 94, 0.25);
+}
+body.dark .certificate-title   { color: #86efac; }
+body.dark .certificate-subtitle{ color: #4ade80; }
+body.dark .certificate-name    { color: #5eead4; }
+body.dark .certificate-message { color: #d1fae5; }
+body.dark .certificate-footer  { color: #4ade80; }
+body.dark .certificate-sign    { color: #86efac; }
+body.dark .certificate-seal {
+  background: rgba(34, 197, 94, 0.12);
+  border-color: rgba(34, 197, 94, 0.35);
+  color: #4ade80;
+}
+body.dark .certificate-qr img {
+  background: #1e293b;
+  border-color: rgba(34, 197, 94, 0.3);
+}
+
+/* ── Impact card (light-green tinted bg) ── */
+body.dark .impact-card {
+  background: rgba(34, 197, 94, 0.08);
+  border-color: rgba(34, 197, 94, 0.2);
+}
+body.dark .impact-card strong { color: var(--text-main); }
+body.dark .impact-card span   { color: var(--text-muted); }
+
+/* ── Upload card (has-image state) ── */
+body.dark .upload-card.has-image {
+  background: #162032;
+  border-color: var(--border-color);
+}
+
+/* ── Comparison panel ── */
+body.dark .comparison-panel {
+  background: #1e293b;
+  border-color: var(--border-color);
+}
+body.dark .comparison-reco {
+  background: rgba(34, 197, 94, 0.1);
+  border-color: rgba(34, 197, 94, 0.25);
+  color: #4ade80;
+}
+
+/* ── Impact-mode cards ── */
+body.dark .impact-mode-card {
+  background: #162032;
+  border-color: rgba(34, 197, 94, 0.2);
+}
+body.dark .impact-mode-label { color: #4ade80; }
+body.dark .impact-mode-value { color: #5eead4; }
+
+/* ── Purpose (sell/repair/recycle) buttons ── */
+body.dark .purpose-btn {
+  background: #1e293b;
+  border-color: var(--border-color);
+  color: var(--text-main);
+}
+body.dark .purpose-btn:hover {
+  background: #273449;
+  border-color: var(--primary);
+  color: var(--primary);
+}
+body.dark .purpose-btn.active {
+  background: var(--primary);
+  color: white;
+  border-color: var(--primary);
+}
+
+/* ── Geo toggle / map view toggle ── */
+body.dark .geo-toggle {
+  background: #162032;
+}
+body.dark .toggle-btn {
+  color: var(--text-muted);
+}
+body.dark .toggle-btn.active {
+  background: #1e293b;
+  color: var(--text-main);
+}
+
+/* ── Map wrapper & map modal buttons ── */
+body.dark .map-wrapper {
+  background: #1e293b;
+  border-color: var(--border-color);
+}
+body.dark .map-modal-btn {
+  background: #1e293b;
+  border-color: var(--border-color);
+  color: var(--text-main);
+}
+body.dark .map-modal-btn.ghost {
+  background: #162032;
+  color: var(--text-muted);
+}
+
+/* ── Map popup ghost button ── */
+body.dark .map-popup-btn.ghost {
+  background: #1e293b;
+  border-color: var(--border-color);
+  color: var(--text-main);
+}
+
+/* ── Share card & share-cta ── */
+body.dark .share-card {
+  background: #1e293b;
+  border-color: rgba(34, 197, 94, 0.2);
+}
+body.dark .share-cta {
+  background: rgba(34, 197, 94, 0.06);
+  border-color: rgba(34, 197, 94, 0.25);
+}
+body.dark .share-cta-text { color: #4ade80; }
+body.dark .share-logos     { color: #4ade80; }
+
+/* ── Analyze overlay card ── */
+body.dark .analyze-card {
+  background: #1e293b;
+  color: var(--text-main);
+}
+
+/* ── Privacy note ── */
+body.dark .privacy-note {
+  background: #1e293b;
+  border-color: var(--border-color);
+  color: var(--text-muted);
+}
+
+/* ── Login page ── */
+body.dark .login-body {
+  background: var(--bg-body);
+}
+body.dark .stat-pill {
+  background: #1e293b;
+  color: var(--text-main);
+  box-shadow: none;
+}
+
+/* ── Modules section ── */
+body.dark .modules-section {
+  background: linear-gradient(140deg, #0d1f10 0%, #111827 100%);
+  border-color: rgba(34, 197, 94, 0.2);
+}
+body.dark .modules-badge {
+  background: rgba(34, 197, 94, 0.12);
+  color: #4ade80;
+}
+body.dark .modules-header h3 { color: #4ade80; }
+body.dark .modules-header p  { color: #86efac; }
+body.dark .module-title       { color: #4ade80; }
