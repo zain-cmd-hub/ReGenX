@@ -12,6 +12,7 @@ import {
   updateProfile,
 } from "firebase/auth";
 import { auth, googleProvider } from "../lib/firebase";
+import { createUserProfile, getUserProfile } from "../lib/userService";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -31,12 +32,17 @@ export default function LoginPage() {
         const result = await getRedirectResult(auth);
         if (!isMounted || !result?.user) return;
 
+        const user = result.user;
+        await createUserProfile(user.uid, {
+          name: user.displayName || "",
+          email: user.email || "",
+          photo: user.photoURL || "",
+        });
         const userProfile = {
-          name: result.user.displayName || "",
-          email: result.user.email || "",
-          photo: result.user.photoURL || "",
+          name: user.displayName || "",
+          email: user.email || "",
+          photo: user.photoURL || "",
         };
-
         localStorage.setItem("tscemUser", JSON.stringify(userProfile));
         router.push("/");
       } catch (error) {
@@ -71,12 +77,16 @@ export default function LoginPage() {
       const result = await signInWithPopup(auth, googleProvider);
       const user = result.user;
 
+      await createUserProfile(user.uid, {
+        name: user.displayName || "",
+        email: user.email || "",
+        photo: user.photoURL || "",
+      });
       const userProfile = {
         name: user.displayName || "",
         email: user.email || "",
         photo: user.photoURL || "",
       };
-
       localStorage.setItem("tscemUser", JSON.stringify(userProfile));
       router.push("/");
     } catch (error) {
@@ -127,11 +137,17 @@ export default function LoginPage() {
       if (isRegister) {
         // ── Register new user ──────────────────────────────────────────
         const credential = await createUserWithEmailAndPassword(auth, email.trim(), password);
+        const resolvedName = displayName.trim() || email.split("@")[0];
         if (displayName.trim()) {
           await updateProfile(credential.user, { displayName: displayName.trim() });
         }
+        await createUserProfile(credential.user.uid, {
+          name: resolvedName,
+          email: credential.user.email || "",
+          photo: credential.user.photoURL || "",
+        });
         const userProfile = {
-          name: credential.user.displayName || displayName.trim() || email.split("@")[0],
+          name: resolvedName,
           email: credential.user.email || "",
           photo: credential.user.photoURL || "",
         };
@@ -140,12 +156,20 @@ export default function LoginPage() {
       } else {
         // ── Sign in existing user ──────────────────────────────────────
         const credential = await signInWithEmailAndPassword(auth, email.trim(), password);
+        // Fetch profile from Firestore (may already exist from previous signup)
+        let firestoreProfile = null;
+        try { firestoreProfile = await getUserProfile(credential.user.uid); } catch (_) {}
+        const resolvedName = firestoreProfile?.name || credential.user.displayName || email.split("@")[0];
         const userProfile = {
-          name: credential.user.displayName || email.split("@")[0],
+          name: resolvedName,
           email: credential.user.email || "",
-          photo: credential.user.photoURL || "",
+          photo: firestoreProfile?.photo || credential.user.photoURL || "",
         };
         localStorage.setItem("tscemUser", JSON.stringify(userProfile));
+        // Also ensure Firestore doc exists for older accounts
+        if (!firestoreProfile) {
+          await createUserProfile(credential.user.uid, userProfile);
+        }
         router.push("/");
       }
     } catch (error) {

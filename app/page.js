@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 import { onAuthStateChanged, signOut } from "firebase/auth";
 import { auth } from "./lib/firebase";
+import { createUserProfile, getUserProfile, updateUserProfile } from "./lib/userService";
 import ModuleCard from "./components/ModuleCard";
 import EcoBotChat from "./components/EcoBotChat";
 import HeroSection from "./components/sections/HeroSection";
@@ -1384,7 +1385,7 @@ export default function DashboardPage() {
       setIsProfileEditing(false);
     }
 
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (!user) {
         localStorage.removeItem("tscemUser");
         setAuthLoading(false);
@@ -1392,10 +1393,25 @@ export default function DashboardPage() {
         return;
       }
 
+      // Fetch full profile from Firestore (has phone, address, about etc.)
+      let firestoreData = null;
+      try { firestoreData = await getUserProfile(user.uid); } catch (_) {}
+
+      // If Firestore doc missing (old account), create it now
+      if (!firestoreData) {
+        const seedProfile = {
+          name: user.displayName || "",
+          email: user.email || "",
+          photo: user.photoURL || "",
+        };
+        try { await createUserProfile(user.uid, seedProfile); } catch (_) {}
+        firestoreData = seedProfile;
+      }
+
       const nextProfile = {
-        name: user.displayName || "",
-        email: user.email || "",
-        photo: user.photoURL || "",
+        name: firestoreData.name || user.displayName || "",
+        email: firestoreData.email || user.email || "",
+        photo: firestoreData.photo || user.photoURL || "",
       };
       localStorage.setItem("tscemUser", JSON.stringify(nextProfile));
       setUserProfile(nextProfile);
@@ -1404,8 +1420,11 @@ export default function DashboardPage() {
       setProfileData((prev) => {
         const merged = {
           ...prev,
-          name: prev.name || nextProfile.name,
-          email: prev.email || nextProfile.email,
+          name: firestoreData.name || prev.name || nextProfile.name,
+          email: firestoreData.email || prev.email || nextProfile.email,
+          phone: firestoreData.phone || prev.phone || "",
+          address: firestoreData.address || prev.address || "",
+          about: firestoreData.about || prev.about || "",
         };
         localStorage.setItem("tscemProfile", JSON.stringify(merged));
         return merged;
@@ -2685,6 +2704,18 @@ export default function DashboardPage() {
     setIsProfileVerifiedOpen(true);
     setTimeout(() => setIsProfileVerifiedOpen(false), 3000);
     closeProfileModal();
+
+    // Persist to Firestore in background
+    const currentUser = auth.currentUser;
+    if (currentUser) {
+      updateUserProfile(currentUser.uid, {
+        name: nextProfile.name || "",
+        email: nextProfile.email || "",
+        phone: nextProfile.phone || "",
+        address: nextProfile.address || "",
+        about: nextProfile.about || "",
+      }).catch((err) => console.error("Profile Firestore save failed:", err));
+    }
   }
 
   function handleOpenHistory() {
