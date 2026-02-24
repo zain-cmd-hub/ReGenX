@@ -3,10 +3,13 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
+  createUserWithEmailAndPassword,
   getRedirectResult,
   onAuthStateChanged,
+  signInWithEmailAndPassword,
   signInWithPopup,
   signInWithRedirect,
+  updateProfile,
 } from "firebase/auth";
 import { auth, googleProvider } from "../lib/firebase";
 
@@ -14,6 +17,10 @@ export default function LoginPage() {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
+  const [isRegister, setIsRegister] = useState(false);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [displayName, setDisplayName] = useState("");
 
   useEffect(() => {
     let isMounted = true;
@@ -81,9 +88,68 @@ export default function LoginPage() {
     }
   }
 
-  function handleLogin(event) {
+  function getFirebaseErrorMessage(code) {
+    switch (code) {
+      case "auth/user-not-found":
+      case "auth/invalid-credential":
+        return "No account found with this email. Please register first.";
+      case "auth/wrong-password":
+        return "Incorrect password. Please try again.";
+      case "auth/email-already-in-use":
+        return "An account already exists with this email. Please sign in.";
+      case "auth/weak-password":
+        return "Password must be at least 6 characters.";
+      case "auth/invalid-email":
+        return "Please enter a valid email address.";
+      case "auth/too-many-requests":
+        return "Too many failed attempts. Please wait a moment and try again.";
+      case "auth/network-request-failed":
+        return "Network error. Please check your connection.";
+      default:
+        return `Authentication error. (${code})`;
+    }
+  }
+
+  async function handleLogin(event) {
     event.preventDefault();
-    setErrorMessage("Use Google sign-in to continue.");
+    setErrorMessage("");
+
+    if (!email.trim() || !password.trim()) {
+      setErrorMessage("Please enter your email and password.");
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      if (isRegister) {
+        // ── Register new user ──────────────────────────────────────────
+        const credential = await createUserWithEmailAndPassword(auth, email.trim(), password);
+        if (displayName.trim()) {
+          await updateProfile(credential.user, { displayName: displayName.trim() });
+        }
+        const userProfile = {
+          name: credential.user.displayName || displayName.trim() || email.split("@")[0],
+          email: credential.user.email || "",
+          photo: credential.user.photoURL || "",
+        };
+        localStorage.setItem("tscemUser", JSON.stringify(userProfile));
+        router.push("/");
+      } else {
+        // ── Sign in existing user ──────────────────────────────────────
+        const credential = await signInWithEmailAndPassword(auth, email.trim(), password);
+        const userProfile = {
+          name: credential.user.displayName || email.split("@")[0],
+          email: credential.user.email || "",
+          photo: credential.user.photoURL || "",
+        };
+        localStorage.setItem("tscemUser", JSON.stringify(userProfile));
+        router.push("/");
+      }
+    } catch (error) {
+      setErrorMessage(getFirebaseErrorMessage(error?.code || "auth/error"));
+    } finally {
+      setIsLoading(false);
+    }
   }
 
   return (
@@ -120,11 +186,31 @@ export default function LoginPage() {
         <div className="login-form-wrapper">
           <div className="login-form-card">
             <div className="form-header">
-              <h3>Welcome Back</h3>
-              <p>Please enter your details to sign in.</p>
+              <h3>{isRegister ? "Create Account" : "Welcome Back"}</h3>
+              <p>
+                {isRegister
+                  ? "Fill in the details below to register."
+                  : "Please enter your details to sign in."}
+              </p>
             </div>
 
-            <form onSubmit={handleLogin}>
+            <form onSubmit={handleLogin} noValidate>
+              {isRegister && (
+                <div className="form-group">
+                  <label htmlFor="displayName">Full Name</label>
+                  <div className="input-icon-wrapper">
+                    <iconify-icon icon="ph:user-bold" />
+                    <input
+                      type="text"
+                      id="displayName"
+                      placeholder="Your name"
+                      value={displayName}
+                      onChange={(e) => setDisplayName(e.target.value)}
+                    />
+                  </div>
+                </div>
+              )}
+
               <div className="form-group">
                 <label htmlFor="email">Email Address</label>
                 <div className="input-icon-wrapper">
@@ -132,9 +218,14 @@ export default function LoginPage() {
                   <input
                     type="email"
                     id="email"
-                    placeholder="dev@example.com"
+                    placeholder="you@example.com"
                     required
-                    defaultValue="dev@example.com"
+                    value={email}
+                    onChange={(e) => {
+                      setEmail(e.target.value);
+                      setErrorMessage("");
+                    }}
+                    autoComplete="email"
                   />
                 </div>
               </div>
@@ -148,24 +239,43 @@ export default function LoginPage() {
                     id="password"
                     placeholder="••••••••"
                     required
-                    defaultValue="password"
+                    value={password}
+                    onChange={(e) => {
+                      setPassword(e.target.value);
+                      setErrorMessage("");
+                    }}
+                    autoComplete={isRegister ? "new-password" : "current-password"}
                   />
                 </div>
               </div>
 
-              <div className="form-row">
-                <label className="checkbox-label">
-                  <input type="checkbox" defaultChecked />
-                  <span>Remember me</span>
-                </label>
-                <a href="#" className="forgot-link">
-                  Forgot password?
-                </a>
-              </div>
+              {!isRegister && (
+                <div className="form-row">
+                  <label className="checkbox-label">
+                    <input type="checkbox" defaultChecked />
+                    <span>Remember me</span>
+                  </label>
+                  <a href="#" className="forgot-link">
+                    Forgot password?
+                  </a>
+                </div>
+              )}
 
-              <button type="submit" className="btn-primary btn-login">
-                <span>Sign In</span>
-                <iconify-icon icon="ph:arrow-right-bold" />
+              <button
+                type="submit"
+                className="btn-primary btn-login"
+                disabled={isLoading}
+              >
+                <span>
+                  {isLoading
+                    ? isRegister
+                      ? "Creating account..."
+                      : "Signing in..."
+                    : isRegister
+                    ? "Create Account"
+                    : "Sign In"}
+                </span>
+                {!isLoading && <iconify-icon icon="ph:arrow-right-bold" />}
               </button>
 
               <button
@@ -175,7 +285,7 @@ export default function LoginPage() {
                 disabled={isLoading}
               >
                 <iconify-icon icon="logos:google-icon" />
-                <span>{isLoading ? "Signing in..." : "Sign in with Google"}</span>
+                <span>{isLoading ? "Please wait..." : "Sign in with Google"}</span>
               </button>
 
               {errorMessage ? (
@@ -183,7 +293,29 @@ export default function LoginPage() {
               ) : null}
 
               <p className="signup-link">
-                Don&apos;t have an account? <a href="#">Create free account</a>
+                {isRegister ? (
+                  <>
+                    Already have an account?{" "}
+                    <button
+                      type="button"
+                      style={{ background: "none", border: "none", color: "inherit", cursor: "pointer", textDecoration: "underline", padding: 0 }}
+                      onClick={() => { setIsRegister(false); setErrorMessage(""); }}
+                    >
+                      Sign in
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    Don&apos;t have an account?{" "}
+                    <button
+                      type="button"
+                      style={{ background: "none", border: "none", color: "inherit", cursor: "pointer", textDecoration: "underline", padding: 0 }}
+                      onClick={() => { setIsRegister(true); setErrorMessage(""); }}
+                    >
+                      Create free account
+                    </button>
+                  </>
+                )}
               </p>
             </form>
           </div>
