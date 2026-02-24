@@ -1923,6 +1923,97 @@ export default function DashboardPage() {
         wasteKg: purpose === "recycle" ? Number(materialWeight || 0) : 0,
       };
 
+      // ── Gemini AI Enhancement ────────────────────────────────────────
+      // Tries to enrich the local estimate with real computer-vision analysis.
+      // Falls back gracefully to the local result on any error / timeout.
+      try {
+        const aiController = new AbortController();
+        const aiTimer = setTimeout(() => aiController.abort(), 15000);
+        const aiResp = await fetch("/api/analyze-product", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            imageBase64: productImage,
+            mimeType: productFile?.type || "image/jpeg",
+          }),
+          signal: aiController.signal,
+        });
+        clearTimeout(aiTimer);
+        if (aiResp.ok) {
+          const aiData = await aiResp.json();
+          if (aiData && !aiData.error) {
+            // Map Gemini condition → app condition labels
+            const rawCond = (aiData.condition || "").toLowerCase();
+            const mappedCondition =
+              rawCond === "new" || rawCond === "good"
+                ? "Good"
+                : rawCond === "used"
+                ? "Medium"
+                : rawCond === "damaged"
+                ? "Poor"
+                : result.condition;
+
+            // Map Gemini bestAction → internal action key
+            const rawAction = (aiData.bestAction || "").toLowerCase();
+            const mappedAction =
+              rawAction.includes("sell")
+                ? "sell"
+                : rawAction.includes("repair") || rawAction.includes("buy")
+                ? "repair"
+                : rawAction.includes("recycle")
+                ? "recycle"
+                : result.aiSuggestionAction;
+
+            const geminiBestPrice =
+              mappedAction === "sell"
+                ? `₹${aiData.sellPrice}`
+                : mappedAction === "repair"
+                ? `₹${aiData.repairCost}`
+                : mappedAction === "recycle"
+                ? `₹${aiData.recycleValue}`
+                : result.aiPriceEstimate;
+
+            // Merge AI-enhanced fields into result
+            result.condition = mappedCondition;
+            result.sellPrice = aiData.sellPrice || result.sellPrice;
+            result.price = aiData.sellPrice || result.price;
+            result.repairCost = aiData.repairCost || result.repairCost;
+            result.recyclingValue = aiData.recycleValue || result.recyclingValue;
+            result.aiSuggestion = aiData.reason || result.aiSuggestion;
+            result.aiSuggestionAction = mappedAction || result.aiSuggestionAction;
+            result.aiPriceEstimate = geminiBestPrice;
+            result.aiSource = "gemini";
+
+            // Mirror updates into the history entry
+            historyEntry.condition = result.condition;
+            historyEntry.sellPrice = result.sellPrice;
+            historyEntry.repairCost = result.repairCost;
+            historyEntry.recycleValue = result.recyclingValue;
+            historyEntry.price =
+              purpose === "repair"
+                ? result.repairCost
+                : purpose === "recycle"
+                ? result.recyclingValue
+                : result.sellPrice;
+            historyEntry.aiSuggestion = result.aiSuggestion;
+            historyEntry.aiSuggestionAction = result.aiSuggestionAction;
+            historyEntry.aiPriceEstimate = result.aiPriceEstimate;
+            historyEntry.aiSource = "gemini";
+            historyEntry.digitalTwinData.condition = result.condition;
+            historyEntry.digitalTwinData.suggestion = result.aiSuggestion;
+
+            console.log("[Gemini] AI analysis merged:", aiData);
+          }
+        }
+      } catch (aiErr) {
+        if (aiErr.name === "AbortError") {
+          console.warn("[Gemini] AI call timed out after 15 s — using local result.");
+        } else {
+          console.warn("[Gemini] AI call failed — using local result:", aiErr.message);
+        }
+      }
+      // ── End Gemini AI Enhancement ────────────────────────────────────
+
       cache[cacheKey] = result;
       writeImageCache(cache);
 
