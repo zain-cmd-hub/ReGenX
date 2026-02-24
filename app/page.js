@@ -6,6 +6,7 @@ import dynamic from "next/dynamic";
 import { onAuthStateChanged, signOut } from "firebase/auth";
 import { auth } from "./lib/firebase";
 import ModuleCard from "./components/ModuleCard";
+import EcoBotChat from "./components/EcoBotChat";
 import HeroSection from "./components/sections/HeroSection";
 import HowItWorksSection from "./components/sections/HowItWorksSection";
 import CoreFeaturesSection from "./components/sections/CoreFeaturesSection";
@@ -3592,6 +3593,9 @@ export default function DashboardPage() {
           <p className="verified-message">{t.profile.verifiedPopup}</p>
         </div>
       </div>
+
+      {/* ── EcoBot floating chat widget ── */}
+      <EcoBotChat theme={theme} />
 
       {isAnalyzing ? (
         <div className="analyze-overlay" role="status" aria-live="polite">
