@@ -3,13 +3,13 @@ import { getAuth, GoogleAuthProvider } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyC6I6ixbviQwK0o-_q1gAJOBAykSHdmndo",
-  authDomain: "tscem-bdaaa.firebaseapp.com",
-  projectId: "tscem-bdaaa",
-  storageBucket: "tscem-bdaaa.firebasestorage.app",
-  messagingSenderId: "762520161822",
-  appId: "1:762520161822:web:6d4cd3d6bb7f6ef6f3280f",
-  measurementId: "G-Y19P4Y13LP",
+  apiKey: "AIzaSyBlMsTDl731iaAc-1ms_jS22d-TV_Ted1M",
+  authDomain: "regenx-f1133.firebaseapp.com",
+  projectId: "regenx-f1133",
+  storageBucket: "regenx-f1133.firebasestorage.app",
+  messagingSenderId: "1056638149366",
+  appId: "1:1056638149366:web:d13902458cb050e47902d7",
+  measurementId: "G-7HF2GN4DKC",
 };
 
 const app = getApps().length ? getApps()[0] : initializeApp(firebaseConfig);

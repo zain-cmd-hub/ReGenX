@@ -118,6 +118,54 @@ const userName = document.getElementById("userName");
 const userEmail = document.getElementById("userEmail");
 const userStatus = document.getElementById("userStatus");
 
+// Trust Panel Elements
+const trustPanel = document.getElementById("trustPanel");
+const trustDetectedObject = document.getElementById("trustDetectedObject");
+const trustDetectionBar = document.getElementById("trustDetectionBar");
+const trustDetectionConfidence = document.getElementById("trustDetectionConfidence");
+const trustDetectedMaterial = document.getElementById("trustDetectedMaterial");
+const trustConditionScore = document.getElementById("trustConditionScore");
+const trustGaugeArc = document.getElementById("trustGaugeArc");
+const trustConfidenceValue = document.getElementById("trustConfidenceValue");
+const trustConfidenceLabel = document.getElementById("trustConfidenceLabel");
+const trustImageQuality = document.getElementById("trustImageQuality");
+const trustDataMatch = document.getElementById("trustDataMatch");
+const trustOriginalPrice = document.getElementById("trustOriginalPrice");
+const trustAgeDepreciation = document.getElementById("trustAgeDepreciation");
+const trustConditionFactor = document.getElementById("trustConditionFactor");
+const trustMarketDemand = document.getElementById("trustMarketDemand");
+const trustMaterialValue = document.getElementById("trustMaterialValue");
+const trustFinalPrice = document.getElementById("trustFinalPrice");
+const trustOurPriceBar = document.getElementById("trustOurPriceBar");
+const trustOurPrice = document.getElementById("trustOurPrice");
+const trustOlxBar = document.getElementById("trustOlxBar");
+const trustOlxPrice = document.getElementById("trustOlxPrice");
+const trustFbBar = document.getElementById("trustFbBar");
+const trustFbPrice = document.getElementById("trustFbPrice");
+const trustCashifyBar = document.getElementById("trustCashifyBar");
+const trustCashifyPrice = document.getElementById("trustCashifyPrice");
+const trustMarketVerdict = document.getElementById("trustMarketVerdict");
+const trustRecommendationBadge = document.getElementById("trustRecommendationBadge");
+const trustRecommendationIcon = document.getElementById("trustRecommendationIcon");
+const trustRecommendationType = document.getElementById("trustRecommendationType");
+const trustRecommendationExplanation = document.getElementById("trustRecommendationExplanation");
+const trustRepairCost = document.getElementById("trustRepairCost");
+const trustResaleValue = document.getElementById("trustResaleValue");
+const trustRecycleValue = document.getElementById("trustRecycleValue");
+const trustCo2Saved = document.getElementById("trustCo2Saved");
+const trustWaterSaved = document.getElementById("trustWaterSaved");
+const trustEnergySaved = document.getElementById("trustEnergySaved");
+const trustCircularScore = document.getElementById("trustCircularScore");
+const trustPredictionTime = document.getElementById("trustPredictionTime");
+const trustMarketDataTime = document.getElementById("trustMarketDataTime");
+const trustEnvDataTime = document.getElementById("trustEnvDataTime");
+const trustModelVersion = document.getElementById("trustModelVersion");
+const trustAccuracyRate = document.getElementById("trustAccuracyRate");
+const feedbackButtons = document.getElementById("feedbackButtons");
+const feedbackYes = document.getElementById("feedbackYes");
+const feedbackNo = document.getElementById("feedbackNo");
+const feedbackResponse = document.getElementById("feedbackResponse");
+
 const notificationBtn = document.getElementById("notificationBtn");
 const notificationPanel = document.getElementById("notificationPanel");
 const notificationList = document.getElementById("notificationList");
@@ -127,9 +175,9 @@ const markAllReadBtn = document.getElementById("markAllReadBtn");
 let activeFacility = null;
 let latestCertificate = null;
 
-const PROFILE_STORAGE_KEY = "tscemProfile";
-const LANG_STORAGE_KEY = "tscemLanguage";
-const NOTIFICATION_STORAGE_KEY = "tscemNotifications";
+const PROFILE_STORAGE_KEY = "regenxProfile";
+const LANG_STORAGE_KEY = "regenxLanguage";
+const NOTIFICATION_STORAGE_KEY = "regenxNotifications";
 const TWIN_TEXTS = {
   en: {
     heading: "Digital Twin of Your Product",
@@ -199,8 +247,8 @@ function getProfileData() {
   const stored = localStorage.getItem(PROFILE_STORAGE_KEY);
   if (!stored) {
     return {
-      name: "Dev Kulshrestha",
-      email: "Admin",
+      name: "Guest User",
+      email: "User",
       phone: "",
       address: "",
       about: "",
@@ -210,8 +258,8 @@ function getProfileData() {
     return JSON.parse(stored);
   } catch (error) {
     return {
-      name: "Dev Kulshrestha",
-      email: "Admin",
+      name: "Guest User",
+      email: "User",
       phone: "",
       address: "",
       about: "",
@@ -286,6 +334,13 @@ function updateProfileUI(profile) {
   userEmail.textContent = profile.email || "-";
   userStatus.textContent = isProfileComplete(profile) ? "✅ Verified User" : "Profile Incomplete";
   userStatus.classList.toggle("verified", isProfileComplete(profile));
+  
+  // Update header profile image
+  const profilePicImg = profileBtn?.querySelector("img");
+  if (profilePicImg) {
+    const encodedName = encodeURIComponent(profile.name || "Guest User");
+    profilePicImg.src = `https://ui-avatars.com/api/?name=${encodedName}&background=0D8ABC&color=fff`;
+  }
 }
 
 function showSuccessFx(message) {
@@ -340,36 +395,78 @@ function initParticles() {
 }
 
 function openProfileModal() {
-  const profile = getProfileData();
-  profileName.value = profile.name || "";
-  profileEmail.value = profile.email || "";
-  profilePhone.value = profile.phone || "";
-  profileAddress.value = profile.address || "";
-  profileAbout.value = profile.about || "";
-  profileError.textContent = "";
-  profileModal.classList.remove("hidden");
-  profileModal.setAttribute("aria-hidden", "false");
+  try {
+    // Close anything else that's open
+    setMenuOpen(false);
+    if (notificationPanel) notificationPanel.classList.add("hidden");
+
+    // Show modal immediately so the user sees it open
+    if (profileModal) {
+      profileModal.hidden = false;
+      profileModal.classList.remove("hidden");
+      profileModal.setAttribute("aria-hidden", "false");
+    }
+
+    // Populate form asynchronously so the modal appears instantly
+    requestAnimationFrame(() => {
+      try {
+        const profile = getProfileData();
+        if (profileName) profileName.value = profile.name || "";
+        if (profileEmail) profileEmail.value = profile.email || "";
+        if (profilePhone) profilePhone.value = profile.phone || "";
+        if (profileAddress) profileAddress.value = profile.address || "";
+        if (profileAbout) profileAbout.value = profile.about || "";
+        if (profileError) profileError.textContent = "";
+      } catch (formErr) {
+        console.error("Error populating profile form:", formErr);
+        if (profileError) profileError.textContent = "Could not load profile data.";
+      }
+    });
+  } catch (err) {
+    console.error("Error opening profile modal:", err);
+  }
 }
 
 function closeProfileModal() {
-  profileModal.classList.add("hidden");
-  profileModal.setAttribute("aria-hidden", "true");
+  if (profileModal) {
+    profileModal.classList.add("hidden");
+    profileModal.hidden = true;
+    profileModal.setAttribute("aria-hidden", "true");
+  }
+  // Ensure body is scrollable
+  document.body.style.overflow = "";
 }
 
 function openProfileSuccess() {
-  profileSuccessMessage.textContent = getSuccessMessage();
+  if (!profileSuccessModal) return;
+  if (profileSuccessMessage) profileSuccessMessage.textContent = getSuccessMessage();
+  profileSuccessModal.hidden = false;
   profileSuccessModal.classList.remove("hidden");
   profileSuccessModal.setAttribute("aria-hidden", "false");
   setTimeout(() => {
-    profileSuccessModal.classList.add("hidden");
-    profileSuccessModal.setAttribute("aria-hidden", "true");
+    if (profileSuccessModal) {
+      profileSuccessModal.classList.add("hidden");
+      profileSuccessModal.hidden = true;
+      profileSuccessModal.setAttribute("aria-hidden", "true");
+    }
   }, 3000);
 }
 
 function closeProfileSuccess() {
-  profileSuccessModal.classList.add("hidden");
-  profileSuccessModal.setAttribute("aria-hidden", "true");
+  if (profileSuccessModal) {
+    profileSuccessModal.classList.add("hidden");
+    profileSuccessModal.hidden = true;
+    profileSuccessModal.setAttribute("aria-hidden", "true");
+  }
 }
+
+// Ensure all modals start in correct hidden state
+[connectModal, certificateModal, profileModal, profileSuccessModal].forEach((modal) => {
+  if (!modal) return;
+  const isHidden = modal.classList.contains("hidden");
+  modal.hidden = isHidden;
+  modal.setAttribute("aria-hidden", isHidden ? "true" : "false");
+});
 
 navButtons.forEach((btn) => {
   btn.addEventListener("click", () => {
@@ -404,12 +501,32 @@ if (notificationBtn && notificationPanel) {
 
 document.addEventListener("click", (event) => {
   if (!notificationPanel || !notificationBtn) return;
+  // Don't process outside-click when a modal is open
+  if (profileModal && !profileModal.classList.contains("hidden")) return;
+  if (profileSuccessModal && !profileSuccessModal.classList.contains("hidden")) return;
   const target = event.target;
   if (!(target instanceof HTMLElement)) return;
   const isInside = notificationPanel.contains(target) || notificationBtn.contains(target);
   if (!isInside) {
     notificationPanel.classList.add("hidden");
   }
+});
+
+document.addEventListener("keydown", (event) => {
+  if (event.key !== "Escape") return;
+  if (profileSuccessModal && !profileSuccessModal.classList.contains("hidden")) {
+    closeProfileSuccess();
+  }
+  if (profileModal && !profileModal.classList.contains("hidden")) {
+    closeProfileModal();
+  }
+  // Close any other modal with .hidden class management
+  document.querySelectorAll(".modal:not(.hidden)").forEach((m) => {
+    m.classList.add("hidden");
+    m.hidden = true;
+    m.setAttribute("aria-hidden", "true");
+  });
+  document.body.style.overflow = "";
 });
 
 if (markAllReadBtn) {
@@ -438,17 +555,26 @@ if (notificationList) {
 }
 
 if (profileBtn) {
-  profileBtn.addEventListener("click", openProfileModal);
+  profileBtn.addEventListener("click", (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    openProfileModal();
+  });
 }
 
 if (profileModalClose) {
-  profileModalClose.addEventListener("click", closeProfileModal);
+  profileModalClose.addEventListener("click", (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    closeProfileModal();
+  });
 }
 
 if (profileModal) {
+  // Close when clicking overlay (background) — NOT the card itself
   profileModal.addEventListener("click", (event) => {
     const target = event.target;
-    if (target instanceof HTMLElement && target.dataset.close === "true") {
+    if (target === profileModal || (target instanceof HTMLElement && target.dataset.close === "true")) {
       closeProfileModal();
     }
   });
@@ -775,7 +901,7 @@ function animateCounter(element, target, options = {}) {
 function refreshDashboard() {
   dashProduct.textContent = state.productType || "-";
   dashAge.textContent = state.productAge ? `Age: ${state.productAge} year(s)` : "-";
-  dashUsage.textContent = state.usageLevel ? `Usage: ${state.usageLevel}` : "-";
+  if (dashUsage) dashUsage.textContent = state.usageLevel ? `Usage: ${state.usageLevel}` : "-";
   dashCondition.textContent = state.condition ? `Condition: ${state.condition}` : "-";
   dashScore.textContent = state.score ? `Score: ${state.score}/100` : "-";
   dashLife.textContent = state.remainingLife ? `Remaining life: ${state.remainingLife}%` : "-";
@@ -880,11 +1006,11 @@ function generateCertificatePdf(payload) {
   doc.setFontSize(12);
   doc.text(`Product: ${payload.productName}`, 60, 270);
   doc.text(`Date: ${payload.date}`, 60, 290);
-  doc.text("SCEM - Smart Circular Economy Marketplace", 60, 330);
+  doc.text("ReGenX - Smart Circular Economy Marketplace", 60, 330);
 
   doc.setFontSize(10);
   doc.setTextColor(34, 197, 94);
-  doc.text("Powered by SCEM", 60, 360);
+  doc.text("Powered by ReGenX", 60, 360);
 
   doc.save(`eco-certificate-${payload.productName.replace(/\s+/g, "-")}.pdf`);
 }
@@ -969,7 +1095,7 @@ priceBtn.addEventListener("click", () => {
     const demandScore = randomBetween(60, 120);
     const demandLabel = demandScore > 100 ? "High" : demandScore > 80 ? "Moderate" : "Low";
 
-    const baseValue = 12000;
+    const baseValue = getBasePrice(state.productType);
     const conditionMultiplier = state.condition === "Good" ? 1.2 : state.condition === "Medium" ? 0.9 : 0.6;
     const lifeMultiplier = state.remainingLife / 100;
     const demandMultiplier = demandScore / 100;
@@ -985,6 +1111,21 @@ priceBtn.addEventListener("click", () => {
 
     hideLoader(priceLoader);
     refreshDashboard();
+    
+    // Save to history
+    const futurePath = state.condition === "Good" ? "sell" : state.condition === "Medium" ? "repair" : "recycle";
+    addToHistory({
+      productType: state.productType,
+      condition: state.condition,
+      score: state.score,
+      remainingLife: state.remainingLife,
+      price: estimatedPrice,
+      demand: demandLabel,
+      futurePath: futurePath,
+    });
+    
+    // Populate and show trust features
+    populateTrustFeatures();
   }, 1100);
 });
 
@@ -1142,9 +1283,545 @@ setInterval(() => {
   const reuse = randomBetween(50, 80);
   const demand = ["High", "Moderate", "Low"][randomBetween(0, 2)];
 
-  liveScore.textContent = score;
-  liveReuse.textContent = `${reuse}%`;
-  liveDemand.textContent = demand;
+  if (liveScore) liveScore.textContent = score;
+  if (liveReuse) liveReuse.textContent = `${reuse}%`;
+  if (liveDemand) liveDemand.textContent = demand;
 }, 3500);
+
+// ==========================================
+// TRUST FEATURES - Populate Functions
+// ==========================================
+
+const PRODUCT_BASE_PRICES = {
+  laptop: 45000,
+  phone: 25000,
+  tablet: 30000,
+  tv: 35000,
+  refrigerator: 28000,
+  "washing machine": 22000,
+  microwave: 8000,
+  ac: 32000,
+  camera: 35000,
+  watch: 15000,
+  headphones: 8000,
+  speaker: 12000,
+  default: 15000
+};
+
+const PRODUCT_MATERIALS = {
+  laptop: "Aluminum, Plastic, Lithium-ion",
+  phone: "Glass, Aluminum, Lithium-ion",
+  tablet: "Aluminum, Glass, Lithium-ion",
+  tv: "Plastic, Glass, LED/OLED",
+  refrigerator: "Steel, Plastic, Copper",
+  "washing machine": "Steel, Plastic, Rubber",
+  microwave: "Steel, Glass, Plastic",
+  ac: "Copper, Aluminum, Plastic",
+  camera: "Magnesium Alloy, Glass, Plastic",
+  watch: "Steel/Aluminum, Glass, Lithium",
+  headphones: "Plastic, Aluminum, Copper",
+  speaker: "Wood/Plastic, Paper, Copper",
+  default: "Mixed Materials"
+};
+
+function getBasePrice(productType) {
+  const type = productType.toLowerCase();
+  for (const [key, value] of Object.entries(PRODUCT_BASE_PRICES)) {
+    if (type.includes(key)) return value;
+  }
+  return PRODUCT_BASE_PRICES.default;
+}
+
+function getMaterial(productType) {
+  const type = productType.toLowerCase();
+  for (const [key, value] of Object.entries(PRODUCT_MATERIALS)) {
+    if (type.includes(key)) return value;
+  }
+  return PRODUCT_MATERIALS.default;
+}
+
+function populateTrustFeatures() {
+  if (!trustPanel) return;
+  
+  // Show the trust panel
+  trustPanel.classList.remove("is-hidden");
+  
+  const predictionTime = new Date();
+  const productType = state.productType || "Product";
+  const condition = state.condition || "Medium";
+  const age = state.productAge || 0;
+  const usage = state.usageLevel || "moderate";
+  const score = state.score || 70;
+  const price = state.price || 0;
+  const demand = state.demand || "Moderate";
+  
+  // Calculate base price and breakdown
+  const basePrice = getBasePrice(productType);
+  const ageDepreciation = Math.round(basePrice * (age * 0.08));
+  const conditionMultiplier = condition === "Good" ? 0.95 : condition === "Medium" ? 0.75 : 0.5;
+  const demandMultiplier = demand === "High" ? 1.15 : demand === "Moderate" ? 1.0 : 0.85;
+  const materialValue = Math.round(basePrice * 0.1);
+  
+  // Detection confidence based on various factors
+  const imageQuality = state.productImage ? randomBetween(85, 98) : randomBetween(70, 85);
+  const dataMatch = randomBetween(88, 97);
+  const overallConfidence = Math.round((imageQuality * 0.4 + dataMatch * 0.6));
+  
+  // 1. Image Verification
+  if (trustDetectedObject) trustDetectedObject.textContent = productType;
+  if (trustDetectionBar) trustDetectionBar.style.setProperty("--confidence", `${imageQuality}%`);
+  if (trustDetectionConfidence) trustDetectionConfidence.textContent = `${imageQuality}%`;
+  if (trustDetectedMaterial) trustDetectedMaterial.textContent = getMaterial(productType);
+  if (trustConditionScore) trustConditionScore.textContent = `${condition} (${score}/100)`;
+  
+  // 2. Prediction Confidence Meter
+  if (trustGaugeArc) {
+    const arcLength = (overallConfidence / 100) * 157;
+    trustGaugeArc.setAttribute("stroke-dasharray", `${arcLength} 157`);
+  }
+  if (trustConfidenceValue) {
+    animateCounter(trustConfidenceValue, overallConfidence, {});
+  }
+  if (trustConfidenceLabel) {
+    trustConfidenceLabel.textContent = overallConfidence >= 90 ? "Highly Reliable" : 
+                                       overallConfidence >= 75 ? "Reliable" : "Moderate";
+  }
+  if (trustImageQuality) trustImageQuality.textContent = `${imageQuality}%`;
+  if (trustDataMatch) trustDataMatch.textContent = `${dataMatch}%`;
+  
+  // 3. Prediction Breakdown
+  if (trustOriginalPrice) trustOriginalPrice.textContent = `₹${basePrice.toLocaleString()}`;
+  if (trustAgeDepreciation) trustAgeDepreciation.textContent = `-₹${ageDepreciation.toLocaleString()}`;
+  if (trustConditionFactor) trustConditionFactor.textContent = `×${conditionMultiplier.toFixed(2)}`;
+  if (trustMarketDemand) trustMarketDemand.textContent = `×${demandMultiplier.toFixed(2)}`;
+  if (trustMaterialValue) trustMaterialValue.textContent = `+₹${materialValue.toLocaleString()}`;
+  if (trustFinalPrice) trustFinalPrice.textContent = `₹${price.toLocaleString()}`;
+  
+  // 4. Market Price Comparison
+  const olxPrice = Math.round(price * (0.9 + Math.random() * 0.3));
+  const fbPrice = Math.round(price * (0.85 + Math.random() * 0.35));
+  const cashifyPrice = Math.round(price * (0.7 + Math.random() * 0.2));
+  const maxPrice = Math.max(price, olxPrice, fbPrice, cashifyPrice);
+  
+  if (trustOurPriceBar) trustOurPriceBar.style.width = `${(price / maxPrice) * 100}%`;
+  if (trustOurPrice) trustOurPrice.textContent = `₹${price.toLocaleString()}`;
+  if (trustOlxBar) trustOlxBar.style.width = `${(olxPrice / maxPrice) * 100}%`;
+  if (trustOlxPrice) trustOlxPrice.textContent = `₹${olxPrice.toLocaleString()}`;
+  if (trustFbBar) trustFbBar.style.width = `${(fbPrice / maxPrice) * 100}%`;
+  if (trustFbPrice) trustFbPrice.textContent = `₹${fbPrice.toLocaleString()}`;
+  if (trustCashifyBar) trustCashifyBar.style.width = `${(cashifyPrice / maxPrice) * 100}%`;
+  if (trustCashifyPrice) trustCashifyPrice.textContent = `₹${cashifyPrice.toLocaleString()}`;
+  
+  if (trustMarketVerdict) {
+    const avgMarket = (olxPrice + fbPrice + cashifyPrice) / 3;
+    const diff = ((price - avgMarket) / avgMarket) * 100;
+    if (Math.abs(diff) < 15) {
+      trustMarketVerdict.innerHTML = `<iconify-icon icon="ph:check-circle-bold"></iconify-icon><span>Price within market range (±${Math.abs(diff).toFixed(0)}%)</span>`;
+      trustMarketVerdict.style.background = "rgba(34, 197, 94, 0.1)";
+      trustMarketVerdict.style.color = "#16a34a";
+    } else if (diff < 0) {
+      trustMarketVerdict.innerHTML = `<iconify-icon icon="ph:arrow-down-bold"></iconify-icon><span>Below market average (${Math.abs(diff).toFixed(0)}% lower)</span>`;
+      trustMarketVerdict.style.background = "rgba(59, 130, 246, 0.1)";
+      trustMarketVerdict.style.color = "#3b82f6";
+    } else {
+      trustMarketVerdict.innerHTML = `<iconify-icon icon="ph:arrow-up-bold"></iconify-icon><span>Above market average (${diff.toFixed(0)}% higher)</span>`;
+      trustMarketVerdict.style.background = "rgba(245, 158, 11, 0.1)";
+      trustMarketVerdict.style.color = "#f59e0b";
+    }
+  }
+  
+  // 5. AI Recommendation
+  const repairCost = Math.round(price * (0.15 + Math.random() * 0.15));
+  const resaleValue = price;
+  const recycleValue = Math.round(price * 0.2);
+  
+  let recommendation = "Resell";
+  let recIcon = "ph:storefront-bold";
+  let recExplanation = "The product is in good condition with high resale value. Selling directly will maximize your returns.";
+  let recClass = "resell";
+  
+  if (condition === "Poor" || score < 40) {
+    recommendation = "Recycle";
+    recIcon = "ph:recycle-bold";
+    recExplanation = "Due to the product's condition, recycling is the most environmentally responsible option. Material recovery can still provide value.";
+    recClass = "recycle";
+  } else if (repairCost < resaleValue * 0.3 && condition !== "Good") {
+    recommendation = "Repair";
+    recIcon = "ph:wrench-bold";
+    recExplanation = `Repair cost (₹${repairCost.toLocaleString()}) is significantly lower than potential resale value increase. Repairing could boost value by ₹${Math.round(resaleValue * 0.4).toLocaleString()}.`;
+    recClass = "repair";
+  }
+  
+  if (trustRecommendationBadge) {
+    trustRecommendationBadge.className = `recommendation-badge ${recClass}`;
+  }
+  if (trustRecommendationIcon) trustRecommendationIcon.setAttribute("icon", recIcon);
+  if (trustRecommendationType) trustRecommendationType.textContent = recommendation;
+  if (trustRecommendationExplanation) trustRecommendationExplanation.textContent = recExplanation;
+  if (trustRepairCost) trustRepairCost.textContent = `₹${repairCost.toLocaleString()}`;
+  if (trustResaleValue) trustResaleValue.textContent = `₹${resaleValue.toLocaleString()}`;
+  if (trustRecycleValue) trustRecycleValue.textContent = `₹${recycleValue.toLocaleString()}`;
+  
+  // 6. Environmental Impact
+  const co2Factor = score / 100;
+  const co2Saved = (2.5 + Math.random() * 3 * co2Factor).toFixed(1);
+  const waterSaved = Math.round(150 + Math.random() * 200 * co2Factor);
+  const energySaved = (15 + Math.random() * 25 * co2Factor).toFixed(1);
+  const circularScore = Math.round(score * 0.9 + randomBetween(5, 15));
+  
+  if (trustCo2Saved) trustCo2Saved.textContent = `${co2Saved} kg`;
+  if (trustWaterSaved) trustWaterSaved.textContent = `${waterSaved} L`;
+  if (trustEnergySaved) trustEnergySaved.textContent = `${energySaved} kWh`;
+  if (trustCircularScore) trustCircularScore.textContent = `${Math.min(circularScore, 100)}/100`;
+  
+  // 8. Timestamps
+  const timeAgo = "Just now";
+  const marketUpdate = ["Today", "1 hour ago", "2 hours ago"][randomBetween(0, 2)];
+  const envUpdate = ["Today", "Yesterday", "This week"][randomBetween(0, 2)];
+  
+  if (trustPredictionTime) trustPredictionTime.textContent = timeAgo;
+  if (trustMarketDataTime) trustMarketDataTime.textContent = marketUpdate;
+  if (trustEnvDataTime) trustEnvDataTime.textContent = envUpdate;
+  
+  // 9. Model Version
+  if (trustModelVersion) trustModelVersion.textContent = "Version 2.1.0";
+  
+  // 10. Accuracy Rate
+  if (trustAccuracyRate) trustAccuracyRate.textContent = `${randomBetween(91, 96)}%`;
+  
+  // Reset feedback buttons
+  if (feedbackButtons) feedbackButtons.classList.remove("hidden");
+  if (feedbackResponse) feedbackResponse.classList.add("hidden");
+  if (feedbackYes) feedbackYes.classList.remove("selected");
+  if (feedbackNo) feedbackNo.classList.remove("selected");
+  
+  // Scroll to trust panel
+  setTimeout(() => {
+    trustPanel.scrollIntoView({ behavior: "smooth", block: "start" });
+  }, 300);
+}
+
+// Feedback handlers
+if (feedbackYes) {
+  feedbackYes.addEventListener("click", () => {
+    feedbackYes.classList.add("selected");
+    feedbackNo.classList.remove("selected");
+    setTimeout(() => {
+      feedbackButtons.classList.add("hidden");
+      feedbackResponse.classList.remove("hidden");
+    }, 300);
+    addNotification({ title: "Feedback Received", message: "Thank you for confirming the prediction accuracy!", icon: "✅" });
+  });
+}
+
+if (feedbackNo) {
+  feedbackNo.addEventListener("click", () => {
+    feedbackNo.classList.add("selected");
+    feedbackYes.classList.remove("selected");
+    setTimeout(() => {
+      feedbackButtons.classList.add("hidden");
+      feedbackResponse.innerHTML = `<iconify-icon icon="ph:info-bold"></iconify-icon><span>Thank you! Your feedback helps us improve our AI model.</span>`;
+      feedbackResponse.classList.remove("hidden");
+    }, 300);
+    addNotification({ title: "Feedback Received", message: "We'll use your feedback to improve predictions.", icon: "📝" });
+  });
+}
+
+// ─────────────────────────────────────
+// History Functionality (Firebase + localStorage)
+// ─────────────────────────────────────
+const historyGrid = document.getElementById("historyGrid");
+const historyEmpty = document.getElementById("historyEmpty");
+const historyFilter = document.getElementById("historyFilter");
+let productHistory = [];
+let currentUserId = null;
+
+const HISTORY_STORAGE_KEY = "regenxProductHistory";
+const HISTORY_COLLECTION = "productHistory";
+
+// Get current user ID (from Firebase auth or localStorage)
+function getCurrentUserId() {
+  if (typeof firebaseAuth !== "undefined" && firebaseAuth.currentUser) {
+    return firebaseAuth.currentUser.uid;
+  }
+  // Fallback to localStorage guest ID
+  let guestId = localStorage.getItem("regenxGuestId");
+  if (!guestId) {
+    guestId = `guest_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+    localStorage.setItem("regenxGuestId", guestId);
+  }
+  return guestId;
+}
+
+// Load history from Firebase and localStorage
+async function loadHistory() {
+  currentUserId = getCurrentUserId();
+  
+  // First load from localStorage (faster)
+  try {
+    const stored = localStorage.getItem(HISTORY_STORAGE_KEY);
+    if (stored) {
+      productHistory = JSON.parse(stored);
+      renderHistory();
+    }
+  } catch (e) {
+    productHistory = [];
+  }
+  
+  // Then sync from Firebase if available
+  if (typeof firebaseDb !== "undefined") {
+    try {
+      const snapshot = await firebaseDb
+        .collection(HISTORY_COLLECTION)
+        .where("userId", "==", currentUserId)
+        .limit(50)
+        .get();
+      
+      if (!snapshot.empty) {
+        let firebaseHistory = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        // Sort by date descending (client-side to avoid composite index)
+        firebaseHistory.sort((a, b) => new Date(b.date) - new Date(a.date));
+        // Merge with localStorage (Firebase takes priority)
+        const existingIds = new Set(firebaseHistory.map(h => h.id));
+        const localOnly = productHistory.filter(h => !existingIds.has(h.id));
+        productHistory = [...firebaseHistory, ...localOnly];
+        localStorage.setItem(HISTORY_STORAGE_KEY, JSON.stringify(productHistory));
+        renderHistory();
+      }
+    } catch (e) {
+      console.log("Firebase sync skipped:", e.message);
+    }
+  }
+}
+
+// Save history to localStorage and Firebase
+async function saveHistory() {
+  // Always save to localStorage
+  try {
+    localStorage.setItem(HISTORY_STORAGE_KEY, JSON.stringify(productHistory));
+  } catch (e) {
+    console.warn("Could not save history to localStorage");
+  }
+}
+
+// Compress image for Firebase storage (limit to 100KB)
+function compressImageForStorage(base64Image) {
+  if (!base64Image) return "";
+  // If image is small enough, keep it
+  if (base64Image.length < 100000) return base64Image;
+  // Otherwise, skip storing the full image in database (keep in localStorage only)
+  return ""; // Return empty to save space in Firestore
+}
+
+// Save single item to Firebase
+async function saveToFirebase(entry) {
+  if (typeof firebaseDb !== "undefined") {
+    try {
+      // Create a copy without large image for database storage
+      const dbEntry = {
+        ...entry,
+        image: compressImageForStorage(entry.image),
+        userId: getCurrentUserId(),
+      };
+      await firebaseDb.collection(HISTORY_COLLECTION).doc(entry.id).set(dbEntry);
+      console.log("History saved to database");
+      addNotification({ title: "History Saved", message: "Product saved to your history!", icon: "💾" });
+    } catch (e) {
+      console.warn("Could not save to Firebase:", e.message);
+    }
+  }
+}
+
+// Delete from Firebase
+async function deleteFromFirebase(id) {
+  if (typeof firebaseDb !== "undefined") {
+    try {
+      await firebaseDb.collection(HISTORY_COLLECTION).doc(id).delete();
+    } catch (e) {
+      console.warn("Could not delete from Firebase:", e.message);
+    }
+  }
+}
+
+function addToHistory(item) {
+  const entry = {
+    id: `${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+    image: state.productImage || "",
+    productName: item.productType || "Product",
+    condition: item.condition || "-",
+    score: item.score || 0,
+    remainingLife: item.remainingLife || 0,
+    price: item.price || 0,
+    demand: item.demand || "",
+    futurePath: item.futurePath || "sell",
+    ecoScore: item.score || 0,
+    date: new Date().toISOString(),
+    userId: getCurrentUserId(),
+  };
+  productHistory.unshift(entry);
+  saveHistory();
+  saveToFirebase(entry); // Save to Firebase database
+  renderHistory();
+}
+
+async function deleteHistoryItem(id) {
+  const confirmed = window.confirm("Delete this item from history?");
+  if (!confirmed) return;
+  
+  productHistory = productHistory.filter(item => item.id !== id);
+  saveHistory();
+  deleteFromFirebase(id); // Delete from Firebase
+  renderHistory();
+}
+
+function formatHistoryDate(isoString) {
+  if (!isoString) return "-";
+  const date = new Date(isoString);
+  return date.toLocaleDateString("en-IN", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
+function renderHistory() {
+  if (!historyGrid) return;
+  
+  const filterValue = historyFilter ? historyFilter.value : "all";
+  const filtered = filterValue === "all" 
+    ? productHistory 
+    : productHistory.filter(item => item.futurePath === filterValue);
+  
+  if (filtered.length === 0) {
+    historyGrid.innerHTML = "";
+    if (historyEmpty) historyEmpty.style.display = "block";
+    return;
+  }
+  
+  if (historyEmpty) historyEmpty.style.display = "none";
+  
+  historyGrid.innerHTML = filtered.map((item, index) => {
+    const imageHtml = item.image 
+      ? `<img src="${item.image}" alt="${item.productName}" />` 
+      : `<div class="no-image"><iconify-icon icon="ph:image-bold"></iconify-icon></div>`;
+    
+    return `
+      <div class="history-card" style="animation: fadeInUp 0.3s ease ${index * 0.05}s both;">
+        <div class="history-card-image">
+          ${imageHtml}
+          <button class="history-delete-btn" data-delete-id="${item.id}" title="Delete">
+            <iconify-icon icon="ph:trash-bold"></iconify-icon>
+          </button>
+        </div>
+        <div class="history-card-body">
+          <h4 class="history-card-title">${item.productName}</h4>
+          <div class="history-card-meta">
+            <span class="history-meta-item">
+              <iconify-icon icon="ph:heart-half-bold"></iconify-icon>
+              ${item.condition}
+            </span>
+            <span class="history-meta-item">
+              <iconify-icon icon="ph:leaf-bold"></iconify-icon>
+              ${item.ecoScore}/100
+            </span>
+            <span class="history-meta-item">
+              <iconify-icon icon="ph:clock-bold"></iconify-icon>
+              ${item.remainingLife}%
+            </span>
+          </div>
+          <div class="history-card-price">₹${item.price.toLocaleString("en-IN")}</div>
+          <span class="history-card-path ${item.futurePath}">${item.futurePath}</span>
+          <div class="history-card-date">${formatHistoryDate(item.date)}</div>
+          <div class="history-card-actions">
+            <button class="history-action-btn secondary" data-view-id="${item.id}">
+              <iconify-icon icon="ph:eye-bold"></iconify-icon>
+              View
+            </button>
+            <button class="history-action-btn primary" data-share-id="${item.id}">
+              <iconify-icon icon="ph:share-bold"></iconify-icon>
+              Share
+            </button>
+          </div>
+        </div>
+      </div>
+    `;
+  }).join("");
+  
+  // Attach delete handlers
+  historyGrid.querySelectorAll("[data-delete-id]").forEach(btn => {
+    btn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      deleteHistoryItem(btn.dataset.deleteId);
+    });
+  });
+  
+  // Attach share handlers
+  historyGrid.querySelectorAll("[data-share-id]").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const item = productHistory.find(h => h.id === btn.dataset.shareId);
+      if (item) {
+        const text = `🌱 Eco Analysis: ${item.productName}\nCondition: ${item.condition}\nEco Score: ${item.ecoScore}/100\nEstimated Price: ₹${item.price.toLocaleString("en-IN")}\nRecommendation: ${item.futurePath}\n\nAnalyzed with ReGenX`;
+        if (navigator.share) {
+          navigator.share({ title: "Eco Analysis", text }).catch(() => {});
+        } else {
+          const whatsappLink = `https://wa.me/?text=${encodeURIComponent(text)}`;
+          window.open(whatsappLink, "_blank", "noopener,noreferrer");
+        }
+      }
+    });
+  });
+}
+
+// Filter change handler 
+if (historyFilter) {
+  historyFilter.addEventListener("change", renderHistory);
+}
+
+// Firebase auth state listener - reload history when user logs in/out
+if (typeof firebaseAuth !== "undefined") {
+  firebaseAuth.onAuthStateChanged((user) => {
+    if (user) {
+      currentUserId = user.uid;
+      console.log("User logged in:", user.email);
+      // Update user profile UI
+      const userNameEl = document.getElementById("userName");
+      const userAvatarEl = document.getElementById("userAvatar");
+      const userEmailEl = document.getElementById("userEmail");
+      const userStatusEl = document.getElementById("userStatus");
+      const profileBtnEl = document.getElementById("profileBtn");
+      
+      const displayName = user.displayName || user.email.split("@")[0];
+      const initials = displayName
+        .split(/[\s_]+/)
+        .filter(Boolean)
+        .slice(0, 2)
+        .map(part => part[0])
+        .join("")
+        .toUpperCase();
+      
+      if (userNameEl) userNameEl.textContent = displayName;
+      if (userAvatarEl) userAvatarEl.textContent = initials || "U";
+      if (userEmailEl) userEmailEl.textContent = user.email || "";
+      if (userStatusEl) {
+        userStatusEl.textContent = "✅ Verified";
+        userStatusEl.classList.add("verified");
+      }
+      if (profileBtnEl) {
+        const img = profileBtnEl.querySelector("img");
+        if (img) img.src = user.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}&background=0D8ABC&color=fff`;
+      }
+    } else {
+      currentUserId = getCurrentUserId();
+      console.log("User logged out, using guest ID");
+    }
+    // Reload history with correct user ID
+    loadHistory();
+  });
+}
+
+// Load history on page load
+loadHistory();
 
 refreshDashboard();

@@ -126,7 +126,12 @@ Return ONLY the raw JSON object. No markdown, no code blocks, no extra text.`;
         reason: String(result.reason || ""),
         aiSource: "gemini",
       },
-      { status: 200 }
+      {
+        status: 200,
+        headers: {
+          'Cache-Control': 'private, s-maxage=300, stale-while-revalidate=600',
+        },
+      }
     );
   } catch (err) {
     console.error("[analyze-image] Unexpected error:", err);

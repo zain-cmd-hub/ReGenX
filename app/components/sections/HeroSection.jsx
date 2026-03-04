@@ -1,4 +1,6 @@
-export default function HeroSection({ title, tagline, badge, primaryCta, secondaryCta, onUpload, onAnalyze }) {
+import { memo } from "react";
+
+export default memo(function HeroSection({ title, tagline, badge, primaryCta, secondaryCta, onUpload, onAnalyze }) {
   return (
     <section id="hero" className="section hero-section">
       <div className="hero-inner">
@@ -16,4 +18,4 @@ export default function HeroSection({ title, tagline, badge, primaryCta, seconda
       </div>
     </section>
   );
-}
+});

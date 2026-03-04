@@ -70,7 +70,7 @@ const translations = {
 
 function getLanguage() {
   if (typeof window === "undefined") return "en";
-  return localStorage.getItem("tscemLanguage") === "hi" ? "hi" : "en";
+  return localStorage.getItem("regenxLanguage") === "hi" ? "hi" : "en";
 }
 
 function formatDate(value, locale) {
@@ -85,7 +85,7 @@ function formatDate(value, locale) {
 }
 
 function generateCertificateId() {
-  return `SCEM-${Date.now().toString(36).toUpperCase()}`;
+  return `RGNX-${Date.now().toString(36).toUpperCase()}`;
 }
 
 function EcoMeter({ score }) {
@@ -170,7 +170,7 @@ export default function HistoryPage() {
   }, []);
 
   useEffect(() => {
-    const stored = localStorage.getItem("tscemProductHistory");
+    const stored = localStorage.getItem("regenxProductHistory");
     if (stored) {
       try {
         const parsed = JSON.parse(stored);
@@ -188,7 +188,7 @@ export default function HistoryPage() {
   }, []);
 
   useEffect(() => {
-    localStorage.setItem("tscemProductHistory", JSON.stringify(history));
+    localStorage.setItem("regenxProductHistory", JSON.stringify(history));
   }, [history]);
 
   useEffect(() => {

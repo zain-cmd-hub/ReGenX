@@ -1,4 +1,6 @@
-export default function HistoryPreviewSection({
+import { memo } from "react";
+
+export default memo(function HistoryPreviewSection({
   items,
   onOpenHistory,
   title,
@@ -21,7 +23,7 @@ export default function HistoryPreviewSection({
         <div className="history-preview-grid">
           {items.map((item) => (
             <div key={item.id} className="history-preview-card">
-              <img src={item.image} alt={item.productName} />
+              <img src={item.image} alt={item.productName} loading="lazy" decoding="async" />
               <div className="history-preview-body">
                 <h4>{item.productName}</h4>
                 <div className="history-preview-meta">
@@ -40,4 +42,4 @@ export default function HistoryPreviewSection({
       </div>
     </section>
   );
-}
+});

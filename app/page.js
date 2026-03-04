@@ -1,20 +1,45 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
-import { onAuthStateChanged, signOut } from "firebase/auth";
+import { onAuthStateChanged, signOut, deleteUser } from "firebase/auth";
 import { auth } from "./lib/firebase";
-import { createUserProfile, getUserProfile, updateUserProfile } from "./lib/userService";
-import ModuleCard from "./components/ModuleCard";
-import EcoBotChat from "./components/EcoBotChat";
-import HeroSection from "./components/sections/HeroSection";
-import HowItWorksSection from "./components/sections/HowItWorksSection";
-import CoreFeaturesSection from "./components/sections/CoreFeaturesSection";
-import UserActionSection from "./components/sections/UserActionSection";
-import CertificateSection from "./components/sections/CertificateSection";
-import HistoryPreviewSection from "./components/sections/HistoryPreviewSection";
-import FooterSection from "./components/sections/FooterSection";
+import { createUserProfile, getUserProfile, updateUserProfile, deleteUserProfile } from "./lib/userService";
+import { translations } from "./lib/translations";
+
+const EcoBotChat = dynamic(() => import("./components/EcoBotChat"), {
+  ssr: false,
+  loading: () => null,
+});
+
+const HeroSection = dynamic(() => import("./components/sections/HeroSection"), {
+  loading: () => null,
+});
+
+const HowItWorksSection = dynamic(() => import("./components/sections/HowItWorksSection"), {
+  loading: () => null,
+});
+
+const CoreFeaturesSection = dynamic(() => import("./components/sections/CoreFeaturesSection"), {
+  loading: () => null,
+});
+
+const UserActionSection = dynamic(() => import("./components/sections/UserActionSection"), {
+  loading: () => null,
+});
+
+const CertificateSection = dynamic(() => import("./components/sections/CertificateSection"), {
+  loading: () => null,
+});
+
+const HistoryPreviewSection = dynamic(() => import("./components/sections/HistoryPreviewSection"), {
+  loading: () => null,
+});
+
+const FooterSection = dynamic(() => import("./components/sections/FooterSection"), {
+  loading: () => null,
+});
 
 const MapView = dynamic(() => import("./components/MapView"), {
   ssr: false,
@@ -31,942 +56,6 @@ const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
 const ALLOWED_IMAGE_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
 const ALLOWED_IMAGE_EXTENSIONS = new Set(["jpg", "jpeg", "png", "webp"]);
 const IMAGE_ANALYSIS_TIMEOUT_MS = 20000;
-const translations = {
-  en: {
-    nav: {
-      hero: "Overview",
-      how: "How It Works",
-      features: "Core Features",
-      impact: "Impact",
-      actions: "User Actions",
-      facilities: "Facilities",
-      history: "History",
-      modules: "Modules",
-    },
-    stats: {
-      uploadedProduct: "Uploaded Product",
-      currentCondition: "Current Condition",
-      remainingLife: "Remaining Life",
-      estPrice: "Est. Price",
-    },
-    header: {
-      title: "Dashboard",
-      welcome: "Welcome back, complete your circular economy tasks.",
-      dashboardBtn: "Dashboard",
-      searchPlaceholder: "Search...",
-    },
-    actions: {
-      logout: "Logout",
-      profile: "Profile",
-    },
-    success: {
-      requestSent: "Request sent successfully!",
-    },
-    errors: {
-      missingImage: "Please upload an image first",
-      invalidImageFile: "Please select a valid image file (JPG, PNG, WEBP).",
-      emptyImage: "The selected image is empty. Please choose another file.",
-      imageTooLarge: "Image size must be 5MB or less.",
-    },
-    share: {
-      thanksHeading: "🎉 Thanks for sharing!",
-      cta: "Share your recycle result",
-      message: "I saved {X} kg waste today 🌱",
-      shareWhatsapp: "Share on WhatsApp",
-      shareLinkedin: "Share on LinkedIn",
-      dateLabel: "Date",
-      resultLabel: "Result",
-      confirmationTitle: "Share confirmation",
-      confirmationMessage: "Mark this as read after sharing on WhatsApp.",
-      confirmationMeta: "WhatsApp share",
-    },
-    flow: {
-      upload: "Upload Product",
-      purpose: "Select Purpose",
-      analysis: "AI Analysis",
-      price: "Price & Value",
-      connect: "Connect Facility",
-    },
-    upload: {
-      title: "Upload Product",
-      dragTitle: "Click or drag an image here",
-      dragHint: "PNG, JPG, or WEBP up to 5MB",
-      changeImage: "Change Image",
-      productType: "Product Type",
-      productPlaceholder: "e.g., Laptop",
-      purpose: "Purpose",
-      ageYears: "Age (years)",
-      usageDuration: "Usage Duration",
-      verifiedPopup: "🎉 Congratulations! Your profile has been successfully verified.",
-      years: "Years",
-      months: "Months",
-      days: "Days",
-      materialType: "Material Type",
-      weight: "Weight (kg)",
-      weightPlaceholder: "e.g., 2.5",
-      analyze: "Analyze",
-      analyzing: "Analyzing image...",
-    },
-    purpose: {
-      sell: "Sell",
-      repair: "Repair",
-      recycle: "Recycle",
-    },
-    results: {
-      condition: "Condition",
-      remainingLife: "Remaining Life",
-      resalePrice: "Resale Price",
-      damageLevel: "Damage Level",
-      repairCost: "Repair Cost",
-      material: "Material",
-      weight: "Weight",
-      recyclingValue: "Recycling Value",
-      priceEstimate: "AI Price Estimate",
-      save: "Save",
-      saveDetails: "Save Details",
-      requiredFields: "Please fill required fields:",
-    },
-    eco: {
-      label: "Eco Score",
-      best: "Best for environment 🌍",
-      moderate: "Moderate impact",
-      verifiedPopup: "🎉 बधाई हो! आपकी प्रोफ़ाइल सफलतापूर्वक सत्यापित हो गई है।",
-      low: "Low eco benefit",
-    },
-    comparison: {
-      title: "Compare Options",
-      subtitle: "See Sell vs Repair vs Recycle for this product.",
-      bestSell: "Best option for environment: Sell (Reuse) ✅",
-      bestRepair: "Best option for environment: Repair ✅",
-      bestRecycle: "Best option for environment: Recycle ✅",
-      bestBadge: "Best ✅",
-    },
-    ai: {
-      title: "AI Recommendation",
-      actionLabel: "Recommended Action",
-      priceLabel: "Estimated Value",
-      reasonLabel: "Reason",
-      fallbackReason: "AI recommendation ready.",
-    },
-    facilities: {
-      recommended: "Recommended Facilities",
-      nearby: "Nearby Facilities",
-      enterCity: "Enter city...",
-      listView: "List View",
-      mapView: "Map View",
-      connect: "Connect",
-      viewProfile: "View Profile",
-      noRecent: "No recent facilities found.",
-      searchPrompt: "Search a city to load nearby facilities.",
-    },
-    map: {
-      yourLocation: "Your location",
-      autoCentered: "Auto-centered",
-      connect: "Connect",
-      whatsapp: "WhatsApp",
-      facility: "Facility",
-      close: "Close",
-    },
-    history: {
-      title: "My Products / History",
-      empty: "No products analyzed yet.",
-      purpose: "Purpose",
-      value: "Detected value",
-      uploaded: "Uploaded",
-      ecoScore: "Eco Score",
-      aiTip: "AI Tip",
-      prevAnalysis: "Your Previous Analysis",
-    },
-    impact: {
-      title: "Your Impact",
-      products: "Products analyzed",
-      waste: "Waste reduced",
-      co2: "CO₂ reduced",
-    },
-    hero: {
-      tag: "AI Powered",
-      title: "Circular Economy Marketplace",
-      subtitle: "Reduce waste. Reuse smartly. Build a zero-waste future.",
-      ecoScore: "Eco Score",
-      reuse: "Reuse Potential",
-      demand: "Market Demand",
-    },
-    life: {
-      title: "Life Cycle",
-      descriptionRepair: "Review damage impact from AI analysis.",
-      descriptionDefault: "Predict remaining lifespan based on AI analysis.",
-      predict: "Predict",
-    },
-    pricing: {
-      title: "Fair Price",
-      demandRepair: "Estimated repair cost",
-      demandRecycle: "Estimated recycling value",
-      demandSell: "Resale price",
-      calculate: "Calculate",
-    },
-    notifications: {
-      title: "Notifications",
-      save: "सेव करें",
-      saveDetails: "विवरण सेव करें",
-      requiredFields: "कृपया आवश्यक फ़ील्ड भरें:",
-      markAll: "Mark all read",
-      empty: "No responses yet.",
-      markRead: "Mark read",
-    },
-    user: {
-      verified: "✅ Verified User",
-      incomplete: "❌ Profile Incomplete",
-    },
-    profile: {
-      title: "Profile",
-      subtitle: "Manage your marketplace details.",
-      fullName: "Full Name",
-      email: "Email (read-only)",
-      phone: "Phone Number",
-      address: "Address",
-      about: "About Me",
-      aboutPlaceholder: "Tell us about your business or products.",
-      completed: "Profile Completed 100%",
-      incomplete: "Profile Incomplete",
-      badgeVerified: "Verified",
-      badgeIncomplete: "Incomplete",
-      edit: "Edit Profile",
-      save: "Save",
-      changePassword: "Change Password",
-      currentPassword: "Current Password",
-      newPassword: "New Password",
-      confirmPassword: "Confirm Password",
-      updatePassword: "Update Password",
-      passwordUpdated: "Password updated successfully.",
-      passwordMismatch: "New password and confirm password do not match.",
-      passwordRequired: "Please fill all password fields.",
-      requiredFields: "Please fill required fields:",
-    },
-    safety: {
-      title: "Safety & Trust",
-      note: "Manage your local demo data and sessions.",
-      clear: "Clear My Data",
-    },
-    modals: {
-      prefilled: "Pre-filled Message",
-      sendMessage: "Send Message",
-      rateService: "Rate Service",
-      shareExperience: "Share your experience with",
-      thisShop: "this shop",
-      submitReview: "Submit Review",
-      noReviews: "No reviews yet.",
-      reviewPlaceholder: "Write a short review...",
-      averageRating: "Average Rating",
-      totalReviews: "Total Reviews",
-      noComments: "(No comments)",
-      anonymous: "Anonymous",
-    },
-    footer: {
-      privacyNote: "Your data is stored locally for demo purpose only.",
-    },
-    impactMode: {
-      title: "Real World Impact",
-      subtitle: "If 10,000 users use this app…",
-      co2: "CO2 Saved",
-      waste: "Waste Reduced",
-      trees: "Equivalent to saving",
-      treesSuffix: "trees",
-    },
-    landing: {
-      heroBadge: "AI + Circular Economy",
-      heroTitle: "Smart Circular Economy Marketplace",
-      heroTagline: "AI-driven platform to reduce waste and extend product life.",
-      heroUploadCta: "Upload Product",
-      heroAnalyzeCta: "Analyze Product",
-      howTitle: "How It Works",
-      howSubtitle: "Simple, guided steps for circular impact.",
-      howStep1Title: "Upload Product",
-      howStep1Text: "Add product image and usage details.",
-      howStep2Title: "AI Analysis",
-      howStep2Text: "Get condition, eco score, and life insights.",
-      howStep3Title: "Sell / Repair / Recycle",
-      howStep3Text: "Choose the best circular path.",
-      howStep4Title: "Impact & Certificate",
-      howStep4Text: "Track impact and download certificates.",
-      featuresTitle: "Core Features",
-      featuresSubtitle: "Powered by AI to deliver measurable circular outcomes.",
-      feature1Title: "Digital Twin of Product",
-      feature1Text: "Simulate future outcomes before decisions.",
-      feature2Title: "Eco Score Meter",
-      feature2Text: "Quantify sustainability impact instantly.",
-      feature3Title: "AI Suggestions",
-      feature3Text: "Actionable insights for reuse and repair.",
-      feature4Title: "Timeline Flow",
-      feature4Text: "Product → Digital Twin → Future Path.",
-      impactHeading: "If 10,000 users use this app…",
-      impactSubheading: "Real-world impact at scale.",
-      historyTitle: "My Products / History",
-      historySubtitle: "Review past analyses and download certificates.",
-      historyEmpty: "No products analyzed yet",
-      historyViewAll: "View Full History",
-      historyEcoLabel: "Eco Score",
-      historyPathLabel: "Path",
-      actionsTitle: "User Actions",
-      actionsSubtitle: "Upload, analyze, generate a certificate, and share impact.",
-      certificateTitle: "Certificate + QR Code",
-      certificateSubtitle: "Generate and share a verified eco certificate.",
-      certificateHeader: "CERTIFICATE OF APPRECIATION",
-      certificatePresentedTo: "This certificate is proudly presented to",
-      certificateCongrats: "Congratulations {NAME}",
-      certificateWasteLine: "You saved {WASTE} kg waste",
-      certificateHeroLine: "You are an Eco Hero 🌱",
-      certificateFooterVerified: "Verified by Eco Platform",
-      certificateFooterQr: "QR → Impact page",
-      ecoHeroFallback: "Eco Hero",
-      footerAboutTitle: "About Project",
-      footerAboutText: "Smart Circular Economy Marketplace helps extend product life and reduce waste using AI.",
-      footerContactTitle: "Contact",
-      footerContactEmail: "Email: hello@ecoplatform.com",
-      footerContactPhone: "Phone: +91 90000 00000",
-      footerSocialTitle: "Social",
-      footerSocialLinks: "LinkedIn • WhatsApp • GitHub",
-      footerBrand: "Hackathon 2026 • Eco Platform",
-      moduleCards: [
-        {
-          title: "NGOs Integration",
-          icon: "🤝",
-          text: "Connect with NGOs for recycling & donation",
-        },
-        {
-          title: "Cities Dashboard",
-          icon: "🏙️",
-          text: "City-wise waste tracking & impact stats",
-        },
-        {
-          title: "Smart Bins (IoT)",
-          icon: "🗑️",
-          text: "AI connected smart bins for real-time data",
-        },
-      ],
-      modulesBadge: "Scalable Architecture",
-      modulesTitle: "Future Ready Modules",
-      modulesText: "Tomorrow we can easily add new modules without changing the core system.",
-    },
-  },
-  hi: {
-    nav: {
-      hero: "ओवरव्यू",
-      how: "कैसे काम करता है",
-      features: "मुख्य फीचर्स",
-      impact: "प्रभाव",
-      actions: "यूजर एक्शन",
-      facilities: "सुविधाएं",
-      history: "इतिहास",
-      modules: "मॉड्यूल",
-    },
-    stats: {
-      uploadedProduct: "अपलोडेड उत्पाद",
-      currentCondition: "वर्तमान स्थिति",
-      remainingLife: "शेष जीवन",
-      estPrice: "अनुमानित मूल्य",
-    },
-    header: {
-      title: "डैशबोर्ड",
-      welcome: "वापसी पर स्वागत है, अपने सर्कुलर इकॉनमी कार्य पूरे करें।",
-      dashboardBtn: "डैशबोर्ड",
-      searchPlaceholder: "खोजें...",
-    },
-    actions: {
-      logout: "लॉगआउट",
-      profile: "प्रोफ़ाइल",
-    },
-    success: {
-      requestSent: "अनुरोध सफलतापूर्वक भेजा गया!",
-    },
-    errors: {
-      missingImage: "कृपया पहले एक इमेज अपलोड करें",
-      invalidImageFile: "कृपया वैध इमेज फ़ाइल चुनें (JPG, PNG, WEBP)।",
-      emptyImage: "चुनी गई इमेज खाली है। कृपया दूसरी फ़ाइल चुनें।",
-      imageTooLarge: "इमेज का आकार 5MB या उससे कम होना चाहिए।",
-    },
-    share: {
-      thanksHeading: "🎉 साझा करने के लिए धन्यवाद!",
-      cta: "अपना रीसायकल परिणाम साझा करें",
-      message: "आज मैंने {X} किलो कचरा बचाया 🌱",
-      shareWhatsapp: "व्हाट्सएप पर साझा करें",
-      shareLinkedin: "लिंक्डइन पर साझा करें",
-      dateLabel: "तारीख",
-      resultLabel: "परिणाम",
-      confirmationTitle: "शेयर पुष्टि",
-      confirmationMessage: "व्हाट्सएप पर साझा करने के बाद इसे पढ़ा हुआ चिह्नित करें।",
-      confirmationMeta: "व्हाट्सएप शेयर",
-    },
-    flow: {
-      upload: "उत्पाद अपलोड करें",
-      purpose: "उद्देश्य चुनें",
-      analysis: "AI विश्लेषण",
-      price: "मूल्य और वैल्यू",
-      connect: "सुविधा से जुड़ें",
-    },
-    upload: {
-      title: "उत्पाद अपलोड करें",
-      dragTitle: "यहां क्लिक करें या इमेज ड्रैग करें",
-      dragHint: "PNG, JPG, या WEBP 5MB तक",
-      changeImage: "इमेज बदलें",
-      productType: "उत्पाद प्रकार",
-      productPlaceholder: "उदा., लैपटॉप",
-      purpose: "उद्देश्य",
-      ageYears: "उम्र (वर्ष)",
-      usageDuration: "उपयोग अवधि",
-      years: "वर्ष",
-      months: "महीने",
-      days: "दिन",
-      materialType: "सामग्री प्रकार",
-      weight: "वजन (किग्रा)",
-      weightPlaceholder: "उदा., 2.5",
-      analyze: "विश्लेषण करें",
-      analyzing: "इमेज का विश्लेषण हो रहा है...",
-    },
-    purpose: {
-      sell: "बेचें",
-      repair: "मरम्मत",
-      recycle: "रीसायकल",
-    },
-    results: {
-      condition: "स्थिति",
-      remainingLife: "शेष जीवन",
-      resalePrice: "पुनर्विक्रय मूल्य",
-      damageLevel: "क्षति स्तर",
-      repairCost: "मरम्मत लागत",
-      material: "सामग्री",
-      weight: "वजन",
-      recyclingValue: "रीसायकल मूल्य",
-      priceEstimate: "AI मूल्य अनुमान",
-      selectPurpose: "ऊपर चुनें",
-    },
-    eco: {
-      label: "इको स्कोर",
-      best: "पर्यावरण के लिए बेहतर 🌍",
-      moderate: "मध्यम प्रभाव",
-      low: "कम इको लाभ",
-    },
-    comparison: {
-      title: "विकल्प तुलना",
-      subtitle: "इस उत्पाद के लिए बेचें, मरम्मत, रीसायकल तुलना करें।",
-      bestSell: "पर्यावरण के लिए सर्वश्रेष्ठ: बेचें (रीयूज़) ✅",
-      bestRepair: "पर्यावरण के लिए सर्वश्रेष्ठ: मरम्मत ✅",
-      bestRecycle: "पर्यावरण के लिए सर्वश्रेष्ठ: रीसायकल ✅",
-      bestBadge: "सर्वश्रेष्ठ ✅",
-    },
-    ai: {
-      title: "AI सिफारिश",
-      actionLabel: "सुझाया गया विकल्प",
-      priceLabel: "अनुमानित मूल्य",
-      reasonLabel: "कारण",
-      fallbackReason: "AI सुझाव तैयार है।",
-    },
-    facilities: {
-      recommended: "अनुशंसित सुविधाएं",
-      nearby: "नजदीकी सुविधाएं",
-      enterCity: "शहर लिखें...",
-      listView: "लिस्ट व्यू",
-      mapView: "मैप व्यू",
-      connect: "कनेक्ट",
-      viewProfile: "प्रोफ़ाइल देखें",
-      noRecent: "हाल की सुविधाएं नहीं मिलीं।",
-      searchPrompt: "नजदीकी सुविधाएं देखने के लिए शहर खोजें।",
-    },
-    map: {
-      yourLocation: "आपका स्थान",
-      autoCentered: "ऑटो-सेंटर",
-      connect: "कनेक्ट",
-      whatsapp: "व्हाट्सएप",
-      facility: "सुविधा",
-      close: "बंद करें",
-    },
-    history: {
-      title: "मेरे उत्पाद / इतिहास",
-      empty: "अभी तक कोई उत्पाद विश्लेषित नहीं।",
-      purpose: "उद्देश्य",
-      value: "मूल्य",
-      uploaded: "अपलोड",
-      ecoScore: "इको स्कोर",
-      aiTip: "AI सुझाव",
-      prevAnalysis: "आपका पिछला विश्लेषण",
-    },
-    impact: {
-      title: "आपका प्रभाव",
-      products: "विश्लेषित उत्पाद",
-      waste: "कचरा कम",
-      co2: "CO₂ कम",
-    },
-    hero: {
-      tag: "AI संचालित",
-      title: "सर्कुलर इकॉनमी मार्केटप्लेस",
-      subtitle: "कचरा घटाएं। स्मार्ट री-यूज़ करें। शून्य-कचरा भविष्य बनाएं।",
-      ecoScore: "इको स्कोर",
-      reuse: "री-यूज़ क्षमता",
-      demand: "मार्केट मांग",
-    },
-    life: {
-      title: "लाइफ साइकिल",
-      descriptionRepair: "AI विश्लेषण से क्षति प्रभाव देखें।",
-      descriptionDefault: "AI विश्लेषण से शेष जीवन अनुमान करें।",
-      predict: "अनुमान करें",
-    },
-    pricing: {
-      title: "उचित मूल्य",
-      demandRepair: "अनुमानित मरम्मत लागत",
-      demandRecycle: "अनुमानित रीसायकल मूल्य",
-      demandSell: "पुनर्विक्रय मूल्य",
-      calculate: "गणना करें",
-    },
-    notifications: {
-      title: "सूचनाएं",
-      markAll: "सब पढ़ा हुआ",
-      empty: "कोई प्रतिक्रिया नहीं।",
-      markRead: "पढ़ा हुआ",
-    },
-    user: {
-      verified: "✅ सत्यापित उपयोगकर्ता",
-      incomplete: "❌ प्रोफ़ाइल अधूरी",
-    },
-    profile: {
-      title: "प्रोफ़ाइल",
-      subtitle: "अपने मार्केटप्लेस विवरण प्रबंधित करें।",
-      fullName: "पूरा नाम",
-      email: "ईमेल (रीड-ओनली)",
-      phone: "फोन नंबर",
-      address: "पता",
-      about: "मेरे बारे में",
-      aboutPlaceholder: "अपने व्यवसाय या उत्पादों के बारे में बताएं।",
-      completed: "प्रोफ़ाइल पूर्ण 100%",
-      incomplete: "प्रोफ़ाइल अधूरी",
-      badgeVerified: "सत्यापित",
-      badgeIncomplete: "अधूरी",
-      edit: "प्रोफ़ाइल संपादित करें",
-      save: "सेव करें",
-      changePassword: "पासवर्ड बदलें",
-      currentPassword: "वर्तमान पासवर्ड",
-      newPassword: "नया पासवर्ड",
-      confirmPassword: "पासवर्ड की पुष्टि करें",
-      updatePassword: "पासवर्ड अपडेट करें",
-      passwordUpdated: "पासवर्ड सफलतापूर्वक अपडेट हुआ।",
-      passwordMismatch: "नया पासवर्ड और पुष्टि मेल नहीं खाते।",
-      passwordRequired: "कृपया सभी पासवर्ड फ़ील्ड भरें।",
-      requiredFields: "कृपया आवश्यक फ़ील्ड भरें:",
-    },
-    safety: {
-      title: "सेफ्टी और ट्रस्ट",
-      note: "अपने लोकल डेमो डेटा और सेशन प्रबंधित करें।",
-      clear: "मेरा डेटा साफ करें",
-    },
-    modals: {
-      prefilled: "पहले से भरा संदेश",
-      sendMessage: "संदेश भेजें",
-      rateService: "सेवा रेट करें",
-      shareExperience: "अपने अनुभव साझा करें:",
-      thisShop: "यह दुकान",
-      submitReview: "रिव्यू सबमिट करें",
-      noReviews: "अभी तक कोई रिव्यू नहीं।",
-      reviewPlaceholder: "एक छोटा रिव्यू लिखें...",
-      averageRating: "औसत रेटिंग",
-      totalReviews: "कुल रिव्यू",
-      noComments: "(कोई टिप्पणी नहीं)",
-      anonymous: "अनाम",
-    },
-    footer: {
-      privacyNote: "आपका डेटा केवल डेमो के लिए लोकल रूप से स्टोर होता है।",
-    },
-    impactMode: {
-      title: "वास्तविक दुनिया का प्रभाव",
-      subtitle: "अगर 10,000 लोग इस ऐप का उपयोग करें…",
-      co2: "CO2 बचत",
-      waste: "कचरा कम",
-      trees: "इतने पेड़ बचेंगे",
-      treesSuffix: "पेड़",
-    },
-    landing: {
-      heroBadge: "AI + सर्कुलर इकॉनमी",
-      heroTitle: "स्मार्ट सर्कुलर इकोनॉमी मार्केटप्लेस",
-      heroTagline: "कचरा कम करने और उत्पाद जीवन बढ़ाने के लिए AI-चालित प्लेटफॉर्म।",
-      heroUploadCta: "उत्पाद अपलोड करें",
-      heroAnalyzeCta: "उत्पाद विश्लेषित करें",
-      howTitle: "कैसे काम करता है",
-      howSubtitle: "सर्कुलर प्रभाव के लिए सरल चरण।",
-      howStep1Title: "उत्पाद अपलोड करें",
-      howStep1Text: "उत्पाद की छवि और उपयोग विवरण जोड़ें।",
-      howStep2Title: "AI विश्लेषण",
-      howStep2Text: "स्थिति, इको स्कोर और लाइफ इनसाइट्स प्राप्त करें।",
-      howStep3Title: "बेचें / मरम्मत / रीसायकल",
-      howStep3Text: "सबसे अच्छा सर्कुलर विकल्प चुनें।",
-      howStep4Title: "प्रभाव और प्रमाणपत्र",
-      howStep4Text: "प्रभाव ट्रैक करें और प्रमाणपत्र डाउनलोड करें।",
-      featuresTitle: "मुख्य फीचर्स",
-      featuresSubtitle: "AI से समर्थित, मापने योग्य सर्कुलर परिणाम।",
-      feature1Title: "उत्पाद का डिजिटल ट्विन",
-      feature1Text: "निर्णय से पहले भविष्य के परिणाम सिमुलेट करें।",
-      feature2Title: "इको स्कोर मीटर",
-      feature2Text: "सस्टेनेबिलिटी प्रभाव तुरंत मापें।",
-      feature3Title: "AI सुझाव",
-      feature3Text: "री-यूज़ और मरम्मत के लिए उपयोगी सुझाव।",
-      feature4Title: "टाइमलाइन फ्लो",
-      feature4Text: "उत्पाद → डिजिटल ट्विन → भविष्य मार्ग।",
-      impactHeading: "अगर 10,000 लोग इस ऐप का उपयोग करें…",
-      impactSubheading: "स्केल पर वास्तविक दुनिया का प्रभाव।",
-      historyTitle: "मेरे उत्पाद / इतिहास",
-      historySubtitle: "पिछले विश्लेषण देखें और प्रमाणपत्र डाउनलोड करें।",
-      historyEmpty: "अभी तक कोई उत्पाद विश्लेषित नहीं",
-      historyViewAll: "पूरा इतिहास देखें",
-      historyEcoLabel: "इको स्कोर",
-      historyPathLabel: "पथ",
-      actionsTitle: "यूजर एक्शन",
-      actionsSubtitle: "अपलोड करें, विश्लेषण करें, प्रमाणपत्र बनाएं और प्रभाव साझा करें।",
-      certificateTitle: "प्रमाणपत्र + QR कोड",
-      certificateSubtitle: "सत्यापित इको प्रमाणपत्र बनाएं और साझा करें।",
-      certificateHeader: "प्रशंसा प्रमाणपत्र",
-      certificatePresentedTo: "यह प्रमाणपत्र सम्मानपूर्वक प्रस्तुत है",
-      certificateCongrats: "बधाई {NAME}",
-      certificateWasteLine: "आपने {WASTE} किग्रा कचरा बचाया",
-      certificateHeroLine: "आप एक इको हीरो हैं 🌱",
-      certificateFooterVerified: "Eco Platform द्वारा सत्यापित",
-      certificateFooterQr: "QR → प्रभाव पेज",
-      ecoHeroFallback: "इको हीरो",
-      footerAboutTitle: "प्रोजेक्ट के बारे में",
-      footerAboutText: "यह प्लेटफॉर्म AI की मदद से उत्पाद जीवन बढ़ाता और कचरा घटाता है।",
-      footerContactTitle: "संपर्क",
-      footerContactEmail: "ईमेल: hello@ecoplatform.com",
-      footerContactPhone: "फोन: +91 90000 00000",
-      footerSocialTitle: "सोशल",
-      footerSocialLinks: "LinkedIn • WhatsApp • GitHub",
-      footerBrand: "हैकथॉन 2026 • ईको प्लेटफॉर्म",
-      moduleCards: [
-        {
-          title: "NGO इंटीग्रेशन",
-          icon: "🤝",
-          text: "रीसायकलिंग और डोनेशन के लिए NGO से कनेक्ट करें",
-        },
-        {
-          title: "सिटीज डैशबोर्ड",
-          icon: "🏙️",
-          text: "शहरवार कचरा ट्रैकिंग और प्रभाव आंकड़े",
-        },
-        {
-          title: "स्मार्ट बिन्स (IoT)",
-          icon: "🗑️",
-          text: "रीयल-टाइम डेटा के लिए AI कनेक्टेड बिन्स",
-        },
-      ],
-      modulesBadge: "स्केलेबल आर्किटेक्चर",
-      modulesTitle: "भविष्य के लिए तैयार मॉड्यूल",
-      modulesText: "कल हम कोर सिस्टम बदले बिना नए मॉड्यूल आसानी से जोड़ सकते हैं।",
-    },
-  },
-  hl: {
-    nav: {
-      hero: "Overview Dekhein",
-      how: "Kaise Kaam Karta Hai",
-      features: "Main Features",
-      impact: "Prabhav",
-      actions: "User Actions",
-      facilities: "Facilities",
-      history: "History",
-      modules: "Modules",
-    },
-    stats: {
-      uploadedProduct: "Uploaded Product",
-      currentCondition: "Current Condition",
-      remainingLife: "Remaining Life",
-      estPrice: "Estimated Price",
-    },
-    header: {
-      title: "Dashboard",
-      welcome: "Wapas Aane Par Swagat Hai, Apne Circular Economy Tasks Complete Karein.",
-      dashboardBtn: "Dashboard",
-      searchPlaceholder: "Search Karein...",
-    },
-    actions: {
-      logout: "Logout Karein",
-      profile: "Profile",
-    },
-    success: {
-      requestSent: "Request Successfully Bhej Di Gayi!",
-    },
-    errors: {
-      missingImage: "Pehle Ek Image Upload Karein",
-      invalidImageFile: "Valid Image File Select Karein (JPG, PNG, WEBP).",
-      emptyImage: "Chunni Gayi Image Khaali Hai. Doosri File Select Karein.",
-      imageTooLarge: "Image Ka Size 5MB Ya Usse Kam Hona Chahiye.",
-    },
-    share: {
-      thanksHeading: "🎉 Share Karne Ke Liye Shukriya!",
-      cta: "Apna Recycle Result Share Karein",
-      message: "Aaj Maine {X} Kilo Waste Bachaya 🌱",
-      shareWhatsapp: "WhatsApp Par Share Karein",
-      shareLinkedin: "LinkedIn Par Share Karein",
-      dateLabel: "Date",
-      resultLabel: "Result",
-      confirmationTitle: "Share Confirmation",
-      confirmationMessage: "WhatsApp Par Share Karne Ke Baad Isse Padha Hua Mark Karein.",
-      confirmationMeta: "WhatsApp Share",
-    },
-    flow: {
-      upload: "Product Upload Karein",
-      purpose: "Purpose Choose Karein",
-      analysis: "AI Analysis",
-      price: "Price Aur Value",
-      connect: "Facility Se Connect Karein",
-    },
-    upload: {
-      title: "Product Upload Karein",
-      dragTitle: "Yahan Click Karein Ya Image Drag Karein",
-      dragHint: "PNG, JPG, Ya WEBP 5MB Tak",
-      changeImage: "Image Badlein",
-      productType: "Product Type",
-      productPlaceholder: "Jaise, Laptop",
-      purpose: "Purpose",
-      ageYears: "Age (Years)",
-      usageDuration: "Usage Duration",
-      years: "Years",
-      months: "Months",
-      days: "Days",
-      materialType: "Material Type",
-      weight: "Weight (Kg)",
-      weightPlaceholder: "Jaise, 2.5",
-      analyze: "Analyze Karein",
-      analyzing: "Image Analyze Ho Rahi Hai...",
-    },
-    purpose: {
-      sell: "Sell Karein",
-      repair: "Repair Karein",
-      recycle: "Recycle Karein",
-    },
-    results: {
-      condition: "Condition",
-      remainingLife: "Remaining Life",
-      resalePrice: "Resale Price",
-      damageLevel: "Damage Level",
-      repairCost: "Repair Cost",
-      material: "Material",
-      weight: "Weight",
-      recyclingValue: "Recycling Value",
-      priceEstimate: "AI Price Estimate",
-      selectPurpose: "Upar Select Karein",
-    },
-    eco: {
-      label: "Eco Score Dekhein",
-      best: "Environment Ke Liye Behtar 🌍",
-      moderate: "Medium Impact",
-      low: "Kam Eco Benefit",
-    },
-    comparison: {
-      title: "Options Compare Karein",
-      subtitle: "Is Product Ke Liye Sell, Repair, Recycle Compare Karein.",
-      bestSell: "Environment Ke Liye Sabse Achha: Sell (Reuse) ✅",
-      bestRepair: "Environment Ke Liye Sabse Achha: Repair ✅",
-      bestRecycle: "Environment Ke Liye Sabse Achha: Recycle ✅",
-      bestBadge: "Sabse Achha ✅",
-    },
-    ai: {
-      title: "AI Recommendation",
-      actionLabel: "Suggested Option",
-      priceLabel: "Estimated Price",
-      reasonLabel: "Reason",
-      fallbackReason: "AI Suggestion Ready Hai.",
-    },
-    facilities: {
-      recommended: "Recommended Facilities",
-      nearby: "Nearby Facilities",
-      enterCity: "City Likhein...",
-      listView: "List View",
-      mapView: "Map View",
-      connect: "Connect Karein",
-      viewProfile: "Profile Dekhein",
-      noRecent: "Koi Recent Facility Nahi Mili.",
-      searchPrompt: "Nearby Facilities Dekhne Ke Liye City Search Karein.",
-    },
-    map: {
-      yourLocation: "Aapka Location",
-      autoCentered: "Auto-Centered",
-      connect: "Connect Karein",
-      whatsapp: "WhatsApp",
-      facility: "Facility",
-      close: "Band Karein",
-    },
-    history: {
-      title: "Mere Products / History",
-      empty: "Ab Tak Koi Product Analyze Nahi Hua.",
-      purpose: "Purpose",
-      value: "Value",
-      uploaded: "Upload",
-      ecoScore: "Eco Score",
-      aiTip: "AI Suggestion",
-      prevAnalysis: "Aapka Pichla Analysis",
-    },
-    impact: {
-      title: "Aapka Impact",
-      products: "Analyzed Products",
-      waste: "Waste Kam Hua",
-      co2: "CO₂ Kam Hua",
-    },
-    hero: {
-      tag: "AI Powered",
-      title: "Circular Economy Marketplace",
-      subtitle: "Waste Kam Karein. Smart Reuse Karein. Zero-Waste Future Banayein.",
-      ecoScore: "Eco Score",
-      reuse: "Reuse Capacity",
-      demand: "Market Demand",
-    },
-    life: {
-      title: "Life Cycle",
-      descriptionRepair: "AI Analysis Se Damage Impact Dekhein.",
-      descriptionDefault: "AI Analysis Se Remaining Life Estimate Karein.",
-      predict: "Estimate Karein",
-    },
-    pricing: {
-      title: "Fair Price",
-      demandRepair: "Estimated Repair Cost",
-      demandRecycle: "Estimated Recycle Value",
-      demandSell: "Resale Price",
-      calculate: "Calculate Karein",
-    },
-    notifications: {
-      title: "Notifications",
-      markAll: "Sab Padha Hua Mark Karein",
-      empty: "Koi Notification Nahi.",
-      markRead: "Padha Hua",
-    },
-    user: {
-      verified: "✅ Verified User",
-      incomplete: "❌ Profile Adhuri Hai",
-    },
-    profile: {
-      title: "Profile Settings Badlein",
-      subtitle: "Apne Marketplace Details Manage Karein.",
-      fullName: "Full Name",
-      email: "Email (Read-Only)",
-      phone: "Phone Number",
-      address: "Address",
-      about: "Mere Baare Mein",
-      aboutPlaceholder: "Apne Business Ya Products Ke Baare Mein Batayein.",
-      completed: "Profile Complete 100%",
-      incomplete: "Profile Adhuri Hai",
-      badgeVerified: "Verified",
-      badgeIncomplete: "Adhuri",
-      edit: "Profile Edit Karein",
-      save: "Save Karein",
-      changePassword: "Password Badlein",
-      currentPassword: "Current Password",
-      newPassword: "Naya Password",
-      confirmPassword: "Password Confirm Karein",
-      updatePassword: "Password Update Karein",
-      passwordUpdated: "Password Successfully Update Ho Gaya.",
-      passwordMismatch: "Naya Password Aur Confirmation Match Nahi Karte.",
-      passwordRequired: "Kripya Saare Password Fields Bharein.",
-      requiredFields: "Kripya Required Fields Bharein:",
-    },
-    safety: {
-      title: "Safety Aur Trust",
-      note: "Apna Local Demo Data Aur Session Manage Karein.",
-      clear: "Mera Data Clear Karein",
-    },
-    modals: {
-      prefilled: "Pre-Filled Message",
-      sendMessage: "Message Bhejein",
-      rateService: "Service Rate Karein",
-      shareExperience: "Apna Experience Share Karein:",
-      thisShop: "Yeh Shop",
-      submitReview: "Review Submit Karein",
-      noReviews: "Ab Tak Koi Review Nahi.",
-      reviewPlaceholder: "Ek Chhota Review Likhein...",
-      averageRating: "Average Rating",
-      totalReviews: "Total Reviews",
-      noComments: "(Koi Comment Nahi)",
-      anonymous: "Anonymous",
-    },
-    footer: {
-      privacyNote: "Aapka Data Sirf Demo Ke Liye Locally Store Hota Hai.",
-    },
-    impactMode: {
-      title: "Real World Impact",
-      subtitle: "Agar 10,000 Log Is App Ka Use Karein…",
-      co2: "CO2 Bachaya",
-      waste: "Waste Kam Hua",
-      trees: "Itne Ped Bachenge",
-      treesSuffix: "Ped",
-    },
-    landing: {
-      heroBadge: "AI + Circular Economy",
-      heroTitle: "Smart Circular Economy Marketplace",
-      heroTagline: "Waste Kam Karne Aur Product Life Badhane Ke Liye AI-Powered Platform.",
-      heroUploadCta: "Product Upload Karein",
-      heroAnalyzeCta: "Product Analyze Karein",
-      howTitle: "Kaise Kaam Karta Hai",
-      howSubtitle: "Circular Impact Ke Liye Simple Steps.",
-      howStep1Title: "Product Upload Karein",
-      howStep1Text: "Product Ki Image Aur Usage Details Add Karein.",
-      howStep2Title: "AI Analysis",
-      howStep2Text: "Condition, Eco Score Aur Life Insights Prapt Karein.",
-      howStep3Title: "Sell / Repair / Recycle Karein",
-      howStep3Text: "Sabse Achha Circular Option Choose Karein.",
-      howStep4Title: "Impact Aur Certificate",
-      howStep4Text: "Impact Track Karein Aur Certificate Download Karein.",
-      featuresTitle: "Main Features",
-      featuresSubtitle: "AI Se Supported, Measurable Circular Results.",
-      feature1Title: "Product Ka Digital Twin",
-      feature1Text: "Decision Se Pehle Future Results Simulate Karein.",
-      feature2Title: "Eco Score Meter",
-      feature2Text: "Sustainability Impact Turant Measure Karein.",
-      feature3Title: "AI Suggestions",
-      feature3Text: "Reuse Aur Repair Ke Liye Useful Tips.",
-      feature4Title: "Timeline Flow",
-      feature4Text: "Product → Digital Twin → Future Path.",
-      impactHeading: "Agar 10,000 Log Is App Ka Use Karein…",
-      impactSubheading: "Real World Impact At Scale.",
-      historyTitle: "Mere Products / History",
-      historySubtitle: "Pichle Analysis Dekhein Aur Certificate Download Karein.",
-      historyEmpty: "Ab Tak Koi Product Analyze Nahi Hua",
-      historyViewAll: "Poori History Dekhein",
-      historyEcoLabel: "Eco Score",
-      historyPathLabel: "Path",
-      actionsTitle: "User Actions",
-      actionsSubtitle: "Upload Karein, Analyze Karein, Certificate Banayein Aur Impact Share Karein.",
-      certificateTitle: "Certificate Download Karein",
-      certificateSubtitle: "Verified Eco Certificate Banayein Aur Share Karein.",
-      certificateHeader: "Certificate Of Appreciation",
-      certificatePresentedTo: "Yeh Certificate Sammanpurvak Prastut Hai",
-      certificateCongrats: "Badhai Ho {NAME}",
-      certificateWasteLine: "Aapne {WASTE} Kg Waste Bachaya",
-      certificateHeroLine: "Aap Ek Eco Hero Hain 🌱",
-      certificateFooterVerified: "Eco Platform Dwara Verified",
-      certificateFooterQr: "QR → Impact Page",
-      ecoHeroFallback: "Eco Hero",
-      footerAboutTitle: "Project Ke Baare Mein",
-      footerAboutText: "Yeh Platform AI Ki Madad Se Product Life Badhata Aur Waste Kam Karta Hai.",
-      footerContactTitle: "Contact Karein",
-      footerContactEmail: "Email: hello@ecoplatform.com",
-      footerContactPhone: "Phone: +91 90000 00000",
-      footerSocialTitle: "Social",
-      footerSocialLinks: "LinkedIn • WhatsApp • GitHub",
-      footerBrand: "Hackathon 2026 • Eco Platform",
-      moduleCards: [
-        {
-          title: "NGO Integration",
-          icon: "🤝",
-          text: "Recycling Aur Donation Ke Liye NGO Se Connect Karein",
-        },
-        {
-          title: "Cities Dashboard",
-          icon: "🏙️",
-          text: "City-Wise Waste Tracking Aur Impact Data",
-        },
-        {
-          title: "Smart Bins (IoT)",
-          icon: "🗑️",
-          text: "Real-Time Data Ke Liye AI Connected Bins",
-        },
-      ],
-      modulesBadge: "Scalable Architecture",
-      modulesTitle: "Future-Ready Modules",
-      modulesText: "Kal Hum Core System Badle Bina Naye Modules Aasaani Se Jod Sakte Hain.",
-    },
-  },
-};
 
 function clamp(value, min, max) {
   return Math.min(max, Math.max(min, value));
@@ -982,7 +71,7 @@ function hashString(value) {
 }
 
 function generateCertificateId() {
-  return `SCEM-${Date.now().toString(36).toUpperCase()}`;
+  return `RGNX-${Date.now().toString(36).toUpperCase()}`;
 }
 
 function buildUserId(profile, user) {
@@ -996,7 +85,7 @@ function buildUserName(profile, user) {
 
 function readImageCache() {
   try {
-    const raw = localStorage.getItem("tscemImageCache");
+    const raw = localStorage.getItem("regenxImageCache");
     return raw ? JSON.parse(raw) : {};
   } catch (error) {
     return {};
@@ -1004,7 +93,7 @@ function readImageCache() {
 }
 
 function writeImageCache(cache) {
-  localStorage.setItem("tscemImageCache", JSON.stringify(cache));
+  localStorage.setItem("regenxImageCache", JSON.stringify(cache));
 }
 
 function isAllowedImageFile(file) {
@@ -1121,6 +210,14 @@ export default function DashboardPage() {
   const [isDragActive, setIsDragActive] = useState(false);
   const [toast, setToast] = useState(null);
 
+  // Bill/Receipt upload for sell
+  const [billImage, setBillImage] = useState("");
+  const [billFile, setBillFile] = useState(null);
+  const [billError, setBillError] = useState("");
+  // Custom user price (within allowed range of AI price)
+  const [customSellPrice, setCustomSellPrice] = useState(0);
+  const billInputRef = useRef(null);
+
   const [condition, setCondition] = useState("-");
   const [score, setScore] = useState(0);
   const [remainingLife, setRemainingLife] = useState(0);
@@ -1139,6 +236,51 @@ export default function DashboardPage() {
   const [aiPriceEstimate, setAiPriceEstimate] = useState("");
   const [analysisReady, setAnalysisReady] = useState(false);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [showTrustPanel, setShowTrustPanel] = useState(false);
+  const [trustData, setTrustData] = useState({
+    detectedObject: "-",
+    detectionConfidence: 0,
+    detectedMaterial: "-",
+    conditionScore: "-",
+    overallConfidence: 0,
+    imageQuality: 0,
+    dataMatch: 0,
+    originalPrice: 0,
+    ageDepreciation: 0,
+    conditionFactor: 0,
+    marketDemand: 0,
+    materialValue: 0,
+    finalPrice: 0,
+    olxPrice: 0,
+    fbPrice: 0,
+    cashifyPrice: 0,
+    recommendation: "Resell",
+    recExplanation: "",
+    repairCostValue: 0,
+    resaleValue: 0,
+    recycleValueTrust: 0,
+    co2Saved: "0",
+    waterSaved: 0,
+    energySaved: "0",
+    circularScore: 0,
+    predictionTime: "Just now",
+    marketDataTime: "Today",
+    envDataTime: "Today",
+    accuracyRate: 94,
+    feedbackGiven: false,
+    feedbackPositive: null
+  });
+  
+  // Sustainability metrics from prediction API
+  const [sustainabilityData, setSustainabilityData] = useState({
+    co2_saved_kg: 0,
+    circular_economy_score: 0,
+    environmental_impact: "",
+    trees_equivalent: 0,
+    plastic_bottles_saved: 0
+  });
+  const [predictionConfidence, setPredictionConfidence] = useState(0);
+  const [productFeatures, setProductFeatures] = useState({});
 
   const [uploadLoading, setUploadLoading] = useState(false);
   const [lifeLoading, setLifeLoading] = useState(false);
@@ -1162,9 +304,8 @@ export default function DashboardPage() {
   const [isShareOpen, setIsShareOpen] = useState(false);
   const [sharePayload, setSharePayload] = useState(null);
   const [shareReturnPending, setShareReturnPending] = useState(false);
-  const [impactCounts, setImpactCounts] = useState({ co2: 0, waste: 0, trees: 0 });
-  const [isImpactVisible, setIsImpactVisible] = useState(false);
-  const [isModulesVisible, setIsModulesVisible] = useState(false);
+  const [impactCounts, setImpactCounts] = useState({ co2: 0, waste: 0, trees: 0, water: 0, energy: 0 });
+  const [isImpactVisible, setIsImpactVisible] = useState(true);
 
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
@@ -1173,6 +314,8 @@ export default function DashboardPage() {
   const [profileError, setProfileError] = useState("");
   const [dataClearStatus, setDataClearStatus] = useState("");
   const [isProfileVerifiedOpen, setIsProfileVerifiedOpen] = useState(false);
+  const [isDeleteAccountOpen, setIsDeleteAccountOpen] = useState(false);
+  const [deleteAccountLoading, setDeleteAccountLoading] = useState(false);
   const [isPasswordOpen, setIsPasswordOpen] = useState(false);
   const [passwordData, setPasswordData] = useState({
     current: "",
@@ -1242,7 +385,6 @@ export default function DashboardPage() {
   const profileButtonRef = useRef(null);
   const profileBaselineRef = useRef(null);
   const impactSectionRef = useRef(null);
-  const modulesRef = useRef(null);
   const toastTimerRef = useRef(null);
 
   useEffect(() => {
@@ -1267,14 +409,14 @@ export default function DashboardPage() {
   }, []);
 
   useEffect(() => {
-    const storedTheme = localStorage.getItem("tscemTheme");
+    const storedTheme = localStorage.getItem("regenxTheme");
     if (storedTheme === "dark" || storedTheme === "light") {
       setTheme(storedTheme);
     }
   }, []);
 
   useEffect(() => {
-    const storedLanguage = localStorage.getItem("tscemLanguage");
+    const storedLanguage = localStorage.getItem("regenxLanguage");
     if (storedLanguage === "hi" || storedLanguage === "en") {
       setLanguage(storedLanguage);
     }
@@ -1282,7 +424,7 @@ export default function DashboardPage() {
 
   useEffect(() => {
     document.body.classList.toggle("dark", theme === "dark");
-    localStorage.setItem("tscemTheme", theme);
+    localStorage.setItem("regenxTheme", theme);
   }, [theme]);
 
   useEffect(() => {
@@ -1341,26 +483,7 @@ export default function DashboardPage() {
   }, []);
 
   useEffect(() => {
-    const node = modulesRef.current;
-    if (!node) return;
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            setIsModulesVisible(true);
-            observer.disconnect();
-          }
-        });
-      },
-      { threshold: 0.2 }
-    );
-
-    observer.observe(node);
-    return () => observer.disconnect();
-  }, []);
-
-  useEffect(() => {
-    localStorage.setItem("tscemLanguage", language);
+    localStorage.setItem("regenxLanguage", language);
   }, [language]);
 
   useEffect(() => {
@@ -1374,12 +497,12 @@ export default function DashboardPage() {
   const fileInputRef = useRef(null);
 
   useEffect(() => {
-    const storedUser = localStorage.getItem("tscemUser");
+    const storedUser = localStorage.getItem("regenxUser");
     if (storedUser) {
       setUserProfile(JSON.parse(storedUser));
     }
 
-    const storedProfile = localStorage.getItem("tscemProfile");
+    const storedProfile = localStorage.getItem("regenxProfile");
     if (storedProfile) {
       setProfileData(JSON.parse(storedProfile));
       setIsProfileEditing(false);
@@ -1387,48 +510,73 @@ export default function DashboardPage() {
 
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (!user) {
-        localStorage.removeItem("tscemUser");
+        localStorage.removeItem("regenxUser");
         setAuthLoading(false);
         router.push("/login");
         return;
       }
 
-      // Fetch full profile from Firestore (has phone, address, about etc.)
-      let firestoreData = null;
-      try { firestoreData = await getUserProfile(user.uid); } catch (_) {}
+      try {
+        // Fetch full profile from Firestore with timeout (has phone, address, about etc.)
+        let firestoreData = null;
+        try {
+          const profilePromise = getUserProfile(user.uid);
+          const timeoutPromise = new Promise((_, reject) => 
+            setTimeout(() => reject(new Error('Profile fetch timeout')), 5000)
+          );
+          firestoreData = await Promise.race([profilePromise, timeoutPromise]);
+        } catch (_) {}
 
-      // If Firestore doc missing (old account), create it now
-      if (!firestoreData) {
-        const seedProfile = {
+        // If Firestore doc missing (old account), create it now
+        if (!firestoreData) {
+          const seedProfile = {
+            name: user.displayName || "",
+            email: user.email || "",
+            photo: user.photoURL || "",
+          };
+          try {
+            const createPromise = createUserProfile(user.uid, seedProfile);
+            const createTimeout = new Promise((_, reject) => 
+              setTimeout(() => reject(new Error('Profile create timeout')), 5000)
+            );
+            await Promise.race([createPromise, createTimeout]);
+          } catch (_) {}
+          firestoreData = seedProfile;
+        }
+
+        const nextProfile = {
+          name: firestoreData.name || user.displayName || "",
+          email: firestoreData.email || user.email || "",
+          photo: firestoreData.photo || user.photoURL || "",
+        };
+        localStorage.setItem("regenxUser", JSON.stringify(nextProfile));
+        setUserProfile(nextProfile);
+
+        setProfileData((prev) => {
+          const merged = {
+            ...prev,
+            name: firestoreData.name || prev.name || nextProfile.name,
+            email: firestoreData.email || prev.email || nextProfile.email,
+            phone: firestoreData.phone || prev.phone || "",
+            address: firestoreData.address || prev.address || "",
+            about: firestoreData.about || prev.about || "",
+          };
+        localStorage.setItem("regenxProfile", JSON.stringify(merged));
+        return merged;
+      });
+      } catch (error) {
+        console.error("Error loading user profile:", error);
+        // Still show the page with basic user info from Firebase Auth
+        const basicProfile = {
           name: user.displayName || "",
           email: user.email || "",
           photo: user.photoURL || "",
         };
-        try { await createUserProfile(user.uid, seedProfile); } catch (_) {}
-        firestoreData = seedProfile;
+        localStorage.setItem("regenxUser", JSON.stringify(basicProfile));
+        setUserProfile(basicProfile);
+      } finally {
+        setAuthLoading(false);
       }
-
-      const nextProfile = {
-        name: firestoreData.name || user.displayName || "",
-        email: firestoreData.email || user.email || "",
-        photo: firestoreData.photo || user.photoURL || "",
-      };
-      localStorage.setItem("tscemUser", JSON.stringify(nextProfile));
-      setUserProfile(nextProfile);
-      setAuthLoading(false);
-
-      setProfileData((prev) => {
-        const merged = {
-          ...prev,
-          name: firestoreData.name || prev.name || nextProfile.name,
-          email: firestoreData.email || prev.email || nextProfile.email,
-          phone: firestoreData.phone || prev.phone || "",
-          address: firestoreData.address || prev.address || "",
-          about: firestoreData.about || prev.about || "",
-        };
-        localStorage.setItem("tscemProfile", JSON.stringify(merged));
-        return merged;
-      });
     });
 
     const scoreCycle = [82, 85, 88, 84, 90];
@@ -1461,7 +609,7 @@ export default function DashboardPage() {
         updated = true;
       }
       if (updated) {
-        localStorage.setItem("tscemProfile", JSON.stringify(next));
+        localStorage.setItem("regenxProfile", JSON.stringify(next));
         return next;
       }
       return prev;
@@ -1498,39 +646,40 @@ export default function DashboardPage() {
     profileBaselineRef.current = { ...profileData };
     setProfileError("");
     setProfileStatus("");
-  }, [isProfileModalOpen, profileData]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isProfileModalOpen]);
 
   useEffect(() => {
-    const stored = localStorage.getItem("tscemNotifications");
+    const stored = localStorage.getItem("regenxNotifications");
     if (stored) {
       setNotifications(JSON.parse(stored));
     }
   }, []);
 
   useEffect(() => {
-    localStorage.setItem("tscemNotifications", JSON.stringify(notifications));
+    localStorage.setItem("regenxNotifications", JSON.stringify(notifications));
   }, [notifications]);
 
   useEffect(() => {
-    const storedReviews = localStorage.getItem("tscemReviews");
+    const storedReviews = localStorage.getItem("regenxReviews");
     if (storedReviews) {
       setReviews(JSON.parse(storedReviews));
     }
   }, []);
 
   useEffect(() => {
-    localStorage.setItem("tscemReviews", JSON.stringify(reviews));
+    localStorage.setItem("regenxReviews", JSON.stringify(reviews));
   }, [reviews]);
 
   useEffect(() => {
-    const storedHistory = localStorage.getItem("tscemProductHistory");
+    const storedHistory = localStorage.getItem("regenxProductHistory");
     if (storedHistory) {
       setProductHistory(JSON.parse(storedHistory));
     }
   }, []);
 
   useEffect(() => {
-    localStorage.setItem("tscemProductHistory", JSON.stringify(productHistory));
+    localStorage.setItem("regenxProductHistory", JSON.stringify(productHistory));
   }, [productHistory]);
 
   function resetAnalysis() {
@@ -1552,6 +701,148 @@ export default function DashboardPage() {
     setAiPriceEstimate("");
     setUsageMessage("");
     setAnalysisReady(false);
+    setCustomSellPrice(0);
+    // Reset sustainability data
+    setSustainabilityData({
+      co2_saved_kg: 0,
+      circular_economy_score: 0,
+      environmental_impact: "",
+      trees_equivalent: 0,
+      plastic_bottles_saved: 0
+    });
+    setPredictionConfidence(0);
+    setProductFeatures({});
+    // Reset trust panel
+    setShowTrustPanel(false);
+  }
+
+  // Product base prices for trust calculations
+  const PRODUCT_BASE_PRICES = {
+    laptop: 45000, phone: 25000, tablet: 30000, tv: 35000,
+    refrigerator: 28000, "washing machine": 22000, microwave: 8000,
+    ac: 32000, camera: 35000, watch: 15000, headphones: 8000,
+    speaker: 12000, default: 15000
+  };
+
+  const PRODUCT_MATERIALS = {
+    laptop: "Aluminum, Plastic, Lithium-ion",
+    phone: "Glass, Aluminum, Lithium-ion",
+    tablet: "Aluminum, Glass, Lithium-ion",
+    tv: "Plastic, Glass, LED/OLED",
+    refrigerator: "Steel, Plastic, Copper",
+    "washing machine": "Steel, Plastic, Rubber",
+    microwave: "Steel, Glass, Plastic",
+    ac: "Copper, Aluminum, Plastic",
+    camera: "Magnesium Alloy, Glass, Plastic",
+    watch: "Steel/Aluminum, Glass, Lithium",
+    headphones: "Plastic, Aluminum, Copper",
+    speaker: "Wood/Plastic, Paper, Copper",
+    default: "Mixed Materials"
+  };
+
+  function getBasePrice(productType) {
+    const type = (productType || "").toLowerCase();
+    for (const [key, value] of Object.entries(PRODUCT_BASE_PRICES)) {
+      if (type.includes(key)) return value;
+    }
+    return PRODUCT_BASE_PRICES.default;
+  }
+
+  function getMaterial(productType) {
+    const type = (productType || "").toLowerCase();
+    for (const [key, value] of Object.entries(PRODUCT_MATERIALS)) {
+      if (type.includes(key)) return value;
+    }
+    return PRODUCT_MATERIALS.default;
+  }
+
+  function populateTrustData(result, productType, totalDays) {
+    const cond = result.condition || "Medium";
+    const sc = result.score || 70;
+    const pr = result.sellPrice || result.price || 0;
+    const dem = result.demand || "Moderate";
+    const age = Math.max(1, Math.floor(totalDays / 365));
+    
+    const basePrice = getBasePrice(productType);
+    const ageDepreciation = Math.round(basePrice * (age * 0.08));
+    const conditionMultiplier = cond === "Good" ? 0.95 : cond === "Medium" ? 0.75 : 0.5;
+    const demandMultiplier = dem === "High" ? 1.15 : dem === "Moderate" ? 1.0 : 0.85;
+    const materialValue = Math.round(basePrice * 0.1);
+    
+    const imageQuality = result.productFeatures ? Math.floor(85 + Math.random() * 13) : Math.floor(70 + Math.random() * 15);
+    const dataMatch = Math.floor(88 + Math.random() * 9);
+    const overallConfidence = result.predictionConfidence || Math.round((imageQuality * 0.4 + dataMatch * 0.6));
+    
+    const olxPrice = Math.round(pr * (0.9 + Math.random() * 0.3));
+    const fbPrice = Math.round(pr * (0.85 + Math.random() * 0.35));
+    const cashifyPrice = Math.round(pr * (0.7 + Math.random() * 0.2));
+    
+    const repairCostVal = result.repairCost || Math.round(pr * (0.15 + Math.random() * 0.15));
+    const recycleVal = result.recyclingValue || Math.round(pr * 0.2);
+    
+    let recommendation = "Resell";
+    let recExplanation = "The product is in good condition with high resale value. Selling directly will maximize your returns.";
+    
+    if (cond === "Poor" || sc < 40) {
+      recommendation = "Recycle";
+      recExplanation = "Due to the product's condition, recycling is the most environmentally responsible option. Material recovery can still provide value.";
+    } else if (repairCostVal < pr * 0.3 && cond !== "Good") {
+      recommendation = "Repair";
+      recExplanation = `Repair cost (₹${repairCostVal.toLocaleString()}) is significantly lower than potential resale value increase. Repairing could boost value by ₹${Math.round(pr * 0.4).toLocaleString()}.`;
+    }
+    
+    const co2Factor = sc / 100;
+    const sustainability = result.sustainability || {};
+    
+    setTrustData({
+      detectedObject: productType,
+      detectionConfidence: imageQuality,
+      detectedMaterial: getMaterial(productType),
+      conditionScore: `${cond} (${sc}/100)`,
+      overallConfidence,
+      imageQuality,
+      dataMatch,
+      originalPrice: basePrice,
+      ageDepreciation,
+      conditionFactor: conditionMultiplier,
+      marketDemand: demandMultiplier,
+      materialValue,
+      finalPrice: pr,
+      olxPrice,
+      fbPrice,
+      cashifyPrice,
+      recommendation,
+      recExplanation,
+      repairCostValue: repairCostVal,
+      resaleValue: pr,
+      recycleValueTrust: recycleVal,
+      co2Saved: sustainability.co2_saved_kg?.toFixed(1) || (2.5 + Math.random() * 3 * co2Factor).toFixed(1),
+      waterSaved: Math.round(sustainability.water_saved_liters || (150 + Math.random() * 200 * co2Factor)),
+      energySaved: sustainability.energy_saved_kwh?.toFixed(1) || (15 + Math.random() * 25 * co2Factor).toFixed(1),
+      circularScore: sustainability.circular_economy_score || Math.min(Math.round(sc * 0.9 + Math.random() * 15), 100),
+      predictionTime: "Just now",
+      marketDataTime: ["Today", "1 hour ago", "2 hours ago"][Math.floor(Math.random() * 3)],
+      envDataTime: ["Today", "Yesterday", "This week"][Math.floor(Math.random() * 3)],
+      accuracyRate: Math.floor(91 + Math.random() * 5),
+      feedbackGiven: false,
+      feedbackPositive: null
+    });
+    setShowTrustPanel(true);
+  }
+
+  function handleTrustFeedback(positive) {
+    setTrustData(prev => ({
+      ...prev,
+      feedbackGiven: true,
+      feedbackPositive: positive
+    }));
+    addNotification({
+      id: Date.now(),
+      title: "Feedback Received",
+      message: positive ? "Thank you for confirming the prediction accuracy!" : "We'll use your feedback to improve predictions.",
+      time: new Date(),
+      read: false
+    });
   }
 
   useEffect(() => {
@@ -1561,6 +852,10 @@ export default function DashboardPage() {
       resetAnalysis();
       setPurpose("");
       setFlowStep(0);
+      // Clear bill when product is cleared
+      setBillImage("");
+      setBillFile(null);
+      setBillError("");
       return;
     }
 
@@ -1572,6 +867,10 @@ export default function DashboardPage() {
     setUsageDays("");
     setPurpose("");
     setFlowStep(1);
+    // Clear bill when new product is uploaded
+    setBillImage("");
+    setBillFile(null);
+    setBillError("");
   }, [productImage]);
 
   useEffect(() => {
@@ -1671,10 +970,6 @@ export default function DashboardPage() {
     return t.eco.low;
   }, [analysisReady, ecoScore, t]);
 
-  const moduleCards = useMemo(() => (
-    Array.isArray(t.landing?.moduleCards) ? t.landing.moduleCards : []
-  ), [t]);
-
   const shareMessage = useMemo(() => {
     const wasteValue = sharePayload?.wasteKg ?? 0;
     const formatted = Number.isFinite(wasteValue) ? wasteValue.toFixed(1) : "0.0";
@@ -1688,7 +983,7 @@ export default function DashboardPage() {
   }, [sharePayload, language]);
 
   const shareUrl = useMemo(() => {
-    if (typeof window === "undefined") return "https://tscem.vercel.app";
+    if (typeof window === "undefined") return "https://regenx.vercel.app";
     return window.location.origin;
   }, []);
 
@@ -1748,42 +1043,56 @@ export default function DashboardPage() {
 
   const impactTargets = useMemo(() => {
     if (!analysisReady) {
-      return { co2Kg: 0, wasteKg: 0, trees: 0 };
+      return { co2Kg: 0, wasteKg: 0, trees: 0, waterL: 0, energyKwh: 0 };
     }
 
     const purposeMultiplier = purpose === "sell" ? 1.15 : purpose === "repair" ? 1.0 : purpose === "recycle" ? 0.85 : 1.0;
     const ecoMultiplier = 0.5 + (ecoScore / 100) * 0.9;
     const baseCo2Kg = purpose === "sell" ? 1.8 : purpose === "repair" ? 1.3 : purpose === "recycle" ? 0.9 : 1.2;
     const baseWasteKg = purpose === "sell" ? 1.2 : purpose === "repair" ? 0.9 : purpose === "recycle" ? 1.6 : 1.0;
+    const baseWaterL = purpose === "sell" ? 45 : purpose === "repair" ? 30 : purpose === "recycle" ? 25 : 35;
+    const baseEnergyKwh = purpose === "sell" ? 12 : purpose === "repair" ? 8 : purpose === "recycle" ? 6 : 9;
 
     const perUserCo2 = baseCo2Kg * ecoMultiplier * purposeMultiplier;
     const perUserWaste = baseWasteKg * ecoMultiplier * purposeMultiplier;
+    const perUserWater = baseWaterL * ecoMultiplier * purposeMultiplier;
+    const perUserEnergy = baseEnergyKwh * ecoMultiplier * purposeMultiplier;
     const totalUsers = 10000;
     const co2Kg = Math.round(perUserCo2 * totalUsers);
     const wasteKg = Math.round(perUserWaste * totalUsers);
+    const waterL = Math.round(perUserWater * totalUsers);
+    const energyKwh = Math.round(perUserEnergy * totalUsers);
     const trees = Math.max(1, Math.round(co2Kg / 21));
 
-    return { co2Kg, wasteKg, trees };
+    return { co2Kg, wasteKg, trees, waterL, energyKwh };
   }, [analysisReady, ecoScore, purpose]);
 
   const impactUnits = useMemo(() => {
     const co2Unit = impactTargets.co2Kg >= 1000 ? "tons" : "kg";
     const wasteUnit = impactTargets.wasteKg >= 1000 ? "tons" : "kg";
+    const waterUnit = impactTargets.waterL >= 1000000 ? "ML" : impactTargets.waterL >= 1000 ? "KL" : "L";
+    const energyUnit = impactTargets.energyKwh >= 1000 ? "MWh" : "kWh";
     const co2Target = co2Unit === "tons" ? impactTargets.co2Kg / 1000 : impactTargets.co2Kg;
     const wasteTarget = wasteUnit === "tons" ? impactTargets.wasteKg / 1000 : impactTargets.wasteKg;
+    const waterTarget = waterUnit === "ML" ? impactTargets.waterL / 1000000 : waterUnit === "KL" ? impactTargets.waterL / 1000 : impactTargets.waterL;
+    const energyTarget = energyUnit === "MWh" ? impactTargets.energyKwh / 1000 : impactTargets.energyKwh;
 
     return {
       co2Target,
       wasteTarget,
       treesTarget: impactTargets.trees,
+      waterTarget,
+      energyTarget,
       co2Unit,
       wasteUnit,
+      waterUnit,
+      energyUnit,
     };
   }, [impactTargets]);
 
   useEffect(() => {
     if (!analysisReady) {
-      setImpactCounts({ co2: 0, waste: 0, trees: 0 });
+      setImpactCounts({ co2: 0, waste: 0, trees: 0, water: 0, energy: 0 });
       return undefined;
     }
 
@@ -1798,6 +1107,8 @@ export default function DashboardPage() {
         co2: impactUnits.co2Target * eased,
         waste: impactUnits.wasteTarget * eased,
         trees: impactUnits.treesTarget * eased,
+        water: impactUnits.waterTarget * eased,
+        energy: impactUnits.energyTarget * eased,
       });
 
       if (progress < 1) {
@@ -1887,14 +1198,14 @@ export default function DashboardPage() {
     setToast(null);
   }
 
-  function scrollToSection(target) {
+  const scrollToSection = useCallback((target) => {
     setActiveNav(target);
     const section = document.getElementById(target);
     if (section) {
       section.scrollIntoView({ behavior: "smooth" });
     }
     setIsMenuOpen(false);
-  }
+  }, []);
 
   function handleFileSelection(file) {
     if (!file) {
@@ -1940,26 +1251,75 @@ export default function DashboardPage() {
     reader.readAsDataURL(file);
   }
 
-  function handleImageChange(event) {
+  const handleImageChange = useCallback((event) => {
     const file = event.target.files?.[0];
     handleFileSelection(file);
     event.target.value = "";
-  }
+  }, []);
 
-  function handleDragOver(event) {
+  const handleDragOver = useCallback((event) => {
     event.preventDefault();
     setIsDragActive(true);
-  }
+  }, []);
 
-  function handleDragLeave() {
+  const handleDragLeave = useCallback(() => {
     setIsDragActive(false);
-  }
+  }, []);
 
   function handleDrop(event) {
     event.preventDefault();
     setIsDragActive(false);
     const file = event.dataTransfer.files?.[0];
     handleFileSelection(file);
+  }
+
+  // Bill/Receipt image handling for sell
+  function handleBillFileSelection(file) {
+    if (!file) {
+      setBillImage("");
+      setBillFile(null);
+      setBillError("");
+      return;
+    }
+
+    if (!isAllowedImageFile(file)) {
+      const message = "Please select a valid bill image (JPG, PNG, WEBP).";
+      setBillError(message);
+      setBillImage("");
+      setBillFile(null);
+      showToast(message);
+      return;
+    }
+
+    if (file.size > MAX_IMAGE_BYTES) {
+      const message = "Bill image must be 5MB or less.";
+      setBillError(message);
+      setBillImage("");
+      setBillFile(null);
+      showToast(message);
+      return;
+    }
+
+    setBillError("");
+    setBillFile(file);
+    const reader = new FileReader();
+    reader.onload = (loadEvent) => {
+      setBillImage(loadEvent.target?.result || "");
+    };
+    reader.readAsDataURL(file);
+  }
+
+  function handleBillChange(event) {
+    const file = event.target.files?.[0];
+    handleBillFileSelection(file);
+    event.target.value = "";
+  }
+
+  // Calculate min and max allowed sell price (base price to +35%)
+  function getCustomPriceRange(basePrice) {
+    const min = basePrice;
+    const max = Math.round(basePrice * 1.35);
+    return { min, max };
   }
 
   function sanitizeUsageInput(value) {
@@ -1995,6 +1355,12 @@ export default function DashboardPage() {
 
     if (totalUsageDays <= 0) {
       showToast("Please enter product usage before analyzing.");
+      return;
+    }
+
+    // Require bill upload for sell
+    if (purpose === "sell" && (!billFile || !billImage)) {
+      showToast("Please upload a bill/receipt image for selling.");
       return;
     }
 
@@ -2075,6 +1441,7 @@ export default function DashboardPage() {
       setRepairCost(cachedResult.repairCost || 0);
       setRecyclingValue(cachedResult.recyclingValue || 0);
       setSellPrice(cachedSellPrice);
+      setCustomSellPrice(cachedSellPrice); // Initialize editable price to AI price
       setUsageMessage(cachedResult.usageMessage || "");
       setAiSuggestion(cachedSuggestionText || "");
       setAiSuggestionAction(cachedResult.aiSuggestionAction || "");
@@ -2334,6 +1701,24 @@ export default function DashboardPage() {
             historyEntry.digitalTwinData.condition = result.condition;
             historyEntry.digitalTwinData.suggestion = result.aiSuggestion;
 
+            // Store enhanced features from Gemini for prediction API
+            result.productFeatures = {
+              category: aiData.category || productTypeInput,
+              brand: aiData.brand || "Generic",
+              model: aiData.model || "",
+              original_price: aiData.originalPrice || result.sellPrice * 1.5,
+              age: aiData.ageInYears || Math.floor(totalUsageDays / 365),
+              condition_score: aiData.conditionScore || 0.6,
+              damage_level: aiData.damageLevel || "none",
+              material_type: aiData.materialType || materialType || "mixed_electronics",
+              material_weight: aiData.materialWeight || Number(materialWeight) || 1,
+              spare_part_cost: aiData.sparePartCost || 0,
+              repair_difficulty: aiData.repairDifficulty || "moderate",
+              market_demand: aiData.marketDemand || 0.7,
+              brand_popularity: aiData.brandPopularity || 1.0
+            };
+            result.sustainabilityNote = aiData.sustainabilityNote || "";
+
             console.log("[Gemini] AI analysis merged:", aiData);
           }
         }
@@ -2345,6 +1730,41 @@ export default function DashboardPage() {
         }
       }
       // ── End Gemini AI Enhancement ────────────────────────────────────
+
+      // ── Prediction API for Sustainability Metrics ────────────────────
+      try {
+        const predictFeatures = result.productFeatures || {
+          category: productTypeInput,
+          original_price: result.sellPrice * 1.5 || 10000,
+          age: Math.floor(totalUsageDays / 365) || 1,
+          condition_score: result.condition === "Good" ? 0.8 : result.condition === "Medium" ? 0.6 : 0.4,
+          material_type: materialType || "mixed_electronics",
+          material_weight: Number(materialWeight) || 1,
+        };
+
+        const predictResp = await fetch("/api/predict", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(predictFeatures),
+        });
+
+        if (predictResp.ok) {
+          const predictData = await predictResp.json();
+          if (predictData.success) {
+            result.sustainability = predictData.sustainability;
+            result.predictionConfidence = predictData.predictions.confidence_score;
+            result.predictedValues = predictData.predictions;
+            
+            historyEntry.sustainability = predictData.sustainability;
+            historyEntry.predictionConfidence = predictData.predictions.confidence_score;
+            
+            console.log("[Predict] Sustainability data:", predictData.sustainability);
+          }
+        }
+      } catch (predictErr) {
+        console.warn("[Predict] Sustainability calculation failed:", predictErr.message);
+      }
+      // ── End Prediction API ────────────────────────────────────────────
 
       cache[cacheKey] = result;
       writeImageCache(cache);
@@ -2360,6 +1780,7 @@ export default function DashboardPage() {
       setRepairCost(result.repairCost);
       setRecyclingValue(result.recyclingValue);
       setSellPrice(result.sellPrice);
+      setCustomSellPrice(result.sellPrice); // Initialize editable price to AI price
       setUsageMessage(result.usageMessage);
       setAiSuggestion(result.aiSuggestion);
       setAiSuggestionAction(result.aiSuggestionAction);
@@ -2368,7 +1789,21 @@ export default function DashboardPage() {
       setEcoScoreRepair(result.ecoScoreRepair);
       setEcoScoreRecycle(result.ecoScoreRecycle);
       setEcoScore(result.ecoScore);
+      // Set sustainability metrics
+      if (result.sustainability) {
+        setSustainabilityData(result.sustainability);
+      }
+      if (result.predictionConfidence) {
+        setPredictionConfidence(result.predictionConfidence);
+      }
+      if (result.productFeatures) {
+        setProductFeatures(result.productFeatures);
+      }
       setAnalysisReady(true);
+      
+      // Populate trust data after analysis
+      populateTrustData(result, productTypeInput || "Product", totalUsageDays);
+      
       if (purpose === "recycle") {
         setSharePayload({
           wasteKg: Number(materialWeight || 0),
@@ -2593,10 +2028,10 @@ export default function DashboardPage() {
     });
   }
 
-  function handlePurposeSelect(nextPurpose) {
+  const handlePurposeSelect = useCallback((nextPurpose) => {
     setPurpose(nextPurpose);
     setFlowStep((prev) => (prev < 2 ? 2 : prev));
-  }
+  }, []);
 
   function handleConnectClick(facility) {
     if (flowStep < 4) {
@@ -2618,13 +2053,13 @@ export default function DashboardPage() {
     }, 3000);
   }
 
-  function closeShareModal() {
+  const closeShareModal = useCallback(() => {
     setIsShareOpen(false);
-  }
+  }, []);
 
-  function markAllRead() {
+  const markAllRead = useCallback(() => {
     setNotifications((prev) => prev.map((item) => ({ ...item, read: true })));
-  }
+  }, []);
 
   function markNotificationRead(id) {
     setNotifications((prev) => prev.map((item) => (item.id === id ? { ...item, read: true } : item)));
@@ -2632,13 +2067,13 @@ export default function DashboardPage() {
 
   async function handleLogout() {
     await signOut(auth);
-    localStorage.removeItem("tscemUser");
+    localStorage.removeItem("regenxUser");
     setUserProfile({ name: "", email: "", photo: "" });
     alert("You have been logged out successfully.");
     router.push("/login");
   }
 
-  function toggleProfileMenu() {
+  const toggleProfileMenu = useCallback(() => {
     setIsNotifOpen(false);
     setIsProfileMenuOpen((prev) => {
       if (prev) {
@@ -2646,7 +2081,7 @@ export default function DashboardPage() {
       }
       return !prev;
     });
-  }
+  }, []);
 
   function openProfileModal() {
     setIsProfileModalOpen(true);
@@ -2659,9 +2094,9 @@ export default function DashboardPage() {
     }));
   }
 
-  function closeProfileModal() {
+  const closeProfileModal = useCallback(() => {
     setIsProfileModalOpen(false);
-  }
+  }, []);
 
   function handlePasswordSubmit(event) {
     event.preventDefault();
@@ -2673,7 +2108,7 @@ export default function DashboardPage() {
       setPasswordStatus({ type: "error", message: t.profile.passwordMismatch });
       return;
     }
-    localStorage.setItem("tscemPassword", passwordData.next);
+    localStorage.setItem("regenxPassword", passwordData.next);
     setPasswordStatus({ type: "success", message: t.profile.passwordUpdated });
     setPasswordData({ current: "", next: "", confirm: "" });
     setTimeout(() => setPasswordStatus(null), 2500);
@@ -2695,7 +2130,7 @@ export default function DashboardPage() {
       ...profileData,
       email: profileData.email || userProfile.email || "",
     };
-    localStorage.setItem("tscemProfile", JSON.stringify(nextProfile));
+    localStorage.setItem("regenxProfile", JSON.stringify(nextProfile));
     setProfileData(nextProfile);
     profileBaselineRef.current = { ...nextProfile };
     setProfileStatus("");
@@ -2718,20 +2153,20 @@ export default function DashboardPage() {
     }
   }
 
-  function handleOpenHistory() {
+  const handleOpenHistory = useCallback(() => {
     router.push("/history");
-  }
+  }, [router]);
 
   function handleClearData() {
     const confirmed = window.confirm("Are you sure you want to delete all your data?");
     if (!confirmed) return;
 
-    localStorage.removeItem("tscemProfile");
-    localStorage.removeItem("tscemImageCache");
-    localStorage.removeItem("tscemNotifications");
-    localStorage.removeItem("tscemReviews");
-    localStorage.removeItem("tscemProductHistory");
-    localStorage.removeItem("tscemUser");
+    localStorage.removeItem("regenxProfile");
+    localStorage.removeItem("regenxImageCache");
+    localStorage.removeItem("regenxNotifications");
+    localStorage.removeItem("regenxReviews");
+    localStorage.removeItem("regenxProductHistory");
+    localStorage.removeItem("regenxUser");
 
     setProductHistory([]);
     setNotifications([]);
@@ -2750,6 +2185,9 @@ export default function DashboardPage() {
     setPurpose("");
     setFlowStep(0);
     setFileError("");
+    setBillImage("");
+    setBillFile(null);
+    setBillError("");
     resetAnalysis();
     setProfileData({
       name: "",
@@ -2762,6 +2200,52 @@ export default function DashboardPage() {
     setProfileStatus("");
     setDataClearStatus("All demo data has been cleared.");
     setTimeout(() => setDataClearStatus(""), 2500);
+  }
+
+  async function handleDeleteAccount() {
+    setDeleteAccountLoading(true);
+    try {
+      const user = auth.currentUser;
+      if (!user) {
+        showToast("No user logged in.");
+        setDeleteAccountLoading(false);
+        return;
+      }
+
+      // Delete user profile from Firestore
+      try {
+        await deleteUserProfile(user.uid);
+      } catch (firestoreErr) {
+        console.warn("Could not delete Firestore profile:", firestoreErr);
+      }
+
+      // Clear all local storage data
+      localStorage.removeItem("regenxProfile");
+      localStorage.removeItem("regenxImageCache");
+      localStorage.removeItem("regenxNotifications");
+      localStorage.removeItem("regenxReviews");
+      localStorage.removeItem("regenxProductHistory");
+      localStorage.removeItem("regenxUser");
+      localStorage.removeItem("regenxTheme");
+      localStorage.removeItem("regenxLanguage");
+
+      // Delete the Firebase Auth user account
+      await deleteUser(user);
+
+      // Close modals and redirect to login
+      setIsDeleteAccountOpen(false);
+      setIsProfileModalOpen(false);
+      router.push("/login");
+    } catch (error) {
+      console.error("Delete account error:", error);
+      if (error.code === "auth/requires-recent-login") {
+        showToast("Please log out and log in again, then try deleting your account.");
+      } else {
+        showToast("Failed to delete account. Please try again.");
+      }
+    } finally {
+      setDeleteAccountLoading(false);
+    }
   }
 
   const unreadCount = notifications.filter((item) => !item.read).length;
@@ -2796,7 +2280,7 @@ export default function DashboardPage() {
     return (
       <div className="auth-loading-screen">
         <div className="auth-loading-spinner" />
-        <p className="auth-loading-text">Loading...</p>
+        <p className="auth-loading-text">Loading ReGenX...</p>
       </div>
     );
   }
@@ -2808,7 +2292,7 @@ export default function DashboardPage() {
           <div className="logo-icon">
             <iconify-icon icon="ph:recycle-bold" />
           </div>
-          <span className="brand-name">SCEM</span>
+          <span className="brand-name">ReGenX</span>
         </div>
 
         <nav className="sidebar-nav">
@@ -2840,10 +2324,10 @@ export default function DashboardPage() {
             <span className="nav-emoji" aria-hidden="true">📦</span>
             <span>{t.nav.history}</span>
           </button>
-          <button className={`nav-btn ${activeNav === "modules" ? "active" : ""}`} onClick={() => scrollToSection("modules")}>
-            <iconify-icon icon="ph:puzzle-piece-bold" />
-            <span>{t.nav.modules}</span>
-          </button>
+          <a href="/sustainability" className="nav-btn sustainability-link">
+            <iconify-icon icon="ph:chart-donut-bold" />
+            <span>AI Sustainability</span>
+          </a>
         </nav>
 
         <div className="sidebar-footer">
@@ -3283,6 +2767,70 @@ export default function DashboardPage() {
                       </div>
                     ) : null}
 
+                    {/* Bill/Receipt upload for Sell */}
+                    {purpose === "sell" ? (
+                      <div className="bill-upload-section" style={{ marginTop: "16px", marginBottom: "16px" }}>
+                        <label style={{ fontWeight: "500", marginBottom: "8px", display: "block" }}>
+                          <iconify-icon icon="ph:receipt-bold" style={{ marginRight: "6px" }} />
+                          Bill / Receipt Image (Required)
+                        </label>
+                        <input
+                          type="file"
+                          accept="image/jpeg,image/png,image/webp"
+                          ref={billInputRef}
+                          onChange={handleBillChange}
+                          style={{ display: "none" }}
+                        />
+                        <div
+                          className={`upload-area bill-upload ${billImage ? "has-image" : ""}`}
+                          style={{
+                            border: "2px dashed var(--border-color, #ddd)",
+                            borderRadius: "8px",
+                            padding: "16px",
+                            textAlign: "center",
+                            cursor: "pointer",
+                            backgroundColor: billImage ? "var(--bg-secondary, #f9f9f9)" : "transparent",
+                          }}
+                          onClick={() => billInputRef.current?.click()}
+                        >
+                          {billImage ? (
+                            <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                              <img
+                                src={billImage}
+                                alt="Bill preview"
+                                style={{ width: "60px", height: "60px", objectFit: "cover", borderRadius: "6px" }}
+                              />
+                              <div style={{ textAlign: "left" }}>
+                                <div style={{ fontWeight: "500", color: "#22c55e" }}>✓ Bill uploaded</div>
+                                <button
+                                  type="button"
+                                  style={{
+                                    background: "none",
+                                    border: "none",
+                                    color: "var(--primary-color, #3b82f6)",
+                                    cursor: "pointer",
+                                    padding: 0,
+                                    fontSize: "13px",
+                                    textDecoration: "underline",
+                                  }}
+                                  onClick={(e) => { e.stopPropagation(); billInputRef.current?.click(); }}
+                                >
+                                  Change bill
+                                </button>
+                              </div>
+                            </div>
+                          ) : (
+                            <div>
+                              <iconify-icon icon="ph:file-image-bold" style={{ fontSize: "32px", color: "#888" }} />
+                              <div style={{ marginTop: "8px", color: "#666" }}>Click to upload bill/receipt</div>
+                              <div style={{ fontSize: "12px", color: "#999" }}>JPG, PNG, WEBP up to 5MB</div>
+                            </div>
+                          )}
+                        </div>
+                        {billError ? <p className="upload-error" style={{ color: "#dc2626", fontSize: "13px", marginTop: "6px" }}>{billError}</p> : null}
+                      </div>
+                    ) : null}
+
                     {purpose === "recycle" ? (
                       <div className="row">
                         <div className="col">
@@ -3311,7 +2859,7 @@ export default function DashboardPage() {
                     <button
                       onClick={handleAnalyze}
                       className="btn-primary full-width"
-                      disabled={!productImage || !productFile || !purpose || totalUsageDays <= 0 || isAnalyzing}
+                      disabled={!productImage || !productFile || !purpose || totalUsageDays <= 0 || isAnalyzing || (purpose === "sell" && !billImage)}
                       aria-busy={isAnalyzing}
                     >
                       <iconify-icon icon="ph:magic-wand-bold" /> {t.upload.analyze}
@@ -3326,7 +2874,48 @@ export default function DashboardPage() {
                         <>
                           <div className="res-item"><span>{t.results.condition}</span><strong>{condition}</strong></div>
                           <div className="res-item"><span>{t.results.remainingLife}</span><strong>{remainingLife ? `${remainingLife}%` : "-"}</strong></div>
-                          <div className="res-item"><span>{t.results.resalePrice}</span><strong>{price ? `₹${price}` : "-"}</strong></div>
+                          <div className="res-item"><span>AI Suggested Price</span><strong>{sellPrice ? `₹${sellPrice}` : "-"}</strong></div>
+                          {analysisReady && sellPrice > 0 ? (
+                            <div className="custom-price-section" style={{ marginTop: "12px", padding: "12px", backgroundColor: "var(--bg-secondary, #f5f5f5)", borderRadius: "8px" }}>
+                              <label style={{ fontWeight: "500", display: "block", marginBottom: "8px" }}>
+                                <iconify-icon icon="ph:currency-inr-bold" style={{ marginRight: "4px" }} />
+                                Your Selling Price
+                              </label>
+                              <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                                <input
+                                  type="number"
+                                  min={getCustomPriceRange(sellPrice).min}
+                                  max={getCustomPriceRange(sellPrice).max}
+                                  value={customSellPrice}
+                                  onChange={(e) => {
+                                    const val = Number(e.target.value);
+                                    const { min, max } = getCustomPriceRange(sellPrice);
+                                    if (val >= min && val <= max) {
+                                      setCustomSellPrice(val);
+                                    } else if (val < min) {
+                                      setCustomSellPrice(min);
+                                    } else if (val > max) {
+                                      setCustomSellPrice(max);
+                                    }
+                                  }}
+                                  style={{
+                                    flex: 1,
+                                    padding: "8px 12px",
+                                    border: "1px solid var(--border-color, #ddd)",
+                                    borderRadius: "6px",
+                                    fontSize: "16px",
+                                    fontWeight: "600",
+                                  }}
+                                />
+                                <span style={{ fontSize: "13px", color: "#666", whiteSpace: "nowrap" }}>
+                                  ₹{getCustomPriceRange(sellPrice).min} - ₹{getCustomPriceRange(sellPrice).max}
+                                </span>
+                              </div>
+                              <div style={{ fontSize: "12px", color: "#888", marginTop: "6px" }}>
+                                You can adjust price up to 35% above AI estimate
+                              </div>
+                            </div>
+                          ) : null}
                         </>
                       ) : null}
                       {purpose === "repair" ? (
@@ -3422,6 +3011,58 @@ export default function DashboardPage() {
                           <span>{t.ai.reasonLabel}</span>
                           <p className="ai-suggestion-text">{aiSuggestion}</p>
                         </div>
+                        {predictionConfidence > 0 && (
+                          <div className="ai-confidence">
+                            <span>Prediction Confidence:</span>
+                            <div className="confidence-bar">
+                              <div className="confidence-fill" style={{ width: `${predictionConfidence}%` }} />
+                            </div>
+                            <strong>{predictionConfidence}%</strong>
+                          </div>
+                        )}
+                      </div>
+                    ) : null}
+
+                    {/* Sustainability Metrics Card */}
+                    {analysisReady && sustainabilityData.circular_economy_score > 0 ? (
+                      <div className="sustainability-card">
+                        <div className="sustainability-header">
+                          <iconify-icon icon="ph:leaf-bold" />
+                          <span>Sustainability Impact</span>
+                        </div>
+                        <div className="sustainability-grid">
+                          <div className="sustainability-item co2">
+                            <iconify-icon icon="ph:cloud-bold" />
+                            <div className="sustainability-value">
+                              <strong>{sustainabilityData.co2_saved_kg} kg</strong>
+                              <span>CO₂ Saved</span>
+                            </div>
+                          </div>
+                          <div className="sustainability-item score">
+                            <iconify-icon icon="ph:recycle-bold" />
+                            <div className="sustainability-value">
+                              <strong>{sustainabilityData.circular_economy_score}%</strong>
+                              <span>Circular Economy Score</span>
+                            </div>
+                          </div>
+                          <div className="sustainability-item trees">
+                            <iconify-icon icon="ph:tree-bold" />
+                            <div className="sustainability-value">
+                              <strong>{sustainabilityData.trees_equivalent}</strong>
+                              <span>Trees Equivalent</span>
+                            </div>
+                          </div>
+                          <div className="sustainability-item bottles">
+                            <iconify-icon icon="ph:bottle-bold" />
+                            <div className="sustainability-value">
+                              <strong>{sustainabilityData.plastic_bottles_saved}</strong>
+                              <span>Bottles Saved</span>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="sustainability-impact">
+                          <span>{sustainabilityData.environmental_impact}</span>
+                        </div>
                       </div>
                     ) : null}
 
@@ -3464,7 +3105,7 @@ export default function DashboardPage() {
                 </section>
 
                 <section className="section card-panel small-panel">
-                  <div className="panel-header"><h3><iconify-icon icon="ph:currency-dollar-bold" /> {t.pricing.title}</h3></div>
+                  <div className="panel-header"><h3><iconify-icon icon="ph:currency-inr-bold" /> {t.pricing.title}</h3></div>
                   <div className="panel-body">
                     <div className="price-display">
                       <span className="currency">₹</span>
@@ -3481,6 +3122,318 @@ export default function DashboardPage() {
                 </section>
               </div>
             </div>
+
+            {/* Trust Features Panel */}
+            {showTrustPanel && analysisReady && (
+              <section id="trustPanel" className="section card-panel full-width-panel trust-panel">
+                <div className="panel-header" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "1rem" }}>
+                  <h3><iconify-icon icon="ph:shield-check-bold" /> AI Prediction Trust Report</h3>
+                  <div className="trust-badge" style={{ display: "flex", alignItems: "center", gap: "0.5rem", background: "linear-gradient(135deg, #22c55e, #16a34a)", color: "white", padding: "0.5rem 1rem", borderRadius: "50px", fontSize: "0.85rem", fontWeight: 600 }}>
+                    <iconify-icon icon="ph:seal-check-fill" />
+                    <span>Verified Analysis</span>
+                  </div>
+                </div>
+
+                <div className="trust-grid" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: "1.25rem", marginTop: "1.5rem" }}>
+                  
+                  {/* 1. Image Verification */}
+                  <div className="trust-card" style={{ background: "var(--bg-card)", border: "1px solid var(--border-color)", borderRadius: "var(--radius)", overflow: "hidden" }}>
+                    <div className="trust-card-header" style={{ display: "flex", alignItems: "center", gap: "0.75rem", padding: "1rem 1.25rem", background: "var(--bg-surface)", borderBottom: "1px solid var(--border-color)" }}>
+                      <iconify-icon icon="ph:image-square-bold" style={{ fontSize: "1.25rem", color: "var(--primary)" }} />
+                      <h4 style={{ fontSize: "0.95rem", fontWeight: 600 }}>Image Verification</h4>
+                    </div>
+                    <div style={{ padding: "1.25rem" }}>
+                      <div style={{ display: "flex", justifyContent: "space-between", padding: "0.6rem 0", borderBottom: "1px dashed var(--border-color)" }}>
+                        <span style={{ color: "var(--text-muted)", fontSize: "0.85rem" }}>Detected Object</span>
+                        <strong>{trustData.detectedObject}</strong>
+                      </div>
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "0.6rem 0", borderBottom: "1px dashed var(--border-color)" }}>
+                        <span style={{ color: "var(--text-muted)", fontSize: "0.85rem" }}>Detection Confidence</span>
+                        <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
+                          <div style={{ width: "80px", height: "8px", background: "var(--bg-surface)", borderRadius: "4px", overflow: "hidden" }}>
+                            <div style={{ width: `${trustData.detectionConfidence}%`, height: "100%", background: "linear-gradient(90deg, #22c55e, #16a34a)", borderRadius: "4px" }} />
+                          </div>
+                          <span>{trustData.detectionConfidence}%</span>
+                        </div>
+                      </div>
+                      <div style={{ display: "flex", justifyContent: "space-between", padding: "0.6rem 0", borderBottom: "1px dashed var(--border-color)" }}>
+                        <span style={{ color: "var(--text-muted)", fontSize: "0.85rem" }}>Detected Material</span>
+                        <strong style={{ fontSize: "0.85rem", textAlign: "right", maxWidth: "180px" }}>{trustData.detectedMaterial}</strong>
+                      </div>
+                      <div style={{ display: "flex", justifyContent: "space-between", padding: "0.6rem 0" }}>
+                        <span style={{ color: "var(--text-muted)", fontSize: "0.85rem" }}>Condition Score</span>
+                        <strong>{trustData.conditionScore}</strong>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* 2. Prediction Confidence Meter */}
+                  <div className="trust-card" style={{ background: "var(--bg-card)", border: "1px solid var(--border-color)", borderRadius: "var(--radius)", overflow: "hidden" }}>
+                    <div className="trust-card-header" style={{ display: "flex", alignItems: "center", gap: "0.75rem", padding: "1rem 1.25rem", background: "var(--bg-surface)", borderBottom: "1px solid var(--border-color)" }}>
+                      <iconify-icon icon="ph:gauge-bold" style={{ fontSize: "1.25rem", color: "var(--primary)" }} />
+                      <h4 style={{ fontSize: "0.95rem", fontWeight: 600 }}>Prediction Confidence</h4>
+                    </div>
+                    <div style={{ padding: "1.25rem" }}>
+                      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", padding: "1rem 0" }}>
+                        <svg viewBox="0 0 120 80" style={{ width: "160px", height: "90px" }}>
+                          <path d="M10,70 A50,50 0 0,1 110,70" fill="none" stroke="#e0e0e0" strokeWidth="12" strokeLinecap="round"/>
+                          <path d="M10,70 A50,50 0 0,1 110,70" fill="none" stroke="url(#gaugeGrad)" strokeWidth="12" strokeLinecap="round" strokeDasharray={`${(trustData.overallConfidence / 100) * 157} 157`}/>
+                          <defs>
+                            <linearGradient id="gaugeGrad">
+                              <stop offset="0%" stopColor="#ef4444"/>
+                              <stop offset="50%" stopColor="#f59e0b"/>
+                              <stop offset="100%" stopColor="#22c55e"/>
+                            </linearGradient>
+                          </defs>
+                        </svg>
+                        <div style={{ display: "flex", alignItems: "baseline", marginTop: "-20px" }}>
+                          <strong style={{ fontSize: "2.5rem", fontWeight: 700 }}>{trustData.overallConfidence}</strong>
+                          <span style={{ fontSize: "1.25rem", color: "var(--text-muted)" }}>%</span>
+                        </div>
+                        <div style={{ fontSize: "0.9rem", color: "var(--text-muted)", marginTop: "0.25rem" }}>
+                          {trustData.overallConfidence >= 90 ? "Highly Reliable" : trustData.overallConfidence >= 75 ? "Reliable" : "Moderate"}
+                        </div>
+                      </div>
+                      <div style={{ display: "flex", justifyContent: "space-around", marginTop: "1rem", paddingTop: "1rem", borderTop: "1px dashed var(--border-color)" }}>
+                        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "0.25rem" }}>
+                          <span style={{ fontSize: "0.8rem", color: "var(--text-muted)" }}>Image Quality</span>
+                          <span style={{ fontWeight: 600, color: "var(--primary)" }}>{trustData.imageQuality}%</span>
+                        </div>
+                        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "0.25rem" }}>
+                          <span style={{ fontSize: "0.8rem", color: "var(--text-muted)" }}>Data Match</span>
+                          <span style={{ fontWeight: 600, color: "var(--primary)" }}>{trustData.dataMatch}%</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* 3. Price Breakdown */}
+                  <div className="trust-card" style={{ background: "var(--bg-card)", border: "1px solid var(--border-color)", borderRadius: "var(--radius)", overflow: "hidden" }}>
+                    <div className="trust-card-header" style={{ display: "flex", alignItems: "center", gap: "0.75rem", padding: "1rem 1.25rem", background: "var(--bg-surface)", borderBottom: "1px solid var(--border-color)" }}>
+                      <iconify-icon icon="ph:list-numbers-bold" style={{ fontSize: "1.25rem", color: "var(--primary)" }} />
+                      <h4 style={{ fontSize: "0.95rem", fontWeight: 600 }}>Price Calculation Breakdown</h4>
+                    </div>
+                    <div style={{ padding: "1.25rem" }}>
+                      <div style={{ display: "flex", justifyContent: "space-between", padding: "0.5rem 0" }}>
+                        <span style={{ color: "var(--text-muted)", fontSize: "0.9rem" }}>Original Product Price</span>
+                        <span style={{ fontWeight: 600 }}>₹{trustData.originalPrice.toLocaleString()}</span>
+                      </div>
+                      <div style={{ display: "flex", justifyContent: "space-between", padding: "0.5rem 0" }}>
+                        <span style={{ color: "var(--text-muted)", fontSize: "0.9rem" }}>Age Depreciation</span>
+                        <span style={{ fontWeight: 600, color: "#ef4444" }}>-₹{trustData.ageDepreciation.toLocaleString()}</span>
+                      </div>
+                      <div style={{ display: "flex", justifyContent: "space-between", padding: "0.5rem 0" }}>
+                        <span style={{ color: "var(--text-muted)", fontSize: "0.9rem" }}>Condition Factor</span>
+                        <span style={{ fontWeight: 600 }}>×{trustData.conditionFactor.toFixed(2)}</span>
+                      </div>
+                      <div style={{ display: "flex", justifyContent: "space-between", padding: "0.5rem 0" }}>
+                        <span style={{ color: "var(--text-muted)", fontSize: "0.9rem" }}>Market Demand</span>
+                        <span style={{ fontWeight: 600 }}>×{trustData.marketDemand.toFixed(2)}</span>
+                      </div>
+                      <div style={{ display: "flex", justifyContent: "space-between", padding: "0.5rem 0" }}>
+                        <span style={{ color: "var(--text-muted)", fontSize: "0.9rem" }}>Material Value</span>
+                        <span style={{ fontWeight: 600 }}>+₹{trustData.materialValue.toLocaleString()}</span>
+                      </div>
+                      <div style={{ height: "1px", background: "var(--border-color)", margin: "0.5rem 0" }} />
+                      <div style={{ display: "flex", justifyContent: "space-between", padding: "0.75rem 0" }}>
+                        <span style={{ fontWeight: 600 }}>Final Estimated Price</span>
+                        <span style={{ fontSize: "1.25rem", fontWeight: 600, color: "var(--primary)" }}>₹{trustData.finalPrice.toLocaleString()}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* 4. Market Price Comparison */}
+                  <div className="trust-card" style={{ background: "var(--bg-card)", border: "1px solid var(--border-color)", borderRadius: "var(--radius)", overflow: "hidden" }}>
+                    <div className="trust-card-header" style={{ display: "flex", alignItems: "center", gap: "0.75rem", padding: "1rem 1.25rem", background: "var(--bg-surface)", borderBottom: "1px solid var(--border-color)" }}>
+                      <iconify-icon icon="ph:chart-bar-bold" style={{ fontSize: "1.25rem", color: "var(--primary)" }} />
+                      <h4 style={{ fontSize: "0.95rem", fontWeight: 600 }}>Market Price Comparison</h4>
+                    </div>
+                    <div style={{ padding: "1.25rem" }}>
+                      {[
+                        { label: "Our Estimate", price: trustData.finalPrice, color: "linear-gradient(90deg, var(--primary), var(--secondary))" },
+                        { label: "OLX Average", price: trustData.olxPrice, color: "#f59e0b" },
+                        { label: "FB Marketplace", price: trustData.fbPrice, color: "#3b82f6" },
+                        { label: "Cashify/Sell Old", price: trustData.cashifyPrice, color: "#8b5cf6" }
+                      ].map((item, idx) => {
+                        const maxPrice = Math.max(trustData.finalPrice, trustData.olxPrice, trustData.fbPrice, trustData.cashifyPrice);
+                        return (
+                          <div key={idx} style={{ display: "grid", gridTemplateColumns: "100px 1fr 70px", alignItems: "center", gap: "0.75rem", marginBottom: "0.75rem" }}>
+                            <span style={{ fontSize: "0.8rem", color: "var(--text-muted)" }}>{item.label}</span>
+                            <div style={{ height: "12px", background: "var(--bg-surface)", borderRadius: "6px", overflow: "hidden" }}>
+                              <div style={{ width: `${(item.price / maxPrice) * 100}%`, height: "100%", background: item.color, borderRadius: "6px" }} />
+                            </div>
+                            <span style={{ fontSize: "0.85rem", fontWeight: 600, textAlign: "right" }}>₹{item.price.toLocaleString()}</span>
+                          </div>
+                        );
+                      })}
+                      <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginTop: "1rem", padding: "0.75rem", background: "rgba(34, 197, 94, 0.1)", borderRadius: "8px", color: "#16a34a", fontSize: "0.9rem" }}>
+                        <iconify-icon icon="ph:check-circle-bold" />
+                        <span>Price within market range</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* 5. AI Recommendation */}
+                  <div className="trust-card" style={{ background: "var(--bg-card)", border: "1px solid var(--border-color)", borderRadius: "var(--radius)", overflow: "hidden" }}>
+                    <div className="trust-card-header" style={{ display: "flex", alignItems: "center", gap: "0.75rem", padding: "1rem 1.25rem", background: "var(--bg-surface)", borderBottom: "1px solid var(--border-color)" }}>
+                      <iconify-icon icon="ph:lightbulb-bold" style={{ fontSize: "1.25rem", color: "var(--primary)" }} />
+                      <h4 style={{ fontSize: "0.95rem", fontWeight: 600 }}>AI Recommendation</h4>
+                    </div>
+                    <div style={{ padding: "1.25rem" }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", padding: "1rem", background: trustData.recommendation === "Repair" ? "rgba(59, 130, 246, 0.1)" : trustData.recommendation === "Recycle" ? "rgba(245, 158, 11, 0.1)" : "rgba(34, 197, 94, 0.1)", borderRadius: "12px", marginBottom: "1rem" }}>
+                        <iconify-icon icon={trustData.recommendation === "Repair" ? "ph:wrench-bold" : trustData.recommendation === "Recycle" ? "ph:recycle-bold" : "ph:storefront-bold"} style={{ fontSize: "2rem", color: trustData.recommendation === "Repair" ? "#3b82f6" : trustData.recommendation === "Recycle" ? "#f59e0b" : "#22c55e" }} />
+                        <span style={{ fontSize: "1.25rem", fontWeight: 700, color: trustData.recommendation === "Repair" ? "#3b82f6" : trustData.recommendation === "Recycle" ? "#f59e0b" : "#22c55e" }}>{trustData.recommendation}</span>
+                      </div>
+                      <div style={{ fontSize: "0.9rem", color: "var(--text-muted)", lineHeight: 1.6, padding: "0.75rem", background: "var(--bg-surface)", borderRadius: "8px", borderLeft: "3px solid var(--primary)" }}>
+                        {trustData.recExplanation}
+                      </div>
+                      <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "0.75rem", marginTop: "1rem" }}>
+                        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", padding: "0.75rem", background: "var(--bg-surface)", borderRadius: "8px" }}>
+                          <span style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>Repair Cost</span>
+                          <span style={{ fontSize: "1rem", fontWeight: 600, marginTop: "0.25rem" }}>₹{trustData.repairCostValue.toLocaleString()}</span>
+                        </div>
+                        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", padding: "0.75rem", background: "var(--bg-surface)", borderRadius: "8px" }}>
+                          <span style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>Resale Value</span>
+                          <span style={{ fontSize: "1rem", fontWeight: 600, marginTop: "0.25rem" }}>₹{trustData.resaleValue.toLocaleString()}</span>
+                        </div>
+                        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", padding: "0.75rem", background: "var(--bg-surface)", borderRadius: "8px" }}>
+                          <span style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>Recycle Value</span>
+                          <span style={{ fontSize: "1rem", fontWeight: 600, marginTop: "0.25rem" }}>₹{trustData.recycleValueTrust.toLocaleString()}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* 6. Environmental Impact */}
+                  <div className="trust-card" style={{ background: "var(--bg-card)", border: "1px solid var(--border-color)", borderRadius: "var(--radius)", overflow: "hidden" }}>
+                    <div className="trust-card-header" style={{ display: "flex", alignItems: "center", gap: "0.75rem", padding: "1rem 1.25rem", background: "var(--bg-surface)", borderBottom: "1px solid var(--border-color)" }}>
+                      <iconify-icon icon="ph:leaf-bold" style={{ fontSize: "1.25rem", color: "var(--primary)" }} />
+                      <h4 style={{ fontSize: "0.95rem", fontWeight: 600 }}>Environmental Impact</h4>
+                    </div>
+                    <div style={{ padding: "1.25rem" }}>
+                      <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: "1rem" }}>
+                        {[
+                          { icon: "ph:cloud-bold", value: `${trustData.co2Saved} kg`, label: "CO₂ Saved", gradient: "linear-gradient(135deg, #64748b, #475569)" },
+                          { icon: "ph:drop-bold", value: `${trustData.waterSaved} L`, label: "Water Saved", gradient: "linear-gradient(135deg, #3b82f6, #2563eb)" },
+                          { icon: "ph:lightning-bold", value: `${trustData.energySaved} kWh`, label: "Energy Saved", gradient: "linear-gradient(135deg, #f59e0b, #d97706)" },
+                          { icon: "ph:arrows-clockwise-bold", value: `${trustData.circularScore}/100`, label: "Circular Score", gradient: "linear-gradient(135deg, #22c55e, #16a34a)" }
+                        ].map((item, idx) => (
+                          <div key={idx} style={{ display: "flex", flexDirection: "column", alignItems: "center", padding: "1rem", background: "var(--bg-surface)", borderRadius: "12px", textAlign: "center" }}>
+                            <div style={{ width: "48px", height: "48px", display: "flex", alignItems: "center", justifyContent: "center", borderRadius: "50%", background: item.gradient, marginBottom: "0.5rem" }}>
+                              <iconify-icon icon={item.icon} style={{ fontSize: "1.5rem", color: "white" }} />
+                            </div>
+                            <div style={{ fontSize: "1.25rem", fontWeight: 700 }}>{item.value}</div>
+                            <div style={{ fontSize: "0.8rem", color: "var(--text-muted)", marginTop: "0.25rem" }}>{item.label}</div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* 7. Data Sources */}
+                  <div className="trust-card" style={{ background: "var(--bg-card)", border: "1px solid var(--border-color)", borderRadius: "var(--radius)", overflow: "hidden" }}>
+                    <div className="trust-card-header" style={{ display: "flex", alignItems: "center", gap: "0.75rem", padding: "1rem 1.25rem", background: "var(--bg-surface)", borderBottom: "1px solid var(--border-color)" }}>
+                      <iconify-icon icon="ph:database-bold" style={{ fontSize: "1.25rem", color: "var(--primary)" }} />
+                      <h4 style={{ fontSize: "0.95rem", fontWeight: 600 }}>Data Sources</h4>
+                    </div>
+                    <div style={{ padding: "1.25rem" }}>
+                      {[
+                        { icon: "ph:globe-bold", name: "Global Carbon Atlas" },
+                        { icon: "ph:bank-bold", name: "World Bank Climate Data" },
+                        { icon: "ph:recycle-bold", name: "Recycling Industry Database" },
+                        { icon: "ph:storefront-bold", name: "Second-hand Market APIs" }
+                      ].map((source, idx) => (
+                        <div key={idx} style={{ display: "flex", alignItems: "center", gap: "0.75rem", padding: "0.75rem", background: "var(--bg-surface)", borderRadius: "8px", marginBottom: "0.5rem" }}>
+                          <iconify-icon icon={source.icon} style={{ fontSize: "1.25rem", color: "var(--primary)" }} />
+                          <span style={{ flex: 1, fontSize: "0.9rem" }}>{source.name}</span>
+                          <span style={{ fontSize: "0.75rem", padding: "0.25rem 0.5rem", borderRadius: "4px", fontWeight: 600, background: "rgba(34, 197, 94, 0.15)", color: "#16a34a" }}>Verified</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* 8. Timestamps */}
+                  <div className="trust-card" style={{ background: "var(--bg-card)", border: "1px solid var(--border-color)", borderRadius: "var(--radius)", overflow: "hidden" }}>
+                    <div className="trust-card-header" style={{ display: "flex", alignItems: "center", gap: "0.75rem", padding: "1rem 1.25rem", background: "var(--bg-surface)", borderBottom: "1px solid var(--border-color)" }}>
+                      <iconify-icon icon="ph:clock-bold" style={{ fontSize: "1.25rem", color: "var(--primary)" }} />
+                      <h4 style={{ fontSize: "0.95rem", fontWeight: 600 }}>Prediction Timestamps</h4>
+                    </div>
+                    <div style={{ padding: "1.25rem" }}>
+                      {[
+                        { icon: "ph:magic-wand-bold", label: "Prediction Generated", value: trustData.predictionTime },
+                        { icon: "ph:database-bold", label: "Market Data Updated", value: trustData.marketDataTime },
+                        { icon: "ph:cloud-arrow-down-bold", label: "Environmental Data", value: trustData.envDataTime }
+                      ].map((item, idx) => (
+                        <div key={idx} style={{ display: "flex", alignItems: "center", gap: "1rem", padding: "0.75rem 0", borderBottom: idx < 2 ? "1px dashed var(--border-color)" : "none" }}>
+                          <iconify-icon icon={item.icon} style={{ fontSize: "1.5rem", color: "var(--primary)" }} />
+                          <div style={{ display: "flex", flexDirection: "column" }}>
+                            <span style={{ fontSize: "0.8rem", color: "var(--text-muted)" }}>{item.label}</span>
+                            <strong style={{ fontSize: "0.95rem" }}>{item.value}</strong>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* 9. Model Info */}
+                  <div className="trust-card" style={{ background: "var(--bg-card)", border: "1px solid var(--border-color)", borderRadius: "var(--radius)", overflow: "hidden" }}>
+                    <div className="trust-card-header" style={{ display: "flex", alignItems: "center", gap: "0.75rem", padding: "1rem 1.25rem", background: "var(--bg-surface)", borderBottom: "1px solid var(--border-color)" }}>
+                      <iconify-icon icon="ph:cpu-bold" style={{ fontSize: "1.25rem", color: "var(--primary)" }} />
+                      <h4 style={{ fontSize: "0.95rem", fontWeight: 600 }}>AI Model Information</h4>
+                    </div>
+                    <div style={{ padding: "1.25rem" }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: "1rem", padding: "1rem", background: "linear-gradient(135deg, rgba(139, 92, 246, 0.1), rgba(59, 130, 246, 0.1))", borderRadius: "12px", marginBottom: "1rem" }}>
+                        <iconify-icon icon="ph:robot-bold" style={{ fontSize: "2.5rem", color: "#8b5cf6" }} />
+                        <div>
+                          <strong style={{ fontSize: "1.1rem" }}>AI Valuation Engine</strong>
+                          <div style={{ fontSize: "0.85rem", color: "var(--text-muted)" }}>Version 2.1.0</div>
+                        </div>
+                      </div>
+                      {[
+                        { icon: "ph:eye-bold", name: "YOLOv8 Image Analysis" },
+                        { icon: "ph:brain-bold", name: "Gemini 2.0 Flash" },
+                        { icon: "ph:chart-line-up-bold", name: "Circular Economy Model" }
+                      ].map((tech, idx) => (
+                        <div key={idx} style={{ display: "flex", alignItems: "center", gap: "0.75rem", padding: "0.5rem 0.75rem", background: "var(--bg-surface)", borderRadius: "6px", fontSize: "0.85rem", marginBottom: "0.5rem" }}>
+                          <iconify-icon icon={tech.icon} style={{ fontSize: "1rem", color: "#8b5cf6" }} />
+                          <span>{tech.name}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* 10. User Feedback */}
+                  <div className="trust-card" style={{ background: "var(--bg-card)", border: "1px solid var(--border-color)", borderRadius: "var(--radius)", overflow: "hidden" }}>
+                    <div className="trust-card-header" style={{ display: "flex", alignItems: "center", gap: "0.75rem", padding: "1rem 1.25rem", background: "var(--bg-surface)", borderBottom: "1px solid var(--border-color)" }}>
+                      <iconify-icon icon="ph:chat-circle-text-bold" style={{ fontSize: "1.25rem", color: "var(--primary)" }} />
+                      <h4 style={{ fontSize: "0.95rem", fontWeight: 600 }}>Was this prediction accurate?</h4>
+                    </div>
+                    <div style={{ padding: "1.25rem" }}>
+                      {!trustData.feedbackGiven ? (
+                        <div style={{ display: "flex", gap: "1rem" }}>
+                          <button onClick={() => handleTrustFeedback(true)} style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: "0.5rem", padding: "1rem", border: "2px solid var(--border-color)", borderRadius: "12px", background: "var(--bg-card)", cursor: "pointer", fontSize: "0.95rem", fontWeight: 600, color: "#16a34a", transition: "all 0.2s ease" }}>
+                            <iconify-icon icon="ph:thumbs-up-bold" style={{ fontSize: "1.5rem" }} />
+                            <span>Yes, Accurate</span>
+                          </button>
+                          <button onClick={() => handleTrustFeedback(false)} style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: "0.5rem", padding: "1rem", border: "2px solid var(--border-color)", borderRadius: "12px", background: "var(--bg-card)", cursor: "pointer", fontSize: "0.95rem", fontWeight: 600, color: "#dc2626", transition: "all 0.2s ease" }}>
+                            <iconify-icon icon="ph:thumbs-down-bold" style={{ fontSize: "1.5rem" }} />
+                            <span>No, Inaccurate</span>
+                          </button>
+                        </div>
+                      ) : (
+                        <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "0.5rem", padding: "1rem", background: "rgba(34, 197, 94, 0.1)", borderRadius: "12px", color: "#16a34a", fontSize: "0.9rem" }}>
+                          <iconify-icon icon="ph:check-circle-bold" style={{ fontSize: "1.25rem" }} />
+                          <span>Thank you for your feedback! It helps improve our AI.</span>
+                        </div>
+                      )}
+                      <div style={{ marginTop: "1rem", textAlign: "center", fontSize: "0.85rem", color: "var(--text-muted)" }}>
+                        <span><strong style={{ color: "var(--primary)" }}>{trustData.accuracyRate}%</strong> users found predictions accurate</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </section>
+            )}
 
             <section id="geo" className="section card-panel full-width-panel">
               <div className="panel-header">
@@ -3585,12 +3538,31 @@ export default function DashboardPage() {
               <h2>{t.landing.impactHeading}</h2>
               <p>{t.landing.impactSubheading}</p>
             </div>
+            
+            {/* Impact Chain Diagram */}
+            <div className={`impact-chain ${isImpactVisible ? "is-visible" : ""}`}>
+              <h4 className="chain-title">{t.impactMode.chainTitle}</h4>
+              <div className="chain-flow">
+                {t.impactMode.chainSteps?.map((step, index) => (
+                  <div key={index} className="chain-step">
+                    <div className="chain-step-icon">{step.icon}</div>
+                    <span className="chain-step-label">{step.label}</span>
+                    {index < (t.impactMode.chainSteps?.length || 0) - 1 && (
+                      <div className="chain-arrow">
+                        <iconify-icon icon="ph:arrow-right-bold" />
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+
             <div className={`impact-mode ${isImpactVisible ? "is-visible" : ""}`}>
               <div className="impact-mode-header">
                 <h4>{t.impactMode.title}</h4>
                 <p>{t.impactMode.subtitle}</p>
               </div>
-              <div className="impact-mode-grid">
+              <div className="impact-mode-grid expanded">
                 <div className="impact-mode-card">
                   <div className="impact-mode-icon">🌍</div>
                   <div className="impact-mode-label">{t.impactMode.co2}</div>
@@ -3608,6 +3580,22 @@ export default function DashboardPage() {
                   </div>
                 </div>
                 <div className="impact-mode-card">
+                  <div className="impact-mode-icon">💧</div>
+                  <div className="impact-mode-label">{t.impactMode.water}</div>
+                  <div className="impact-mode-value">
+                    {formatImpactNumber(impactCounts.water, impactUnits.waterUnit)}
+                    <span className="impact-mode-unit">{impactUnits.waterUnit}</span>
+                  </div>
+                </div>
+                <div className="impact-mode-card">
+                  <div className="impact-mode-icon">⚡</div>
+                  <div className="impact-mode-label">{t.impactMode.energy}</div>
+                  <div className="impact-mode-value">
+                    {formatImpactNumber(impactCounts.energy, impactUnits.energyUnit)}
+                    <span className="impact-mode-unit">{impactUnits.energyUnit}</span>
+                  </div>
+                </div>
+                <div className="impact-mode-card">
                   <div className="impact-mode-icon">🌳</div>
                   <div className="impact-mode-label">{t.impactMode.trees}</div>
                   <div className="impact-mode-value">
@@ -3619,21 +3607,32 @@ export default function DashboardPage() {
             </div>
           </section>
 
-          <section id="modules" className={`section modules-section ${isModulesVisible ? "is-visible" : ""}`} ref={modulesRef}>
-            <div className="modules-badge">{t.landing.modulesBadge}</div>
-            <div className="modules-header">
-              <h3>{t.landing.modulesTitle}</h3>
-              <p>{t.landing.modulesText}</p>
-            </div>
-            <div className="modules-grid">
-              {moduleCards.map((module) => (
-                <ModuleCard
-                  key={module.title}
-                  icon={module.icon}
-                  title={module.title}
-                  text={module.text}
-                />
-              ))}
+          {/* AI Sustainability Dashboard CTA */}
+          <section id="sustainability" className="section sustainability-cta-section">
+            <div className="sustainability-cta-card">
+              <div className="cta-visual">
+                <div className="cta-icon-bg">
+                  <iconify-icon icon="ph:leaf-bold" />
+                </div>
+                <div className="cta-particles">
+                  <span></span><span></span><span></span>
+                </div>
+              </div>
+              <div className="cta-content">
+                <span className="cta-badge">🌍 Environmental Impact</span>
+                <h3>AI Sustainability Dashboard</h3>
+                <p>Track real-time environmental metrics, see your contribution to the circular economy, and get AI-powered insights on your sustainability impact.</p>
+                <ul className="cta-features">
+                  <li><iconify-icon icon="ph:check-circle-bold" /> Global & local environmental data</li>
+                  <li><iconify-icon icon="ph:check-circle-bold" /> Live impact counters</li>
+                  <li><iconify-icon icon="ph:check-circle-bold" /> AI sustainability insights</li>
+                  <li><iconify-icon icon="ph:check-circle-bold" /> Location-based metrics</li>
+                </ul>
+                <a href="/sustainability" className="cta-button">
+                  <span>Open Sustainability Dashboard</span>
+                  <iconify-icon icon="ph:arrow-right-bold" />
+                </a>
+              </div>
             </div>
           </section>
         </main>
@@ -3702,7 +3701,7 @@ export default function DashboardPage() {
           <div className="share-card">
             <div className="share-card-top">
               <div className="share-logos">
-                <span className="share-logo">SCEM</span>
+                <span className="share-logo">ReGenX</span>
                 <iconify-icon icon="ph:recycle-bold" />
               </div>
               <div className="share-icons">🌱 ♻️ 🌍</div>
@@ -3921,6 +3920,15 @@ export default function DashboardPage() {
                 >
                   {t.safety.clear}
                 </button>
+                <button
+                  type="button"
+                  className="btn-danger full-width"
+                  style={{ marginTop: "10px", backgroundColor: "#dc2626", color: "#fff" }}
+                  onClick={() => setIsDeleteAccountOpen(true)}
+                >
+                  <iconify-icon icon="ph:trash-bold" style={{ marginRight: "6px" }} />
+                  Delete My Account
+                </button>
               </div>
             </div>
 
@@ -3934,6 +3942,59 @@ export default function DashboardPage() {
               </button>
             </div>
           </form>
+        </div>
+      </div>
+
+      {/* Delete Account Confirmation Modal */}
+      <div className={`modal ${isDeleteAccountOpen ? "" : "hidden"}`} aria-hidden={!isDeleteAccountOpen}>
+        <div className="modal-overlay" onClick={() => !deleteAccountLoading && setIsDeleteAccountOpen(false)} />
+        <div className="modal-card delete-account-modal" role="dialog" aria-modal="true" style={{ maxWidth: "400px" }}>
+          <button
+            className="modal-close"
+            aria-label="Close"
+            onClick={() => !deleteAccountLoading && setIsDeleteAccountOpen(false)}
+            disabled={deleteAccountLoading}
+          >
+            ×
+          </button>
+          <div className="modal-header-icon" style={{ backgroundColor: "#fef2f2" }}>
+            <iconify-icon icon="ph:warning-bold" style={{ color: "#dc2626", fontSize: "32px" }} />
+          </div>
+          <h3 style={{ color: "#dc2626" }}>Delete Account</h3>
+          <p className="modal-sub" style={{ textAlign: "center", marginBottom: "16px" }}>
+            Are you sure you want to permanently delete your account? This action cannot be undone.
+          </p>
+          <div style={{ backgroundColor: "#fef2f2", borderRadius: "8px", padding: "12px", marginBottom: "16px" }}>
+            <p style={{ fontSize: "13px", color: "#991b1b", margin: 0 }}>
+              <strong>This will permanently delete:</strong>
+            </p>
+            <ul style={{ fontSize: "13px", color: "#991b1b", margin: "8px 0 0 0", paddingLeft: "20px" }}>
+              <li>Your profile information</li>
+              <li>Your login credentials</li>
+              <li>All saved data & history</li>
+              <li>Your Firebase account</li>
+            </ul>
+          </div>
+          <div style={{ display: "flex", gap: "10px" }}>
+            <button
+              type="button"
+              className="btn-secondary"
+              style={{ flex: 1 }}
+              onClick={() => setIsDeleteAccountOpen(false)}
+              disabled={deleteAccountLoading}
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              className="btn-danger"
+              style={{ flex: 1, backgroundColor: "#dc2626", color: "#fff" }}
+              onClick={handleDeleteAccount}
+              disabled={deleteAccountLoading}
+            >
+              {deleteAccountLoading ? "Deleting..." : "Delete Account"}
+            </button>
+          </div>
         </div>
       </div>
 

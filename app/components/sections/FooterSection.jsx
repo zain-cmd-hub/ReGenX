@@ -1,4 +1,6 @@
-export default function FooterSection({ labels }) {
+import { memo } from "react";
+
+export default memo(function FooterSection({ labels }) {
   return (
     <footer className="main-footer footer-section">
       <div className="footer-grid">
@@ -19,4 +21,4 @@ export default function FooterSection({ labels }) {
       <div className="footer-brand">{labels.brand}</div>
     </footer>
   );
-}
+});

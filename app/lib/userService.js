@@ -1,4 +1,4 @@
-import { doc, getDoc, setDoc, updateDoc, serverTimestamp } from "firebase/firestore";
+import { doc, getDoc, setDoc, updateDoc, deleteDoc, serverTimestamp } from "firebase/firestore";
 import { db } from "./firebase";
 
 const COLLECTION = "users";
@@ -47,4 +47,13 @@ export async function updateUserProfile(uid, data) {
     ...data,
     updatedAt: serverTimestamp(),
   });
+}
+
+/**
+ * Delete user profile document from Firestore.
+ * Called when user deletes their account.
+ */
+export async function deleteUserProfile(uid) {
+  const ref = doc(db, COLLECTION, uid);
+  await deleteDoc(ref);
 }

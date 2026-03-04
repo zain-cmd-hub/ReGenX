@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { memo, useCallback, useEffect, useRef, useState } from "react";
 
 const QUICK_REPLIES = [
   "How do I analyze a product?",
@@ -31,7 +31,7 @@ function formatMessage(text) {
   return html;
 }
 
-export default function EcoBotChat({ theme }) {
+export default memo(function EcoBotChat({ theme }) {
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState([WELCOME_MESSAGE]);
   const [input, setInput] = useState("");
@@ -107,16 +107,19 @@ export default function EcoBotChat({ theme }) {
     }
   }
 
-  function handleKeyDown(e) {
+  const sendMessageRef = useRef(sendMessage);
+  sendMessageRef.current = sendMessage;
+
+  const handleKeyDown = useCallback((e) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
-      sendMessage();
+      sendMessageRef.current();
     }
-  }
+  }, []);
 
-  function clearChat() {
+  const clearChat = useCallback(() => {
     setMessages([WELCOME_MESSAGE]);
-  }
+  }, []);
 
   const isDark = theme === "dark";
 
@@ -242,4 +245,4 @@ export default function EcoBotChat({ theme }) {
       )}
     </>
   );
-}
+});

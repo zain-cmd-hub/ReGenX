@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { memo, useCallback, useEffect, useMemo, useState } from "react";
 import { MapContainer, Marker, Popup, TileLayer, useMap } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
@@ -71,18 +71,19 @@ function MapInteractionLock({ locked }) {
   return null;
 }
 
-export default function MapView({ facilities, center, onConnect, labels }) {
-  const safeCenter = center || { lat: 28.6139, lng: 77.2090 };
+export default memo(function MapView({ facilities, center, onConnect, labels }) {
+  const safeCenter = useMemo(() => center || { lat: 28.6139, lng: 77.2090 }, [center]);
   const [showContactModal, setShowContactModal] = useState(false);
   const [selectedFacility, setSelectedFacility] = useState(null);
-  const safeLabels = labels || {
+  const safeLabels = useMemo(() => labels || {
     yourLocation: "Your location",
     autoCentered: "Auto-centered",
     connect: "Connect",
     whatsapp: "WhatsApp",
     facility: "Facility",
     close: "Close",
-  };
+  }, [labels]);
+  const centerPos = useMemo(() => [safeCenter.lat, safeCenter.lng], [safeCenter.lat, safeCenter.lng]);
   const icons = useMemo(() => ({
     repair: buildMarkerIcon("repair"),
     recycling: buildMarkerIcon("recycling"),
@@ -99,28 +100,32 @@ export default function MapView({ facilities, center, onConnect, labels }) {
     };
   }, [showContactModal]);
 
-  function openContactModal(facility) {
-    if (showContactModal) return;
-    setSelectedFacility(facility);
-    setShowContactModal(true);
-  }
+  const openContactModal = useCallback((facility) => {
+    setShowContactModal((prev) => {
+      if (prev) return prev;
+      setSelectedFacility(facility);
+      return true;
+    });
+  }, []);
 
-  function closeContactModal() {
+  const closeContactModal = useCallback(() => {
     setShowContactModal(false);
     setSelectedFacility(null);
-  }
+  }, []);
 
-  function handleConnect() {
+  const handleConnect = useCallback(() => {
     if (!selectedFacility) return;
     onConnect?.(selectedFacility);
-    closeContactModal();
-  }
+    setShowContactModal(false);
+    setSelectedFacility(null);
+  }, [selectedFacility, onConnect]);
 
-  function handleWhatsApp() {
+  const handleWhatsApp = useCallback(() => {
     if (!selectedFacility?.whatsappLink) return;
     window.open(selectedFacility.whatsappLink, "_blank", "noopener,noreferrer");
-    closeContactModal();
-  }
+    setShowContactModal(false);
+    setSelectedFacility(null);
+  }, [selectedFacility]);
 
   return (
     <div className={`map-wrapper ${showContactModal ? "is-modal" : ""}`}>
@@ -225,4 +230,4 @@ export default function MapView({ facilities, center, onConnect, labels }) {
       ) : null}
     </div>
   );
-}
+});

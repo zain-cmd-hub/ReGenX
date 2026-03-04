@@ -1,4 +1,6 @@
-export default function CertificateSection({ certificate, labels }) {
+import { memo } from "react";
+
+export default memo(function CertificateSection({ certificate, labels }) {
   const name = certificate?.userName || certificate?.productName || labels.ecoHeroFallback;
   const wasteKg = Number(certificate?.wasteKg || 0).toFixed(1);
   return (
@@ -23,4 +25,4 @@ export default function CertificateSection({ certificate, labels }) {
       </div>
     </section>
   );
-}
+});

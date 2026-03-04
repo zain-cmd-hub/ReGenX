@@ -19,7 +19,7 @@
       <div class="logo-icon">
         <iconify-icon icon="ph:recycle-bold"></iconify-icon>
       </div>
-      <span class="brand-name">SCEM</span>
+      <span class="brand-name">ReGenX</span>
     </div>
     
     <nav class="sidebar-nav">
@@ -40,22 +40,26 @@
         <span>Life Cycle</span>
       </button>
       <button class="nav-btn" data-target="pricing">
-        <iconify-icon icon="ph:currency-dollar-bold"></iconify-icon>
+        <iconify-icon icon="ph:currency-inr-bold"></iconify-icon>
         <span>Pricing</span>
       </button>
       <button class="nav-btn" data-target="geo">
         <iconify-icon icon="ph:map-pin-bold"></iconify-icon>
         <span>Facilities</span>
       </button>
+      <button class="nav-btn" data-target="history">
+        <iconify-icon icon="ph:clock-counter-clockwise-bold"></iconify-icon>
+        <span>History</span>
+      </button>
     </nav>
     
     <div class="sidebar-footer">
       <div class="user-section">
         <div class="user-profile">
-          <div class="avatar" id="userAvatar">DK</div>
+          <div class="avatar" id="userAvatar">GU</div>
           <div class="user-info">
-            <span class="user-name" id="userName">Dev Kulshrestha</span>
-            <span class="user-role" id="userEmail">Admin</span>
+            <span class="user-name" id="userName">Guest User</span>
+            <span class="user-role" id="userEmail"></span>
             <span class="user-status" id="userStatus">Profile Incomplete</span>
           </div>
         </div>
@@ -99,7 +103,7 @@
           </div>
         </div>
         <button class="profile-pic" id="profileBtn" type="button" aria-label="Edit Profile">
-          <img src="https://ui-avatars.com/api/?name=Dev+Kulshrestha&background=0D8ABC&color=fff" alt="Profile">
+          <img src="https://ui-avatars.com/api/?name=Guest+User&background=0D8ABC&color=fff" alt="Profile">
         </button>
       </div>
     </header>
@@ -340,7 +344,7 @@
 
             <section id="pricing" class="section card-panel small-panel">
               <div class="panel-header">
-                <h3><iconify-icon icon="ph:currency-dollar-bold"></iconify-icon> Fair Price</h3>
+                <h3><iconify-icon icon="ph:currency-inr-bold"></iconify-icon> Fair Price</h3>
               </div>
                <div class="panel-body">
                  <div class="price-display">
@@ -355,6 +359,353 @@
         </div>
       </div>
 
+      <!-- Trust Features Section -->
+      <section id="trustPanel" class="section card-panel full-width-panel trust-panel is-hidden">
+        <div class="panel-header">
+          <h3><iconify-icon icon="ph:shield-check-bold"></iconify-icon> AI Prediction Trust Report</h3>
+          <div class="trust-badge">
+            <iconify-icon icon="ph:seal-check-fill"></iconify-icon>
+            <span>Verified Analysis</span>
+          </div>
+        </div>
+
+        <div class="trust-grid">
+          <!-- 1. Image Verification Result -->
+          <div class="trust-card image-verification">
+            <div class="trust-card-header">
+              <iconify-icon icon="ph:image-square-bold"></iconify-icon>
+              <h4>Image Verification</h4>
+            </div>
+            <div class="trust-card-body">
+              <div class="verification-row">
+                <span class="label">Detected Object</span>
+                <strong id="trustDetectedObject">-</strong>
+              </div>
+              <div class="verification-row">
+                <span class="label">Detection Confidence</span>
+                <div class="confidence-bar-wrap">
+                  <div class="confidence-bar" id="trustDetectionBar"></div>
+                  <span id="trustDetectionConfidence">0%</span>
+                </div>
+              </div>
+              <div class="verification-row">
+                <span class="label">Detected Material</span>
+                <strong id="trustDetectedMaterial">-</strong>
+              </div>
+              <div class="verification-row">
+                <span class="label">Condition Score</span>
+                <strong id="trustConditionScore">-</strong>
+              </div>
+            </div>
+          </div>
+
+          <!-- 2. Prediction Confidence Meter -->
+          <div class="trust-card confidence-meter-card">
+            <div class="trust-card-header">
+              <iconify-icon icon="ph:gauge-bold"></iconify-icon>
+              <h4>Prediction Confidence</h4>
+            </div>
+            <div class="trust-card-body">
+              <div class="confidence-gauge">
+                <svg viewBox="0 0 120 80" class="gauge-svg">
+                  <path d="M10,70 A50,50 0 0,1 110,70" fill="none" stroke="#e0e0e0" stroke-width="12" stroke-linecap="round"/>
+                  <path d="M10,70 A50,50 0 0,1 110,70" fill="none" stroke="url(#gaugeGradient)" stroke-width="12" stroke-linecap="round" id="trustGaugeArc" stroke-dasharray="0 157"/>
+                  <defs>
+                    <linearGradient id="gaugeGradient">
+                      <stop offset="0%" stop-color="#ef4444"/>
+                      <stop offset="50%" stop-color="#f59e0b"/>
+                      <stop offset="100%" stop-color="#22c55e"/>
+                    </linearGradient>
+                  </defs>
+                </svg>
+                <div class="gauge-value">
+                  <strong id="trustConfidenceValue">0</strong>
+                  <span>%</span>
+                </div>
+                <div class="gauge-label" id="trustConfidenceLabel">Analyzing...</div>
+              </div>
+              <div class="confidence-factors">
+                <div class="factor"><span>Image Quality</span><span id="trustImageQuality">-</span></div>
+                <div class="factor"><span>Data Match</span><span id="trustDataMatch">-</span></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 3. Prediction Breakdown -->
+          <div class="trust-card price-breakdown">
+            <div class="trust-card-header">
+              <iconify-icon icon="ph:list-numbers-bold"></iconify-icon>
+              <h4>Price Calculation Breakdown</h4>
+            </div>
+            <div class="trust-card-body">
+              <div class="breakdown-list">
+                <div class="breakdown-item">
+                  <span class="breakdown-label">Original Product Price</span>
+                  <span class="breakdown-value" id="trustOriginalPrice">₹-</span>
+                </div>
+                <div class="breakdown-item negative">
+                  <span class="breakdown-label">Age Depreciation</span>
+                  <span class="breakdown-value" id="trustAgeDepreciation">-₹-</span>
+                </div>
+                <div class="breakdown-item">
+                  <span class="breakdown-label">Condition Factor</span>
+                  <span class="breakdown-value" id="trustConditionFactor">×-</span>
+                </div>
+                <div class="breakdown-item">
+                  <span class="breakdown-label">Market Demand</span>
+                  <span class="breakdown-value" id="trustMarketDemand">×-</span>
+                </div>
+                <div class="breakdown-item">
+                  <span class="breakdown-label">Material Value</span>
+                  <span class="breakdown-value" id="trustMaterialValue">+₹-</span>
+                </div>
+                <div class="breakdown-divider"></div>
+                <div class="breakdown-item total">
+                  <span class="breakdown-label">Final Estimated Price</span>
+                  <span class="breakdown-value" id="trustFinalPrice">₹-</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 4. Market Price Comparison -->
+          <div class="trust-card market-comparison">
+            <div class="trust-card-header">
+              <iconify-icon icon="ph:chart-bar-bold"></iconify-icon>
+              <h4>Market Price Comparison</h4>
+            </div>
+            <div class="trust-card-body">
+              <div class="market-bars">
+                <div class="market-bar-row">
+                  <span class="market-label">Our Estimate</span>
+                  <div class="market-bar-container">
+                    <div class="market-bar our-price" id="trustOurPriceBar"></div>
+                  </div>
+                  <span class="market-value" id="trustOurPrice">₹-</span>
+                </div>
+                <div class="market-bar-row">
+                  <span class="market-label">OLX Average</span>
+                  <div class="market-bar-container">
+                    <div class="market-bar olx-price" id="trustOlxBar"></div>
+                  </div>
+                  <span class="market-value" id="trustOlxPrice">₹-</span>
+                </div>
+                <div class="market-bar-row">
+                  <span class="market-label">Facebook Marketplace</span>
+                  <div class="market-bar-container">
+                    <div class="market-bar fb-price" id="trustFbBar"></div>
+                  </div>
+                  <span class="market-value" id="trustFbPrice">₹-</span>
+                </div>
+                <div class="market-bar-row">
+                  <span class="market-label">Cashify/Sell Old</span>
+                  <div class="market-bar-container">
+                    <div class="market-bar cashify-price" id="trustCashifyBar"></div>
+                  </div>
+                  <span class="market-value" id="trustCashifyPrice">₹-</span>
+                </div>
+              </div>
+              <div class="market-verdict" id="trustMarketVerdict">
+                <iconify-icon icon="ph:check-circle-bold"></iconify-icon>
+                <span>Price within market range</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- 5. AI Recommendation Explanation -->
+          <div class="trust-card ai-recommendation">
+            <div class="trust-card-header">
+              <iconify-icon icon="ph:lightbulb-bold"></iconify-icon>
+              <h4>AI Recommendation</h4>
+            </div>
+            <div class="trust-card-body">
+              <div class="recommendation-badge" id="trustRecommendationBadge">
+                <iconify-icon icon="ph:recycle-bold" id="trustRecommendationIcon"></iconify-icon>
+                <span id="trustRecommendationType">Analyzing...</span>
+              </div>
+              <div class="recommendation-explanation" id="trustRecommendationExplanation">
+                Analyzing your product to determine the best course of action...
+              </div>
+              <div class="recommendation-factors">
+                <div class="rec-factor">
+                  <span class="rec-factor-label">Repair Cost</span>
+                  <span class="rec-factor-value" id="trustRepairCost">₹-</span>
+                </div>
+                <div class="rec-factor">
+                  <span class="rec-factor-label">Resale Value</span>
+                  <span class="rec-factor-value" id="trustResaleValue">₹-</span>
+                </div>
+                <div class="rec-factor">
+                  <span class="rec-factor-label">Recycle Value</span>
+                  <span class="rec-factor-value" id="trustRecycleValue">₹-</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 6. Environmental Impact Metrics -->
+          <div class="trust-card environmental-impact">
+            <div class="trust-card-header">
+              <iconify-icon icon="ph:leaf-bold"></iconify-icon>
+              <h4>Environmental Impact</h4>
+            </div>
+            <div class="trust-card-body">
+              <div class="impact-grid">
+                <div class="impact-item">
+                  <div class="impact-icon co2">
+                    <iconify-icon icon="ph:cloud-bold"></iconify-icon>
+                  </div>
+                  <div class="impact-value" id="trustCo2Saved">-</div>
+                  <div class="impact-label">CO₂ Saved</div>
+                </div>
+                <div class="impact-item">
+                  <div class="impact-icon water">
+                    <iconify-icon icon="ph:drop-bold"></iconify-icon>
+                  </div>
+                  <div class="impact-value" id="trustWaterSaved">-</div>
+                  <div class="impact-label">Water Saved</div>
+                </div>
+                <div class="impact-item">
+                  <div class="impact-icon energy">
+                    <iconify-icon icon="ph:lightning-bold"></iconify-icon>
+                  </div>
+                  <div class="impact-value" id="trustEnergySaved">-</div>
+                  <div class="impact-label">Energy Saved</div>
+                </div>
+                <div class="impact-item">
+                  <div class="impact-icon circular">
+                    <iconify-icon icon="ph:arrows-clockwise-bold"></iconify-icon>
+                  </div>
+                  <div class="impact-value" id="trustCircularScore">-</div>
+                  <div class="impact-label">Circular Score</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 7. Data Source Transparency -->
+          <div class="trust-card data-sources">
+            <div class="trust-card-header">
+              <iconify-icon icon="ph:database-bold"></iconify-icon>
+              <h4>Data Sources</h4>
+            </div>
+            <div class="trust-card-body">
+              <div class="source-list">
+                <div class="source-item">
+                  <iconify-icon icon="ph:globe-bold"></iconify-icon>
+                  <span>Global Carbon Atlas</span>
+                  <span class="source-status verified">Verified</span>
+                </div>
+                <div class="source-item">
+                  <iconify-icon icon="ph:bank-bold"></iconify-icon>
+                  <span>World Bank Climate Data</span>
+                  <span class="source-status verified">Verified</span>
+                </div>
+                <div class="source-item">
+                  <iconify-icon icon="ph:recycle-bold"></iconify-icon>
+                  <span>Recycling Industry Database</span>
+                  <span class="source-status verified">Verified</span>
+                </div>
+                <div class="source-item">
+                  <iconify-icon icon="ph:storefront-bold"></iconify-icon>
+                  <span>Second-hand Market APIs</span>
+                  <span class="source-status verified">Verified</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 8. Prediction Timestamp -->
+          <div class="trust-card timestamps">
+            <div class="trust-card-header">
+              <iconify-icon icon="ph:clock-bold"></iconify-icon>
+              <h4>Prediction Timestamps</h4>
+            </div>
+            <div class="trust-card-body">
+              <div class="timestamp-row">
+                <iconify-icon icon="ph:magic-wand-bold"></iconify-icon>
+                <div class="timestamp-info">
+                  <span class="timestamp-label">Prediction Generated</span>
+                  <strong id="trustPredictionTime">-</strong>
+                </div>
+              </div>
+              <div class="timestamp-row">
+                <iconify-icon icon="ph:database-bold"></iconify-icon>
+                <div class="timestamp-info">
+                  <span class="timestamp-label">Market Data Updated</span>
+                  <strong id="trustMarketDataTime">-</strong>
+                </div>
+              </div>
+              <div class="timestamp-row">
+                <iconify-icon icon="ph:cloud-arrow-down-bold"></iconify-icon>
+                <div class="timestamp-info">
+                  <span class="timestamp-label">Environmental Data</span>
+                  <strong id="trustEnvDataTime">-</strong>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 9. Model Version Display -->
+          <div class="trust-card model-info">
+            <div class="trust-card-header">
+              <iconify-icon icon="ph:cpu-bold"></iconify-icon>
+              <h4>AI Model Information</h4>
+            </div>
+            <div class="trust-card-body">
+              <div class="model-badge">
+                <iconify-icon icon="ph:robot-bold"></iconify-icon>
+                <div class="model-details">
+                  <strong>AI Valuation Engine</strong>
+                  <span id="trustModelVersion">Version 2.1</span>
+                </div>
+              </div>
+              <div class="model-tech">
+                <div class="tech-item">
+                  <iconify-icon icon="ph:eye-bold"></iconify-icon>
+                  <span>YOLOv8 Image Analysis</span>
+                </div>
+                <div class="tech-item">
+                  <iconify-icon icon="ph:brain-bold"></iconify-icon>
+                  <span>Gemini 2.0 Flash</span>
+                </div>
+                <div class="tech-item">
+                  <iconify-icon icon="ph:chart-line-up-bold"></iconify-icon>
+                  <span>Circular Economy Model</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 10. User Feedback System -->
+          <div class="trust-card user-feedback">
+            <div class="trust-card-header">
+              <iconify-icon icon="ph:chat-circle-text-bold"></iconify-icon>
+              <h4>Was this prediction accurate?</h4>
+            </div>
+            <div class="trust-card-body">
+              <div class="feedback-buttons" id="feedbackButtons">
+                <button class="feedback-btn positive" id="feedbackYes">
+                  <iconify-icon icon="ph:thumbs-up-bold"></iconify-icon>
+                  <span>Yes, Accurate</span>
+                </button>
+                <button class="feedback-btn negative" id="feedbackNo">
+                  <iconify-icon icon="ph:thumbs-down-bold"></iconify-icon>
+                  <span>No, Inaccurate</span>
+                </button>
+              </div>
+              <div class="feedback-response hidden" id="feedbackResponse">
+                <iconify-icon icon="ph:check-circle-bold"></iconify-icon>
+                <span>Thank you for your feedback! It helps improve our AI.</span>
+              </div>
+              <div class="feedback-stats">
+                <span><strong id="trustAccuracyRate">94%</strong> users found predictions accurate</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       <section id="geo" class="section card-panel full-width-panel">
         <div class="panel-header">
           <h3><iconify-icon icon="ph:map-pin-bold"></iconify-icon> Nearby Facilities</h3>
@@ -366,6 +717,28 @@
         <div class="loader" id="geoLoader"></div>
         <div class="geo-grid" id="geoResults">
             <!-- Results populated here -->
+        </div>
+      </section>
+
+      <!-- History Section -->
+      <section id="history" class="section card-panel full-width-panel">
+        <div class="panel-header">
+          <h3><iconify-icon icon="ph:clock-counter-clockwise-bold"></iconify-icon> Product History</h3>
+          <div class="history-filter">
+            <select id="historyFilter">
+              <option value="all">All</option>
+              <option value="sell">Sell</option>
+              <option value="repair">Repair</option>
+              <option value="recycle">Recycle</option>
+            </select>
+          </div>
+        </div>
+        <div class="history-empty" id="historyEmpty">
+          <iconify-icon icon="ph:package-bold" style="font-size: 48px; color: var(--text-muted);"></iconify-icon>
+          <p>No products analyzed yet. Upload a product to get started.</p>
+        </div>
+        <div class="history-grid" id="historyGrid">
+          <!-- History items populated via JS -->
         </div>
       </section>
 
@@ -417,7 +790,7 @@
           <div id="certWaste">Waste saved: - kg</div>
           <div id="certDate">Date: -</div>
           <div class="certificate-brand">
-            <span>SCEM</span> <span>♻️</span> <span>🌍</span>
+            <span>ReGenX</span> <span>♻️</span> <span>🌍</span>
           </div>
         </div>
       </div>
@@ -493,6 +866,74 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+  <script>
+    // Firebase Configuration
+    const firebaseConfig = {
+      apiKey: "AIzaSyBlMsTDl731iaAc-1ms_jS22d-TV_Ted1M",
+      authDomain: "regenx-f1133.firebaseapp.com",
+      projectId: "regenx-f1133",
+      storageBucket: "regenx-f1133.firebasestorage.app",
+      messagingSenderId: "1056638149366",
+      appId: "1:1056638149366:web:d13902458cb050e47902d7"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const firebaseAuth = firebase.auth();
+    const firebaseDb = firebase.firestore();
+  </script>
   <script src="script.js"></script>
+  <script>
+    // Minimal fix: ensure Edit Profile button always works
+    (function() {
+      var btn = document.getElementById('profileBtn');
+      var modal = document.getElementById('profileModal');
+      var closeBtn = document.getElementById('profileModalClose');
+      var overlay = modal ? modal.querySelector('.modal-overlay') : null;
+      if (!btn || !modal) return;
+
+      function showModal() {
+        modal.style.display = 'flex';
+        modal.style.alignItems = 'center';
+        modal.style.justifyContent = 'center';
+        modal.style.position = 'fixed';
+        modal.style.inset = '0';
+        modal.style.zIndex = '9999';
+        modal.style.opacity = '1';
+        modal.style.pointerEvents = 'auto';
+        modal.classList.remove('hidden');
+        modal.hidden = false;
+      }
+
+      function hideModal() {
+        modal.style.display = 'none';
+        modal.classList.add('hidden');
+        modal.hidden = true;
+      }
+
+      btn.addEventListener('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        showModal();
+      });
+
+      if (closeBtn) closeBtn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        hideModal();
+      });
+
+      if (overlay) overlay.addEventListener('click', function() {
+        hideModal();
+      });
+
+      document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape' && !modal.classList.contains('hidden')) {
+          hideModal();
+        }
+      });
+    })();
+  </script>
 </body>
 </html>

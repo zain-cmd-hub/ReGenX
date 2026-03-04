@@ -1,4 +1,6 @@
-export default function CoreFeaturesSection({ title, subtitle, features }) {
+import { memo } from "react";
+
+export default memo(function CoreFeaturesSection({ title, subtitle, features }) {
   return (
     <section id="features" className="section features-section">
       <div className="section-heading">
@@ -16,4 +18,4 @@ export default function CoreFeaturesSection({ title, subtitle, features }) {
       </div>
     </section>
   );
-}
+});

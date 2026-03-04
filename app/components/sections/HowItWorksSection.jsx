@@ -1,4 +1,6 @@
-export default function HowItWorksSection({ title, subtitle, steps }) {
+import { memo } from "react";
+
+export default memo(function HowItWorksSection({ title, subtitle, steps }) {
   return (
     <section id="how" className="section how-section">
       <div className="section-heading">
@@ -19,4 +21,4 @@ export default function HowItWorksSection({ title, subtitle, steps }) {
       </div>
     </section>
   );
-}
+});

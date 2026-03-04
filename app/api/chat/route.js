@@ -4,7 +4,7 @@ const GEMINI_API_KEY = process.env.GEMINI_API_KEY || "AIzaSyAx4Pug2a5bHynmlpYMtn
 const GEMINI_API_URL =
   "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent";
 
-const SYSTEM_PROMPT = `You are EcoBot — a friendly AI assistant for TSCEM, an eco-sustainability and circular economy platform.
+const SYSTEM_PROMPT = `You are EcoBot — a friendly AI assistant for ReGenX, an eco-sustainability and circular economy platform.
 
 ══════════════════════════════════════════
 CRITICAL BEHAVIOR RULES (MUST FOLLOW):
@@ -125,8 +125,11 @@ export async function POST(request) {
     }
 
     // Normalise messages: only keep user + assistant, map to Gemini roles
+    // Limit conversation window to last 20 messages to prevent unbounded growth
+    const MAX_CONVERSATION_WINDOW = 20;
     const normalised = messages
       .filter((m) => m && (m.role === "user" || m.role === "assistant") && typeof m.content === "string" && m.content.trim())
+      .slice(-MAX_CONVERSATION_WINDOW)
       .map((m) => ({
         role: m.role === "assistant" ? "model" : "user",
         parts: [{ text: m.content.trim() }],

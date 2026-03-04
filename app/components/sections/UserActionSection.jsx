@@ -1,4 +1,6 @@
-export default function UserActionSection({ children, title, subtitle }) {
+import { memo } from "react";
+
+export default memo(function UserActionSection({ children, title, subtitle }) {
   return (
     <section id="actions" className="section action-section">
       <div className="section-heading">
@@ -10,4 +12,4 @@ export default function UserActionSection({ children, title, subtitle }) {
       </div>
     </section>
   );
-}
+});
