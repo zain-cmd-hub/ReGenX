@@ -763,11 +763,32 @@ export default function DashboardPage() {
     const dem = result.demand || "Moderate";
     const age = Math.max(1, Math.floor(totalDays / 365));
     
-    const basePrice = getBasePrice(productType);
-    const ageDepreciation = Math.round(basePrice * (age * 0.08));
-    const conditionMultiplier = cond === "Good" ? 0.95 : cond === "Medium" ? 0.75 : 0.5;
-    const demandMultiplier = dem === "High" ? 1.15 : dem === "Moderate" ? 1.0 : 0.85;
-    const materialValue = Math.round(basePrice * 0.1);
+    const basePrice = result.productFeatures?.original_price || getBasePrice(productType);
+    
+    // Check if we have the breakdown from predict API
+    const hasBreakdown = !!result.breakdown;
+    
+    let ageDepreciation;
+    let conditionMultiplier;
+    let demandMultiplier;
+    let materialValue;
+    
+    if (hasBreakdown) {
+      // Parse "25%" to 0.25 and calculate depreciation amount
+      const depPercentStr = result.breakdown.depreciation_applied || "0%";
+      const depPercent = parseInt(depPercentStr.replace('%', '')) / 100;
+      
+      ageDepreciation = Math.round(basePrice * depPercent);
+      conditionMultiplier = result.breakdown.condition_factor || (cond === "Good" ? 0.95 : cond === "Medium" ? 0.75 : 0.5);
+      demandMultiplier = dem === "High" ? 1.15 : dem === "Moderate" ? 1.0 : 0.85; // Using demand multiplier from context
+      materialValue = result.predictedValues?.scrap_value || Math.round(basePrice * 0.1);
+    } else {
+      // Fallback to estimation logic if prediction API didn't return breakdown
+      ageDepreciation = Math.round(basePrice * (age * 0.08));
+      conditionMultiplier = cond === "Good" ? 0.95 : cond === "Medium" ? 0.75 : 0.5;
+      demandMultiplier = dem === "High" ? 1.15 : dem === "Moderate" ? 1.0 : 0.85;
+      materialValue = Math.round(basePrice * 0.1);
+    }
     
     const imageQuality = result.productFeatures ? Math.floor(85 + Math.random() * 13) : Math.floor(70 + Math.random() * 15);
     const dataMatch = Math.floor(88 + Math.random() * 9);
@@ -1731,7 +1752,7 @@ export default function DashboardPage() {
       }
       // ── End Gemini AI Enhancement ────────────────────────────────────
 
-      // ── Prediction API for Sustainability Metrics ────────────────────
+      // ── Prediction API for Pricing and Sustainability Metrics ────────────────────
       try {
         const predictFeatures = result.productFeatures || {
           category: productTypeInput,
@@ -1751,18 +1772,35 @@ export default function DashboardPage() {
         if (predictResp.ok) {
           const predictData = await predictResp.json();
           if (predictData.success) {
+            // Use the algorithmic prediction instead of Gemini's guess
+            result.sellPrice = predictData.predictions.resale_value;
+            result.price = predictData.predictions.resale_value;
+            result.repairCost = predictData.predictions.repair_cost;
+            result.recyclingValue = predictData.predictions.scrap_value;
+            
             result.sustainability = predictData.sustainability;
             result.predictionConfidence = predictData.predictions.confidence_score;
             result.predictedValues = predictData.predictions;
+            result.breakdown = predictData.breakdown;
             
+            // Mirror updates into the history entry
+            historyEntry.sellPrice = predictData.predictions.resale_value;
+            historyEntry.repairCost = predictData.predictions.repair_cost;
+            historyEntry.recycleValue = predictData.predictions.scrap_value;
+            historyEntry.price = purpose === "repair" 
+              ? predictData.predictions.repair_cost 
+              : purpose === "recycle" 
+                ? predictData.predictions.scrap_value 
+                : predictData.predictions.resale_value;
+
             historyEntry.sustainability = predictData.sustainability;
             historyEntry.predictionConfidence = predictData.predictions.confidence_score;
             
-            console.log("[Predict] Sustainability data:", predictData.sustainability);
+            console.log("[Predict] Algorithmic prediction success:", predictData);
           }
         }
       } catch (predictErr) {
-        console.warn("[Predict] Sustainability calculation failed:", predictErr.message);
+        console.warn("[Predict] Prediction calculation failed:", predictErr.message);
       }
       // ── End Prediction API ────────────────────────────────────────────
 

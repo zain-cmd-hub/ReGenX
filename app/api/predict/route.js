@@ -303,10 +303,10 @@ export async function POST(request) {
       model: data.model || '',
       original_price: Number(data.original_price) || 10000,
       purchase_year: purchaseYear,
-      age: data.age || (currentYear - purchaseYear),
+      age: data.age !== undefined ? data.age : (currentYear - purchaseYear),
       
       // Condition data (from image analysis)
-      condition_score: data.condition_score || CONDITION_SCORES[data.condition?.toLowerCase()] || 0.6,
+      condition_score: data.condition_score !== undefined ? data.condition_score : (CONDITION_SCORES[data.condition?.toLowerCase()] || 0.6),
       damage_level: data.damage_level || 'none',
       scratch_level: data.scratch_level || 'minor',
       missing_parts: data.missing_parts || false,
