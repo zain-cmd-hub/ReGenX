@@ -200,7 +200,7 @@ export default function HistoryPage() {
         return;
       }
       const userId = certificateItem.userId || "user";
-      const url = `https://mywebsite.com/user/${userId}/impact`;
+      const url = `https://regenx.vercel.app/user/${userId}/impact`;
       try {
         const QRCode = (await import("qrcode")).default;
         const dataUrl = await QRCode.toDataURL(url, { width: 140, margin: 1 });

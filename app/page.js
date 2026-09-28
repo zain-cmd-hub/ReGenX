@@ -1553,18 +1553,6 @@ export default function DashboardPage() {
             ? `₹${recyclingEstimate}`
             : "";
 
-      console.log("[Local] Factors", {
-        usageImpact: usageImpact.toFixed(2),
-        localAction: aiActionNormalized,
-        remainingLife: remaining,
-        condition: nextCondition,
-        conditionWeight: conditionWeights[nextCondition],
-        resalePrice: estimatedPrice,
-        repairCost: estimatedRepairCost,
-        recyclingValue: recyclingEstimate,
-        usageMessage: nextUsageMessage,
-      });
-
       const nextEcoScore = computeEcoScore({
         purpose: aiActionNormalized || purpose,
         condition: nextCondition,
@@ -1739,8 +1727,6 @@ export default function DashboardPage() {
               brand_popularity: aiData.brandPopularity || 1.0
             };
             result.sustainabilityNote = aiData.sustainabilityNote || "";
-
-            console.log("[Gemini] AI analysis merged:", aiData);
           }
         }
       } catch (aiErr) {
@@ -1795,8 +1781,6 @@ export default function DashboardPage() {
 
             historyEntry.sustainability = predictData.sustainability;
             historyEntry.predictionConfidence = predictData.predictions.confidence_score;
-            
-            console.log("[Predict] Algorithmic prediction success:", predictData);
           }
         }
       } catch (predictErr) {
@@ -2146,7 +2130,6 @@ export default function DashboardPage() {
       setPasswordStatus({ type: "error", message: t.profile.passwordMismatch });
       return;
     }
-    localStorage.setItem("regenxPassword", passwordData.next);
     setPasswordStatus({ type: "success", message: t.profile.passwordUpdated });
     setPasswordData({ current: "", next: "", confirm: "" });
     setTimeout(() => setPasswordStatus(null), 2500);

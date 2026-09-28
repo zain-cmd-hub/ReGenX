@@ -159,14 +159,11 @@ export async function POST(request) {
       ...alternated,
     ];
 
-    console.log(`[EcoBot] Sending ${normalised.length} message(s) to Gemini.`);
-
     // First attempt
     let result = await callGemini(contents);
 
     // If empty text (not a hard error), retry once
     if (!result.error && !result.text) {
-      console.log("[EcoBot] Empty reply — retrying once...");
       result = await callGemini(contents);
     }
 
@@ -178,7 +175,6 @@ export async function POST(request) {
     }
 
     const reply = result.text || "I could not understand that. Could you please rephrase your question? 🌱";
-    console.log(`[EcoBot] Reply (${reply.length} chars):`, reply.slice(0, 120));
     return NextResponse.json({ reply });
 
   } catch (err) {

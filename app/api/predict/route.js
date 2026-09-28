@@ -230,34 +230,67 @@ function calculateSustainability(features, recommendation) {
 
 /**
  * Determine recommendation based on predictions
+ * 5-tier decision tree covering all condition ranges properly.
  */
 function getRecommendation(resale_value, repair_cost, scrap_value, condition_score) {
-  // Decision logic
+
+  // ── Tier 1: Critically damaged / broken (condition ≤ 0.30) ──────────────
+  // These products have no practical resale market. If repair costs exceed
+  // resale value, recycling is the only sensible option.
+  if (condition_score <= 0.30 && repair_cost > resale_value) {
+    return {
+      action: 'Recycle',
+      reason: 'Product is too damaged to repair economically — recycling recovers maximum material value',
+      profit_potential: scrap_value
+    };
+  }
+
+  // ── Tier 2: Scrap value clearly beats resale value ───────────────────────
+  // Raw material is worth more than the product on the used market.
+  if (scrap_value > resale_value) {
+    return {
+      action: 'Recycle',
+      reason: 'Scrap value exceeds resale value — recycling materials yields better returns',
+      profit_potential: scrap_value
+    };
+  }
+
+  // ── Tier 3: Repair is economically smart ────────────────────────────────
+  // Repair cost is less than 40 % of potential resale AND product is not
+  // already in great shape (if it were, we'd just sell it as-is below).
   if (repair_cost < resale_value * 0.4 && condition_score < 0.7) {
     return {
       action: 'Repair and Resell',
-      reason: 'Repair cost is low compared to potential resale value',
+      reason: 'Repair cost is low compared to potential resale value — repairing will significantly boost returns',
       profit_potential: resale_value - repair_cost
     };
-  } else if (scrap_value > resale_value) {
-    return {
-      action: 'Recycle',
-      reason: 'Scrap value exceeds resale value - better to recycle materials',
-      profit_potential: scrap_value
-    };
-  } else if (condition_score >= 0.7) {
+  }
+
+  // ── Tier 4: Good condition — sell directly ───────────────────────────────
+  if (condition_score >= 0.7) {
     return {
       action: 'Sell As-Is',
-      reason: 'Product is in good condition for direct resale',
-      profit_potential: resale_value
-    };
-  } else {
-    return {
-      action: 'Sell As-Is',
-      reason: 'Best option considering all factors',
+      reason: 'Product is in good condition and commands a strong resale price',
       profit_potential: resale_value
     };
   }
+
+  // ── Tier 5: Poor-to-average condition, repair not worth it ───────────────
+  // Condition 0.31–0.69 AND repair costs more than 60 % of resale value.
+  if (condition_score < 0.5 && repair_cost > resale_value * 0.6) {
+    return {
+      action: 'Recycle',
+      reason: 'Repair cost is too high relative to resale value — recycling is the smarter choice',
+      profit_potential: scrap_value
+    };
+  }
+
+  // ── Default: Moderate condition, discounted sale ─────────────────────────
+  return {
+    action: 'Sell As-Is',
+    reason: 'Product has moderate wear — selling at a fair market price is recommended',
+    profit_potential: resale_value
+  };
 }
 
 /**
